@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/rebelly.csproj" />
+  </Folder>
+  <Project Path="test/test.csproj" />
+</Solution>
