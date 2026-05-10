@@ -198,6 +198,7 @@ public static class Runtime
         Interop.AddInteropFunctions(ctx);
         Inspection.AddInspectionFunctions(ctx);
         OS.AddOsFunctions(ctx);
+        IO.AddIoFunctions(ctx);
 
         return ctx;
     }
