@@ -10,10 +10,10 @@ public class InteropTests
         var tokens = lexer.Tokenize();
         var loader = new Loader();
         var root = loader.Load(tokens);
-        
+
         var ctx = Runtime.CreateGlobalContext();
         var interpreter = new Interpreter();
-        
+
         var result = interpreter.Evaluate(root, ctx);
         return (result, ctx);
     }
@@ -22,7 +22,7 @@ public class InteropTests
     public void GetType_Resolves_Valid_DotNet_Type()
     {
         var (result, _) = Run("get-type \"System.Int32\"");
-        
+
         var dnv = Assert.IsType<DotNetValue>(result);
         Assert.Equal(typeof(int), dnv.Instance);
     }
@@ -36,9 +36,9 @@ public class InteropTests
             my-ver: new :ver-type [1 2 3]
             get-prop my-ver ""Minor""
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var intResult = Assert.IsType<Integer>(result);
         Assert.Equal(2, intResult.Number);
     }
@@ -51,9 +51,9 @@ public class InteropTests
             my-date: new :dt-type [2026 12 25]
             get-prop my-date ""Month""
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var intResult = Assert.IsType<Integer>(result);
         Assert.Equal(12, intResult.Number);
     }
@@ -68,9 +68,9 @@ public class InteropTests
             my-ex: new :ex-type [:msg]
             get-prop my-ex ""Message""
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var textResult = Assert.IsType<Text>(result);
         Assert.Equal("Something went wrong", textResult.Content);
     }
@@ -99,9 +99,9 @@ public class InteropTests
             ; Final call to get the result
             res: call-method sb ""ToString"" []
         ";
-        
+
         var (result, ctx) = Run(code);
-        
+
         // The last expression was call-method ... ""ToString"" []
         var textResult = Assert.IsType<Text>(result);
         Assert.Equal("Hello Ragnar!", textResult.Content);
@@ -119,9 +119,9 @@ public class InteropTests
             new-date: call-method my-date ""AddDays"" [10.0]
             get-prop new-date ""Day""
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var intResult = Assert.IsType<Integer>(result);
         Assert.Equal(19, intResult.Number);
     }
@@ -140,9 +140,9 @@ public class InteropTests
             ; Verify by reading it back
             get-prop sb ""Capacity""
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var intResult = Assert.IsType<Integer>(result);
         Assert.Equal(128, intResult.Number);
     }
@@ -157,10 +157,69 @@ public class InteropTests
             set-prop my-ex ""Source"" ""RagnarEngine""
             get-prop my-ex ""Source""
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var textResult = Assert.IsType<Text>(result);
         Assert.Equal("RagnarEngine", textResult.Content);
+    }
+
+    [Fact]
+    public void Static_Property_Access_Returns_Native_Type()
+    {
+        var code = @"
+            now: get-static ""System.DateTime"" ""Now""
+            get-prop :now ""Year""
+        ";
+        var (result, _) = Run(code);
+
+        // We no longer expect DotNetValue! We expect a native Ragnar Integer.
+        var ragnarInt = Assert.IsType<Integer>(result);
+        Assert.Equal(DateTime.Now.Year, ragnarInt.Number);
+    }
+
+    [Fact]
+    public void Static_Method_Call_Works()
+    {
+        // Math.Abs(-100) should return 100
+        // We pass -100 as a Ragnar Integer, and it should return a Ragnar Integer.
+        var code = @"
+            call-static ""System.Math"" ""Abs"" [ -100 ]
+        ";
+
+        var (result, _) = Run(code);
+
+        // Verify the return value was coerced from a .NET int back to a Ragnar Integer
+        var ragnarInt = Assert.IsType<Integer>(result);
+        Assert.Equal(100, ragnarInt.Number);
+    }
+
+    [Fact]
+    public void Static_String_Method_Works()
+    {
+        // string.Concat("Ragnar", "!", "!")
+        var code = @"
+            call-static ""System.String"" ""Concat"" [ ""Ragnar"" ""!"" ]
+        ";
+
+        var (result, _) = Run(code);
+
+        var ragnarText = Assert.IsType<Text>(result);
+        Assert.Equal("Ragnar!", ragnarText.Content);
+    }
+
+    [Fact]
+    public void Static_Method_With_Multiple_Args_Works()
+    {
+        // Path.Combine("C:/", "Ragnar")
+        var code = @"
+            call-static ""System.IO.Path"" ""Combine"" [ ""C:/"" ""Ragnar"" ]
+        ";
+
+        var (result, _) = Run(code);
+
+        var text = Assert.IsType<Text>(result);
+        // Path.Combine is OS sensitive, so we check for the name
+        Assert.Contains("Ragnar", text.Content);
     }
 }
