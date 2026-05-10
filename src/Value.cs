@@ -115,6 +115,11 @@ public class Path(IEnumerable<Value> parts) : Value
     public override string ToString() => string.Join("/", Parts.Select(p => p.ToString()));
 }
 
+public class SetPath(IEnumerable<Value> parts) : Path(parts)
+{
+    public override string ToString() => string.Join("/", Parts.Select(p => p.ToString())) + ":";
+}
+
 public class DotNetValue(object? instance) : Value
 {
     public object? Instance { get; } = instance;

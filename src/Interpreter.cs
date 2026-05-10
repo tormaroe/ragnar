@@ -90,6 +90,41 @@ public class Interpreter
             return boundValue;
         }
 
+        if (current is SetPath setPath)
+        {
+            // 1. Resolve the head - DO NOT re-evaluate it, just get the reference
+            Value container = ResolvePathHead(context, setPath);
+
+            // 2. Navigate to the second-to-last element
+            for (int i = 1; i < setPath.Parts.Count - 1; i++)
+            {
+                container = NavigatePath(container, setPath.Parts[i]);
+            }
+
+            // 3. Evaluate the VALUE to be set (the next thing in the block)
+            Value valueToSet = Next(block, ref index, context);
+
+            // 4. Perform the assignment
+            Value lastSegment = setPath.Parts.Last();
+
+            if (container is Block b && lastSegment is Integer idx)
+            {
+                int listIdx = (int)idx.Number - 1;
+                if (listIdx >= 0 && listIdx < b.Children.Count)
+                {
+                    b.Children[listIdx] = valueToSet; // This mutates the actual list
+                    return valueToSet;
+                }
+            }
+            else if (container is DotNetValue dnv)
+            {
+                Interop.SetDotNetMember(dnv.Instance!, lastSegment.ToString(), valueToSet);
+                return valueToSet;
+            }
+
+            throw new Exception($"Cannot set {lastSegment} on {container.GetType().Name}");
+        }
+
         if (current is Path path)
         {
             // 1. Start with the head
@@ -155,6 +190,29 @@ public class Interpreter
         return current;
     }
 
+    private Value NavigatePath(Value container, Value segment)
+    {
+        // 1. Handle .NET Instance or Static Type access
+        if (container is DotNetValue dnv)
+        {
+            return GetDotNetMember(dnv.Instance, segment.ToString());
+        }
+
+        // 2. Handle Block index access (e.g., b/1)
+        if (container is Block b && segment is Integer idx)
+        {
+            int listIdx = (int)idx.Number - 1; // Ragnar is 1-indexed
+            return (listIdx >= 0 && listIdx < b.Children.Count)
+                ? b.Children[listIdx]
+                : new Word("none");
+        }
+
+        // 3. Handle Word-based navigation for nested Ragnar structures (like Objects)
+        // If you haven't implemented Ragnar Objects yet, this will be your future hook.
+
+        throw new Exception($"Cannot navigate into {container.GetType().Name} with segment {segment}");
+    }
+
     private static Value ResolvePathHead(Context context, Path path)
     {
         // 1. Resolve the "head" of the path (look it up, don't evaluate it!)
@@ -189,8 +247,10 @@ public class Interpreter
         return first;
     }
 
-    private Value GetDotNetMember(object target, string memberName)
+    private static Value GetDotNetMember(object? target, string memberName)
     {
+        if (target == null) throw new Exception("Cannot access member on null object.");
+
         // If target is a Type, we look for Statics. If it's an instance, we look for Instance members.
         bool isStatic = target is Type;
         Type type = isStatic ? (Type)target : target.GetType();

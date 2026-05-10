@@ -81,20 +81,23 @@ public class Lexer(string input)
         // 1. File Type (Rebol uses % for files)
         if (raw.StartsWith('%'))
         {
-            return new File(raw); 
+            return new File(raw);
         }
 
         // 2. Refinement or Path
         if (raw.Contains('/'))
         {
-            // If it starts with / and has no other slashes, it's a Refinement
-            if (raw.StartsWith('/') && raw.LastIndexOf('/') == 0)
+            bool isSetPath = raw.EndsWith(':');
+            string pathContent = isSetPath ? raw.TrimEnd(':') : raw;
+
+            // Handle Refinement vs Path logic as before...
+            if (!isSetPath && pathContent.StartsWith('/') && !pathContent.Substring(1).Contains('/'))
             {
-                return new Refinement(raw);
+                return new Refinement(pathContent);
             }
-            
-            // Otherwise, it's a Path (e.g., call/wait or a/b/1)
-            return new Path(ParsePathSegments(raw));
+
+            var segments = ParsePathSegments(pathContent);
+            return isSetPath ? new SetPath(segments) : new Path(segments);
         }
 
         // 1. Try Integer / Decimal (existing logic)

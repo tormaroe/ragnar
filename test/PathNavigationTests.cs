@@ -72,4 +72,40 @@ public class PathNavigationTests
         var word = Assert.IsType<Word>(result);
         Assert.Equal("none", word.Name);
     }
+
+    [Fact]
+    public void SetPath_Mutates_Block_Value()
+    {
+        var code = @"
+            b: [1 2 3]
+            b/2: 99
+            b/2
+        ";
+        var (result, _) = Run(code);
+
+        Assert.Equal(99, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void SetPath_Works_On_Nested_Blocks()
+    {
+        var code = @"
+            nested: [[a b] [c d]]
+            nested/2/1: 100
+            nested/2/1
+        ";
+        var (result, _) = Run(code);
+
+        Assert.Equal(100, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void SetPath_Returns_The_Assigned_Value()
+    {
+        // In Ragnar, 'a: b: 10' or 'p/x: 10' should return 10
+        var code = "b: [1] b/1: 50";
+        var (result, _) = Run(code);
+
+        Assert.Equal(50, Assert.IsType<Integer>(result).Number);
+    }
 }

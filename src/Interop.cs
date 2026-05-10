@@ -66,6 +66,36 @@ public class Interop
         };
     }
 
+    public static void SetDotNetMember(object? target, string memberName, Value ragnarValue)
+    {
+        if (target == null) throw new Exception("Cannot set member on null object.");
+
+        bool isStatic = target is Type;
+        Type type = isStatic ? (Type)target : target.GetType();
+        var flags = BindingFlags.Public | BindingFlags.IgnoreCase |
+                    (isStatic ? BindingFlags.Static : BindingFlags.Instance);
+
+        object? rawValue = ToNetObject(ragnarValue);
+
+        // Try Property first
+        var prop = type.GetProperty(memberName, flags);
+        if (prop != null && prop.CanWrite)
+        {
+            prop.SetValue(isStatic ? null : target, rawValue);
+            return;
+        }
+
+        // Try Field
+        var field = type.GetField(memberName, flags);
+        if (field != null)
+        {
+            field.SetValue(isStatic ? null : target, rawValue);
+            return;
+        }
+
+        throw new Exception($"Member '{memberName}' not found or not writable on {type.Name}");
+    }
+
     public static void AddInteropFunctions(Context ctx)
     {
         // get-type "System.Text.StringBuilder"
