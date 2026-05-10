@@ -7,7 +7,7 @@ class Program
         var interpreter = new Interpreter();
         var globalContext = Runtime.CreateGlobalContext();
 
-        Console.WriteLine("[ Ragnar Interpreter ]");
+        Console.WriteLine("\n [][][][][][][][][][ RAGNAR ][][][][][][][][][]\n");
 
         // 1. Process files if provided
         if (args.Length > 0)
