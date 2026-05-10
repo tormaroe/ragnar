@@ -1,4 +1,6 @@
 
+using System.Reflection;
+
 namespace Ragnar;
 
 public class Interpreter
@@ -69,7 +71,7 @@ public class Interpreter
             if (boundValue is Function func)
             {
                 // 1. Create a local scope for this function call
-                var localCtx = new Context(context); 
+                var localCtx = new Context(context);
 
                 // 2. Gather arguments and bind them to parameter names
                 foreach (var paramName in func.Parameters)
@@ -90,63 +92,120 @@ public class Interpreter
 
         if (current is Path path)
         {
-            // 1. Resolve the "head" of the path (look it up, don't evaluate it!)
-            Value head;
-            if (path.Parts[0] is Word w)
-            {
-                head = context.Get(w.Name);
-            }
-            else if (path.Parts[0] is GetWord gw)
-            {
-                head = context.Get(gw.Name);
-            }
-            else
-            {
-                head = path.Parts[0];
-            }
+            // 1. Start with the head
+            Value currentVal = ResolvePathHead(context, path);
 
-            // 2. Handle Refinements for Natives or User Functions
-            if (head is Native native)
+            // 2. Iterate through segments (starting from the second part)
+            for (int i = 1; i < path.Parts.Count; i++)
             {
-                var refinements = new HashSet<string>();
-                foreach (var part in path.Parts.Skip(1))
+                var segment = path.Parts[i];
+
+                // --- BRANCH A: It's a Function/Native ---
+                // If we hit a function, the rest of the path parts are REFINEMENTS.
+                if (currentVal is Native or Function)
                 {
-                    if (part is Word rw) refinements.Add(rw.Name);
-                    else throw new Exception($"Invalid refinement in path: {part}");
+                    // Gather the rest of the path as strings
+                    var refinements = new HashSet<string>();
+                    for (int j = i; j < path.Parts.Count; j++)
+                    {
+                        if (path.Parts[j] is Word rw) refinements.Add(rw.Name);
+                    }
+
+                    // Standard argument collection and execution
+                    if (currentVal is Native n)
+                    {
+                        var args = new List<Value>();
+                        for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context));
+                        return n.Action(args, refinements, context, this);
+                    }
+                    else if (currentVal is Function f)
+                    {
+                        var args = new List<Value>();
+                        for (int k = 0; k < f.Parameters.Count; k++) args.Add(Next(block, ref index, context));
+                        return ExecuteFunction(f, args, refinements, context);
+                    }
                 }
 
-                var args = new List<Value>();
-                for (int i = 0; i < native.Arity; i++)
+                // --- BRANCH B: It's a .NET Object ---
+                if (currentVal is DotNetValue dnv)
                 {
-                    args.Add(Next(block, ref index, context));
+                    currentVal = GetDotNetMember(dnv.Instance, segment.ToString());
+                    continue;
                 }
 
-                return native.Action(args, refinements, context, this);
+                // --- BRANCH C: It's a Block (Index Access) ---
+                if (currentVal is Block b && segment is Integer idx)
+                {
+                    int listIdx = (int)idx.Number - 1; // Rebol is 1-indexed
+                    currentVal = (listIdx >= 0 && listIdx < b.Children.Count)
+                                 ? b.Children[listIdx]
+                                 : new Word("none");
+                    continue;
+                }
+
+                // If we get here and haven't 'continued' or 'returned', it's an error
+                throw new Exception($"Cannot navigate into {currentVal.GetType().Name} with segment {segment}");
             }
-            else if (head is Function func)
-            {
-                // We should also support refinements for user-defined functions!
-                var refinements = new HashSet<string>();
-                foreach (var part in path.Parts.Skip(1))
-                {
-                    if (part is Word rw) refinements.Add(rw.Name);
-                }
 
-                var args = new List<Value>();
-                for (int i = 0; i < func.Parameters.Count; i++)
-                {
-                    args.Add(Next(block, ref index, context));
-                }
-
-                return ExecuteFunction(func, args, refinements, context);
-            }
-            
-            throw new Exception($"Paths starting with {head.GetType().Name} are not yet supported.");
+            return currentVal;
         }
 
         // Literals (Integers, Decimals, Strings, and Blocks) evaluate to themselves.
         // A Block is just data until something like the 'do' function evaluates it.
         return current;
+    }
+
+    private static Value ResolvePathHead(Context context, Path path)
+    {
+        // 1. Resolve the "head" of the path (look it up, don't evaluate it!)
+        // Value head;
+        // if (path.Parts[0] is Word w)
+        // {
+        //     head = context.Get(w.Name);
+        // }
+        // else if (path.Parts[0] is GetWord gw)
+        // {
+        //     head = context.Get(gw.Name);
+        // }
+        // else
+        // {
+        //     head = path.Parts[0];
+        // }
+
+        // return head;
+        var first = path.Parts[0];
+        if (first is Word w)
+        {
+            // Try to get from context, but if not found, 
+            // check if it's a .NET Type name (e.g. "System.Math")
+            try { return context.Get(w.Name); }
+            catch
+            {
+                // If word not in context, see if it's a Static Type
+                try { return new DotNetValue(Interop.ResolveType(w.Name)); }
+                catch { throw; } // Re-throw if it's truly not found
+            }
+        }
+        return first;
+    }
+
+    private Value GetDotNetMember(object target, string memberName)
+    {
+        // If target is a Type, we look for Statics. If it's an instance, we look for Instance members.
+        bool isStatic = target is Type;
+        Type type = isStatic ? (Type)target : target.GetType();
+        var flags = BindingFlags.Public | BindingFlags.IgnoreCase |
+                    (isStatic ? BindingFlags.Static : BindingFlags.Instance);
+
+        // Try Property
+        var prop = type.GetProperty(memberName, flags);
+        if (prop != null) return Interop.ToRagnarValue(prop.GetValue(isStatic ? null : target));
+
+        // Try Field
+        var field = type.GetField(memberName, flags);
+        if (field != null) return Interop.ToRagnarValue(field.GetValue(isStatic ? null : target));
+
+        throw new Exception($"Member '{memberName}' not found on {type.Name}");
     }
 
     private Value ExecuteFunction(Function func, List<Value> args, HashSet<string> refinements, Context context)
@@ -159,7 +218,7 @@ public class Interpreter
 
         // In a more advanced version, we would also set words for the refinements 
         // (e.g., setting a 'wait' word to true inside the function's context).
-        
+
         return Evaluate(func.Body, localContext);
     }
 }

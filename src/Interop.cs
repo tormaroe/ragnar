@@ -4,7 +4,7 @@ namespace Ragnar;
 
 public class Interop
 {
-    static Type ResolveType(string name)
+    public static Type ResolveType(string name)
     {
         // 1. Try the standard way (only checks core/calling assembly)
         var type = Type.GetType(name);
