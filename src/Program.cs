@@ -1,4 +1,4 @@
-﻿namespace rebelly;
+﻿namespace Ragnar;
 
 class Program
 {
@@ -7,7 +7,7 @@ class Program
         var interpreter = new Interpreter();
         var globalContext = Runtime.CreateGlobalContext();
 
-        Console.WriteLine("[ Rebelly Interpreter ]");
+        Console.WriteLine("[ Ragnar Interpreter ]");
 
         // 1. Process files if provided
         if (args.Length > 0)

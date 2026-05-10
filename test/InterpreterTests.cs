@@ -1,10 +1,10 @@
 
-namespace rebelly.tests;
+namespace Ragnar.Tests;
 
 public class InterpreterTests
 {
     /// <summary>
-    /// Helper to execute a snippet of Rebelly code and return the final 
+    /// Helper to execute a snippet of Ragnar code and return the final 
     /// evaluation result and the state of the context.
     /// </summary>
     private (Value Result, Context Context) Run(string code)

@@ -1,5 +1,5 @@
 
-namespace rebelly;
+namespace Ragnar;
 
 public enum TokenType { OpenBracket, CloseBracket, Value }
 

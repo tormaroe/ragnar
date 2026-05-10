@@ -1,4 +1,4 @@
-namespace rebelly;
+namespace Ragnar;
 
 public class Interop
 {
@@ -61,7 +61,7 @@ public class Interop
                     evaluatedArgs.Add(interpreter.Evaluate(tempBlock, context));
                 }
 
-                // Now convert those evaluated Rebelly values to .NET objects
+                // Now convert those evaluated Ragnar values to .NET objects
                 object?[] constructorArgs = evaluatedArgs
                     .Select(ToNetObject)
                     .ToArray();
@@ -127,7 +127,7 @@ public class Interop
                 
                 object? val = prop.GetValue(dnv.Instance);
                 
-                // Convert back to Rebelly types if possible
+                // Convert back to Ragnar types if possible
                 return val switch {
                     int i => new Integer(i),
                     long l => new Integer(l),

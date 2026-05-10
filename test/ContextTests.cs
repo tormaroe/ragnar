@@ -1,4 +1,4 @@
-namespace rebelly.tests;
+namespace Ragnar.Tests;
 
 public class ContextTests
 {

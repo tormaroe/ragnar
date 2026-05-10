@@ -1,4 +1,4 @@
-namespace rebelly.tests;
+namespace Ragnar.Tests;
 
 public class IOTests
 {
@@ -22,14 +22,14 @@ public class IOTests
         string tempFile = System.IO.Path.GetTempFileName();
         var code = $@"
         target: %{tempFile.Replace("\\", "/")}
-        write :target ""Hello from Rebelly!""
+        write :target ""Hello from Ragnar!""
         read :target
     ";
 
         var (result, _) = Run(code);
 
         var textResult = Assert.IsType<Text>(result);
-        Assert.Equal("Hello from Rebelly!", textResult.Content);
+        Assert.Equal("Hello from Ragnar!", textResult.Content);
 
         if (System.IO.File.Exists(tempFile)) System.IO.File.Delete(tempFile);
     }

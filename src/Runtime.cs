@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace rebelly;
+namespace Ragnar;
 
 public static class Runtime
 {

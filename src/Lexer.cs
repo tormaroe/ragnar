@@ -1,7 +1,7 @@
 using System.Text;
 using System.Globalization;
 
-namespace rebelly;
+namespace Ragnar;
 
 public class Lexer(string input)
 {

@@ -1,4 +1,4 @@
-; Example setup script for Rebelly
+; Example setup script for Ragnar
 square: func [n] [mul n n]
-welcome: "Rebelly is ready."
+welcome: "Ragnar is ready."
 print welcome

@@ -1,5 +1,5 @@
 
-namespace rebelly.tests;
+namespace Ragnar.Tests;
 
 public class InteropTests
 {
@@ -61,7 +61,7 @@ public class InteropTests
     [Fact]
     public void GetProp_Can_Retrieve_Strings()
     {
-        // Testing that the bridge converts .NET strings back to Rebelly Text
+        // Testing that the bridge converts .NET strings back to Ragnar Text
         var code = @"
             ex-type: get-type ""System.Exception""
             msg: ""Something went wrong""
@@ -93,7 +93,7 @@ public class InteropTests
             call-method sb ""Append"" [""Hello ""]
             
             ; We can pass variables as arguments too
-            tail: ""Rebelly!""
+            tail: ""Ragnar!""
             call-method sb ""Append"" [:tail]
             
             ; Final call to get the result
@@ -104,7 +104,7 @@ public class InteropTests
         
         // The last expression was call-method ... ""ToString"" []
         var textResult = Assert.IsType<Text>(result);
-        Assert.Equal("Hello Rebelly!", textResult.Content);
+        Assert.Equal("Hello Ragnar!", textResult.Content);
     }
 
     [Fact]
@@ -154,13 +154,13 @@ public class InteropTests
             ex-type: get-type ""System.Exception""
             my-ex: new :ex-type [""Original Error""]
             
-            set-prop my-ex ""Source"" ""RebellyEngine""
+            set-prop my-ex ""Source"" ""RagnarEngine""
             get-prop my-ex ""Source""
         ";
         
         var (result, _) = Run(code);
         
         var textResult = Assert.IsType<Text>(result);
-        Assert.Equal("RebellyEngine", textResult.Content);
+        Assert.Equal("RagnarEngine", textResult.Content);
     }
 }

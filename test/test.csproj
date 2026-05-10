@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\rebelly.csproj" />
+    <ProjectReference Include="..\src\Ragnar.csproj" />
   </ItemGroup>
 
 </Project>
