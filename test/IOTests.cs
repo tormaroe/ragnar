@@ -69,4 +69,26 @@ public class IOTests
 
         if (System.IO.File.Exists(tempFile)) System.IO.File.Delete(tempFile);
     }
+
+    [Fact]
+    public void Foreach_Works_With_File_Lines()
+    {
+        // Simulate reading a file into lines
+        string tempFile = System.IO.Path.GetTempFileName();
+        System.IO.File.WriteAllLines(tempFile, ["Alice", "Bob"]);
+
+        var code = $@"
+            len: 0
+            names: read/lines %{tempFile.Replace("\\", "/")}
+            foreach 'name names [
+                len: add len length? name
+            ]
+            len
+        ";
+
+        var (result, _) = Run(code);
+        Assert.Equal(8, Assert.IsType<Integer>(result).Number); // "Alice" has 5 letters, "Bob" has 3 letters
+
+        if (System.IO.File.Exists(tempFile)) System.IO.File.Delete(tempFile);
+    }
 }

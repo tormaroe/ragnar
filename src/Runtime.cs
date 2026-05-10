@@ -13,13 +13,15 @@ public static class Runtime
         ctx.Set("false", new Logic(false));
 
         // 2. print [val]
-        ctx.Set("print", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("print", new Native((args, refinements, context, interpreter) =>
+        {
             Value toPrint = args[0];
 
             // If it's a block, evaluate its contents so 'name' becomes 'Alice'
             if (toPrint is Block b)
             {
-                var evaluated = b.Children.Select(c => {
+                var evaluated = b.Children.Select(c =>
+                {
                     // Create a tiny temporary block to evaluate the single item
                     return interpreter.Evaluate(new Block(new[] { c }), context);
                 });
@@ -32,22 +34,26 @@ public static class Runtime
 
         // 3. do [block]
         // This is the core of homoiconicity: treating data as code.
-        ctx.Set("do", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("do", new Native((args, refinements, context, interpreter) =>
+        {
             if (args[0] is Block b) return interpreter.Evaluate(b, context);
             return args[0]; // If not a block, just return the value
         }, 1));
 
         // 4. if [condition] [block]
-        ctx.Set("if", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("if", new Native((args, refinements, context, interpreter) =>
+        {
             bool isTrue = (args[0] is Logic l && l.Condition);
-            if (isTrue && args[1] is Block b) {
+            if (isTrue && args[1] is Block b)
+            {
                 return interpreter.Evaluate(b, context);
             }
             return new Word("none");
         }, 2));
 
         // loop 5 [ print "Hello" ]
-        ctx.Set("loop", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("loop", new Native((args, refinements, context, interpreter) =>
+        {
             if (args[0] is Integer count && args[1] is Block body)
             {
                 Value lastResult = new Word("none");
@@ -61,7 +67,8 @@ public static class Runtime
         }, 2));
 
         // while [ condition-block ] [ body-block ]
-        ctx.Set("while", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("while", new Native((args, refinements, context, interpreter) =>
+        {
             if (args[0] is Block condition && args[1] is Block body)
             {
                 Value lastResult = new Word("none");
@@ -85,55 +92,83 @@ public static class Runtime
             throw new Exception("while usage: while [condition-block] [body-block]");
         }, 2));
 
+        // foreach line lines [ print line ]
+        ctx.Set("foreach", new Native((args, refinements, context, interpreter) =>
+        {
+            if (args[0] is Word word && args[1] is Block series && args[2] is Block body)
+            {
+                Value lastResult = new Word("none");
+
+                foreach (var item in series.Children)
+                {
+                    // 1. Set the loop variable in the current context
+                    context.Set(word.Name, item);
+
+                    // 2. Evaluate the body
+                    lastResult = interpreter.Evaluate(body, context);
+                }
+
+                return lastResult;
+            }
+            throw new Exception("foreach usage: foreach word series block");
+        }, 3));
+
         // 5. equal? [val1] [val2]
-        ctx.Set("equal?", new Native((args, refinements, _, _) => {
+        ctx.Set("equal?", new Native((args, refinements, _, _) =>
+        {
             // Simple comparison for now
             return new Logic(args[0].ToString() == args[1].ToString());
         }, 2));
 
         // add [val1] [val2]
-        ctx.Set("add", new Native((args, refinements, _, _) => {
+        ctx.Set("add", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number + i2.Number);
-            
+
             // Basic math for decimals too
             double d1 = args[0] is Decimal dec1 ? dec1.Number : (args[0] is Integer int1 ? int1.Number : 0);
             double d2 = args[1] is Decimal dec2 ? dec2.Number : (args[1] is Integer int2 ? int2.Number : 0);
             return new Decimal(d1 + d2);
         }, 2));
 
-        ctx.Set("greater?", new Native((args, refinements, _, _) => {
+        ctx.Set("greater?", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Logic(i1.Number > i2.Number);
             return new Logic(false);
         }, 2));
 
-        ctx.Set("less?", new Native((args, refinements, _, _) => {
+        ctx.Set("less?", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Logic(i1.Number < i2.Number);
             return new Logic(false);
         }, 2));
 
-        ctx.Set("mul", new Native((args, refinements, _, _) => {
+        ctx.Set("mul", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number * i2.Number);
-            
+
             double d1 = args[0] is Decimal dec1 ? dec1.Number : (args[0] is Integer int1 ? int1.Number : 0);
             double d2 = args[1] is Decimal dec2 ? dec2.Number : (args[1] is Integer int2 ? int2.Number : 0);
             return new Decimal(d1 * d2);
         }, 2));
 
-        ctx.Set("sub", new Native((args, refinements, _, _) => {
+        ctx.Set("sub", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number - i2.Number);
-            
+
             double d1 = args[0] is Decimal dec1 ? dec1.Number : (args[0] is Integer int1 ? int1.Number : 0);
             double d2 = args[1] is Decimal dec2 ? dec2.Number : (args[1] is Integer int2 ? int2.Number : 0);
             return new Decimal(d1 - d2);
         }, 2));
 
         // func [spec] [body]
-        ctx.Set("func", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("func", new Native((args, refinements, context, interpreter) =>
+        {
             if (args[0] is not Block spec) throw new Exception("func spec must be a block.");
             if (args[1] is not Block body) throw new Exception("func body must be a block.");
 
@@ -146,49 +181,55 @@ public static class Runtime
         }, 2));
 
         // Helper for positional access
-        static Value GetAt(List<Value> items, int index) => 
+        static Value GetAt(List<Value> items, int index) =>
             (index >= 0 && index < items.Count) ? items[index] : new Word("none");
 
         // first [10 20] -> 10
-        ctx.Set("first", new Native((args, refinements, _, _) => {
+        ctx.Set("first", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Block b) return GetAt(b.Children, 0);
             if (args[1] is Text t) return new Text(t.Content[0].ToString());
             throw new Exception("first requires a block or text.");
         }, 1));
 
         // second [10 20] -> 20
-        ctx.Set("second", new Native((args, refinements, _, _) => {
+        ctx.Set("second", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Block b) return GetAt(b.Children, 1);
             throw new Exception("second requires a block.");
         }, 1));
 
         // last [10 20] -> 20
-        ctx.Set("last", new Native((args, refinements, _, _) => {
+        ctx.Set("last", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Block b) return GetAt(b.Children, b.Children.Count - 1);
             throw new Exception("last requires a block.");
         }, 1));
 
         // length? [1 2 3] -> 3
-        ctx.Set("length?", new Native((args, refinements, _, _) => {
+        ctx.Set("length?", new Native((args, refinements, _, _) =>
+        {
             if (args[0] is Block b) return new Integer(b.Children.Count);
             if (args[0] is Text t) return new Integer(t.Content.Length);
             throw new Exception("length? requires a block or text.");
         }, 1));
 
         // append [1 2] 3 -> [1 2 3]
-        ctx.Set("append", new Native((args, refinements, _, _) => {
-            if (args[0] is Block b) {
+        ctx.Set("append", new Native((args, refinements, _, _) =>
+        {
+            if (args[0] is Block b)
+            {
                 b.Children.Add(args[1]);
                 return b; // Return the modified block
             }
             throw new Exception("append requires a block as the first argument.");
         }, 2));
-        
+
         // exit / quit
-        var exitNative = new Native((args, refinements, _, _) => 
+        var exitNative = new Native((args, refinements, _, _) =>
         {
             ctx.Output.WriteLine("Goodbye!");
-            Environment.Exit(0); 
+            Environment.Exit(0);
             return new Word("none"); // This line is never actually reached
         }, 0);
 

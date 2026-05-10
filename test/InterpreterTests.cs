@@ -13,10 +13,10 @@ public class InterpreterTests
         var tokens = lexer.Tokenize();
         var loader = new Loader();
         var root = loader.Load(tokens);
-        
+
         var ctx = Runtime.CreateGlobalContext();
         var interpreter = new Interpreter();
-        
+
         var result = interpreter.Evaluate(root, ctx);
         return (result, ctx);
     }
@@ -56,9 +56,9 @@ public class InterpreterTests
             increment: func [n] [ add n 1 ]
             result: increment 99
         ";
-        
+
         var (lastValue, ctx) = Run(code);
-        
+
         var resultVal = Assert.IsType<Integer>(ctx.Get("result"));
         Assert.Equal(100, resultVal.Number);
 
@@ -74,9 +74,9 @@ public class InterpreterTests
             plus: :add
             plus 5 5
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         Assert.Equal(10, Assert.IsType<Integer>(result).Number);
     }
 
@@ -85,7 +85,7 @@ public class InterpreterTests
     {
         // 'do' should evaluate the contents of a block
         var (result, _) = Run("do [ add 5 5 ]");
-        
+
         Assert.Equal(10, Assert.IsType<Integer>(result).Number);
     }
 
@@ -98,9 +98,9 @@ public class InterpreterTests
             b: 20
             add a b ; result should be 30
         ";
-        
+
         var (result, _) = Run(code);
-        
+
         var intVal = Assert.IsType<Integer>(result);
         Assert.Equal(30, intVal.Number);
     }
@@ -109,11 +109,11 @@ public class InterpreterTests
     public void Equality_Check_Returns_Logic()
     {
         var (result, _) = Run("equal? 10 10");
-        
+
         var logicResult = Assert.IsType<Logic>(result);
         Assert.True(logicResult.Condition);
     }
-    
+
     [Fact]
     public void Loop_Executes_Multiple_Times()
     {
@@ -144,12 +144,28 @@ public class InterpreterTests
     }
 
     [Fact]
+    public void Foreach_Iterates_Over_Block()
+    {
+        // TODO: Need to implement a "Lit-Argument" system to allow us to capture the loop 
+        // variable as a word without evaluating it immediately.
+        var code = @"
+            sum: 0
+            foreach 'n [1 2 3 4] [
+                sum: add sum n
+            ]
+            sum
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal(10, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
     public void LitWord_Evaluates_To_Word()
     {
         // In code: 'my-variable
         // The result should be the Word object itself, not its value.
         var (result, _) = Run("'test-word");
-        
+
         var wordResult = Assert.IsType<Word>(result);
         Assert.Equal("test-word", wordResult.Name);
     }
@@ -160,7 +176,7 @@ public class InterpreterTests
         // If we use a regular word that isn't defined, it throws an error.
         // If we use a lit-word, it should succeed because it doesn't look it up yet.
         var (result, _) = Run("'undefined-word");
-        
+
         Assert.IsType<Word>(result);
     }
 
@@ -169,7 +185,7 @@ public class InterpreterTests
     {
         // Probe should be 'transparent' to the evaluation
         var (result, _) = Run("probe 123");
-        
+
         Assert.Equal(123, Assert.IsType<Integer>(result).Number);
     }
 
@@ -179,7 +195,7 @@ public class InterpreterTests
         var (res1, _) = Run("type? 10");
         var (res2, _) = Run("type? [1 2]");
         var (res3, _) = Run("type? first ['hello]");
-        
+
         Assert.Equal("integer!", Assert.IsType<Word>(res1).Name);
         Assert.Equal("block!", Assert.IsType<Word>(res2).Name);
         Assert.Equal("lit-word!", Assert.IsType<Word>(res3).Name);
@@ -192,7 +208,7 @@ public class InterpreterTests
             name: ""Alice""
             print [""Hello"" name]
         ";
-        
+
         var lexer = new Lexer(code);
         var tokens = lexer.Tokenize();
         var root = new Loader().Load(tokens);
@@ -223,21 +239,22 @@ public class InterpreterTests
         var (res2, _) = Run("last [10 20 30]");
         Assert.Equal(30, Assert.IsType<Integer>(res2).Number);
     }
-    
+
     [Fact]
     public void Path_Triggers_Refinement_Logic()
     {
         // We'll use a mock native to check if the refinement was received
         var ctx = Runtime.CreateGlobalContext();
         bool flagSet = false;
-        
-        ctx.Set("test-ref", new Native((args, refs, _, _) => {
+
+        ctx.Set("test-ref", new Native((args, refs, _, _) =>
+        {
             flagSet = refs.Contains("flag");
             return new Word("none");
         }, 0));
 
         var interpreter = new Interpreter();
-        
+
         // Execute call with refinement
         interpreter.Evaluate(new Loader().Load(new Lexer("test-ref/flag").Tokenize()), ctx);
         Assert.True(flagSet);
