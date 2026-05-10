@@ -2,8 +2,9 @@ namespace rebelly;
 
 public abstract class Value
 {
-    // Every value should be able to represent itself as a string
     public abstract override string ToString();
+    // Default human-friendly version is just the string version
+    public virtual string ToUserString() => ToString();
 }
 
 public class Integer(long value) : Value
@@ -21,13 +22,20 @@ public class Decimal(double value) : Value
 public class Text(string value) : Value
 {
     public string Content { get; } = value;
-    public override string ToString() => Content;
+    public override string ToString() => $"\"{Content}\"";
+    public override string ToUserString() => Content;
 }
 
 public class Word(string name) : Value
 {
     public string Name { get; } = name;
     public override string ToString() => Name;
+}
+
+public class LitWord(string name) : Value
+{
+    public string Name { get; } = name.TrimStart('\'');
+    public override string ToString() => "'" + Name;
 }
 
 public class SetWord(string name) : Value
@@ -51,10 +59,11 @@ public class Block : Value
     public Block() { }
     public Block(IEnumerable<Value> values) => Children.AddRange(values);
 
-    public override string ToString() 
-    {
-        return $"[ {string.Join(" ", Children.Select(c => c.ToString()))} ]";
-    }
+    public override string ToString() => "[ " + string.Join(" ", Children) + " ]";
+
+    // Flatten the block: no brackets, and use the user-friendly version of children
+    public override string ToUserString() => 
+        string.Join(" ", Children.Select(c => c.ToUserString()));
 }
 
 public delegate Value NativeAction(List<Value> args, Context context, Interpreter interpreter);

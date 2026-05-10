@@ -18,4 +18,15 @@ public class LexerTests
         Assert.Equal(TokenType.OpenBracket, tokens[5].Type);
         Assert.Equal(TokenType.CloseBracket, tokens[6].Type);
     }
+
+    [Fact]
+    public void Lexer_Identifies_LitWords()
+    {
+        var lexer = new Lexer("'apple 'orange:");
+        var tokens = lexer.Tokenize();
+        
+        Assert.NotEmpty(tokens);
+        var litWord = Assert.IsType<LitWord>(tokens[0].Value); // Assert.IsType handles the null check
+        Assert.Equal("apple", litWord.Name);
+    }
 }

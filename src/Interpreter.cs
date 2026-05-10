@@ -26,6 +26,12 @@ public class Interpreter
 
         Value current = block.Children[index++];
 
+        // --- HANDLE LIT-WORD ---
+        if (current is LitWord lit)
+        {
+            return new Word(lit.Name);
+        }
+
         // --- HANDLE GET-WORD ---
         if (current is GetWord getWord)
         {
@@ -50,7 +56,7 @@ public class Interpreter
             // If the word points to a Native function, we must gather args
             if (boundValue is Native native)
             {
-                List<Value> args = new();
+                List<Value> args = [];
                 for (int i = 0; i < native.Arity; i++)
                 {
                     // Recursively get the next complete expression for each argument

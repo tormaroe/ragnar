@@ -11,8 +11,20 @@ public static class Runtime
         ctx.Set("false", new Logic(false));
 
         // 2. print [val]
-        ctx.Set("print", new Native((args, _, _) => {
-            Console.WriteLine(args[0].ToString());
+        ctx.Set("print", new Native((args, context, interpreter) => {
+            Value toPrint = args[0];
+
+            // If it's a block, evaluate its contents so 'name' becomes 'Alice'
+            if (toPrint is Block b)
+            {
+                var evaluated = b.Children.Select(c => {
+                    // Create a tiny temporary block to evaluate the single item
+                    return interpreter.Evaluate(new Block(new[] { c }), context);
+                });
+                toPrint = new Block(evaluated);
+            }
+
+            context.Output.WriteLine(toPrint.ToUserString());
             return args[0];
         }, 1));
 
@@ -69,7 +81,7 @@ public static class Runtime
                 return lastResult;
             }
             throw new Exception("while usage: while [condition-block] [body-block]");
-    }, 2));
+        }, 2));
 
         // 5. equal? [val1] [val2]
         ctx.Set("equal?", new Native((args, _, _) => {
@@ -131,10 +143,49 @@ public static class Runtime
             return new Function(parameters, body);
         }, 2));
 
+        // Helper for positional access
+        static Value GetAt(List<Value> items, int index) => 
+            (index >= 0 && index < items.Count) ? items[index] : new Word("none");
+
+        // first [10 20] -> 10
+        ctx.Set("first", new Native((args, _, _) => {
+            if (args[0] is Block b) return GetAt(b.Children, 0);
+            if (args[1] is Text t) return new Text(t.Content[0].ToString());
+            throw new Exception("first requires a block or text.");
+        }, 1));
+
+        // second [10 20] -> 20
+        ctx.Set("second", new Native((args, _, _) => {
+            if (args[0] is Block b) return GetAt(b.Children, 1);
+            throw new Exception("second requires a block.");
+        }, 1));
+
+        // last [10 20] -> 20
+        ctx.Set("last", new Native((args, _, _) => {
+            if (args[0] is Block b) return GetAt(b.Children, b.Children.Count - 1);
+            throw new Exception("last requires a block.");
+        }, 1));
+
+        // length? [1 2 3] -> 3
+        ctx.Set("length?", new Native((args, _, _) => {
+            if (args[0] is Block b) return new Integer(b.Children.Count);
+            if (args[0] is Text t) return new Integer(t.Content.Length);
+            throw new Exception("length? requires a block or text.");
+        }, 1));
+
+        // append [1 2] 3 -> [1 2 3]
+        ctx.Set("append", new Native((args, _, _) => {
+            if (args[0] is Block b) {
+                b.Children.Add(args[1]);
+                return b; // Return the modified block
+            }
+            throw new Exception("append requires a block as the first argument.");
+        }, 2));
+        
         // exit / quit
         var exitNative = new Native((args, _, _) => 
         {
-            Console.WriteLine("Goodbye!");
+            ctx.Output.WriteLine("Goodbye!");
             Environment.Exit(0); 
             return new Word("none"); // This line is never actually reached
         }, 0);
@@ -143,6 +194,7 @@ public static class Runtime
         ctx.Set("quit", exitNative);
 
         Interop.AddInteropFunctions(ctx);
+        Inspection.AddInspectionFunctions(ctx);
 
         return ctx;
     }

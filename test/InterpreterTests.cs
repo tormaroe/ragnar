@@ -142,4 +142,85 @@ public class InterpreterTests
         var (result, _) = Run(code);
         Assert.Equal(15, Assert.IsType<Integer>(result).Number);
     }
+
+    [Fact]
+    public void LitWord_Evaluates_To_Word()
+    {
+        // In code: 'my-variable
+        // The result should be the Word object itself, not its value.
+        var (result, _) = Run("'test-word");
+        
+        var wordResult = Assert.IsType<Word>(result);
+        Assert.Equal("test-word", wordResult.Name);
+    }
+
+    [Fact]
+    public void LitWord_Prevents_Immediate_Evaluation()
+    {
+        // If we use a regular word that isn't defined, it throws an error.
+        // If we use a lit-word, it should succeed because it doesn't look it up yet.
+        var (result, _) = Run("'undefined-word");
+        
+        Assert.IsType<Word>(result);
+    }
+
+    [Fact]
+    public void Probe_Returns_Same_Value()
+    {
+        // Probe should be 'transparent' to the evaluation
+        var (result, _) = Run("probe 123");
+        
+        Assert.Equal(123, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void Type_Question_Returns_Correct_Type_Word()
+    {
+        var (res1, _) = Run("type? 10");
+        var (res2, _) = Run("type? [1 2]");
+        var (res3, _) = Run("type? first ['hello]");
+        
+        Assert.Equal("integer!", Assert.IsType<Word>(res1).Name);
+        Assert.Equal("block!", Assert.IsType<Word>(res2).Name);
+        Assert.Equal("lit-word!", Assert.IsType<Word>(res3).Name);
+    }
+
+    [Fact]
+    public void Print_Formats_Blocks_And_Strings_For_Humans()
+    {
+        var code = @"
+            name: ""Alice""
+            print [""Hello"" name]
+        ";
+        
+        var lexer = new Lexer(code);
+        var tokens = lexer.Tokenize();
+        var root = new Loader().Load(tokens);
+        var ctx = Runtime.CreateGlobalContext();
+        var interpreter = new Interpreter();
+
+        using var sw = new StringWriter();
+        ctx.Output = sw; // Redirect output to our StringWriter
+
+        interpreter.Evaluate(root, ctx);
+
+        var output = sw.ToString().Trim();
+        // Should NOT have brackets or quotes
+        Assert.Equal("Hello Alice", output);
+    }
+
+    [Fact]
+    public void Series_Operations_Work()
+    {
+        var code = @"
+            b: [10]
+            append b 20
+            first b
+        ";
+        var (res1, _) = Run(code);
+        Assert.Equal(10, Assert.IsType<Integer>(res1).Number);
+
+        var (res2, _) = Run("last [10 20 30]");
+        Assert.Equal(30, Assert.IsType<Integer>(res2).Number);
+    }
 }

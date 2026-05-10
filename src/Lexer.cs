@@ -93,6 +93,9 @@ public class Lexer(string input)
         if (raw.StartsWith(':') && raw.Length > 1)
             return new GetWord(raw);
 
+        if (raw.StartsWith('\'') && raw.Length > 1)
+            return new LitWord(raw);
+
         // 4. It's a regular Word
         return new Word(raw);
     }
