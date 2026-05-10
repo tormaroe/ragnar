@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace rebelly;
 
 public static class Runtime
@@ -11,7 +13,7 @@ public static class Runtime
         ctx.Set("false", new Logic(false));
 
         // 2. print [val]
-        ctx.Set("print", new Native((args, context, interpreter) => {
+        ctx.Set("print", new Native((args, refinements, context, interpreter) => {
             Value toPrint = args[0];
 
             // If it's a block, evaluate its contents so 'name' becomes 'Alice'
@@ -30,13 +32,13 @@ public static class Runtime
 
         // 3. do [block]
         // This is the core of homoiconicity: treating data as code.
-        ctx.Set("do", new Native((args, context, interpreter) => {
+        ctx.Set("do", new Native((args, refinements, context, interpreter) => {
             if (args[0] is Block b) return interpreter.Evaluate(b, context);
             return args[0]; // If not a block, just return the value
         }, 1));
 
         // 4. if [condition] [block]
-        ctx.Set("if", new Native((args, context, interpreter) => {
+        ctx.Set("if", new Native((args, refinements, context, interpreter) => {
             bool isTrue = (args[0] is Logic l && l.Condition);
             if (isTrue && args[1] is Block b) {
                 return interpreter.Evaluate(b, context);
@@ -45,7 +47,7 @@ public static class Runtime
         }, 2));
 
         // loop 5 [ print "Hello" ]
-        ctx.Set("loop", new Native((args, context, interpreter) => {
+        ctx.Set("loop", new Native((args, refinements, context, interpreter) => {
             if (args[0] is Integer count && args[1] is Block body)
             {
                 Value lastResult = new Word("none");
@@ -59,7 +61,7 @@ public static class Runtime
         }, 2));
 
         // while [ condition-block ] [ body-block ]
-        ctx.Set("while", new Native((args, context, interpreter) => {
+        ctx.Set("while", new Native((args, refinements, context, interpreter) => {
             if (args[0] is Block condition && args[1] is Block body)
             {
                 Value lastResult = new Word("none");
@@ -84,13 +86,13 @@ public static class Runtime
         }, 2));
 
         // 5. equal? [val1] [val2]
-        ctx.Set("equal?", new Native((args, _, _) => {
+        ctx.Set("equal?", new Native((args, refinements, _, _) => {
             // Simple comparison for now
             return new Logic(args[0].ToString() == args[1].ToString());
         }, 2));
 
         // add [val1] [val2]
-        ctx.Set("add", new Native((args, _, _) => {
+        ctx.Set("add", new Native((args, refinements, _, _) => {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number + i2.Number);
             
@@ -100,19 +102,19 @@ public static class Runtime
             return new Decimal(d1 + d2);
         }, 2));
 
-        ctx.Set("greater?", new Native((args, _, _) => {
+        ctx.Set("greater?", new Native((args, refinements, _, _) => {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Logic(i1.Number > i2.Number);
             return new Logic(false);
         }, 2));
 
-        ctx.Set("less?", new Native((args, _, _) => {
+        ctx.Set("less?", new Native((args, refinements, _, _) => {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Logic(i1.Number < i2.Number);
             return new Logic(false);
         }, 2));
 
-        ctx.Set("mul", new Native((args, _, _) => {
+        ctx.Set("mul", new Native((args, refinements, _, _) => {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number * i2.Number);
             
@@ -121,7 +123,7 @@ public static class Runtime
             return new Decimal(d1 * d2);
         }, 2));
 
-        ctx.Set("sub", new Native((args, _, _) => {
+        ctx.Set("sub", new Native((args, refinements, _, _) => {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number - i2.Number);
             
@@ -131,7 +133,7 @@ public static class Runtime
         }, 2));
 
         // func [spec] [body]
-        ctx.Set("func", new Native((args, context, interpreter) => {
+        ctx.Set("func", new Native((args, refinements, context, interpreter) => {
             if (args[0] is not Block spec) throw new Exception("func spec must be a block.");
             if (args[1] is not Block body) throw new Exception("func body must be a block.");
 
@@ -148,33 +150,33 @@ public static class Runtime
             (index >= 0 && index < items.Count) ? items[index] : new Word("none");
 
         // first [10 20] -> 10
-        ctx.Set("first", new Native((args, _, _) => {
+        ctx.Set("first", new Native((args, refinements, _, _) => {
             if (args[0] is Block b) return GetAt(b.Children, 0);
             if (args[1] is Text t) return new Text(t.Content[0].ToString());
             throw new Exception("first requires a block or text.");
         }, 1));
 
         // second [10 20] -> 20
-        ctx.Set("second", new Native((args, _, _) => {
+        ctx.Set("second", new Native((args, refinements, _, _) => {
             if (args[0] is Block b) return GetAt(b.Children, 1);
             throw new Exception("second requires a block.");
         }, 1));
 
         // last [10 20] -> 20
-        ctx.Set("last", new Native((args, _, _) => {
+        ctx.Set("last", new Native((args, refinements, _, _) => {
             if (args[0] is Block b) return GetAt(b.Children, b.Children.Count - 1);
             throw new Exception("last requires a block.");
         }, 1));
 
         // length? [1 2 3] -> 3
-        ctx.Set("length?", new Native((args, _, _) => {
+        ctx.Set("length?", new Native((args, refinements, _, _) => {
             if (args[0] is Block b) return new Integer(b.Children.Count);
             if (args[0] is Text t) return new Integer(t.Content.Length);
             throw new Exception("length? requires a block or text.");
         }, 1));
 
         // append [1 2] 3 -> [1 2 3]
-        ctx.Set("append", new Native((args, _, _) => {
+        ctx.Set("append", new Native((args, refinements, _, _) => {
             if (args[0] is Block b) {
                 b.Children.Add(args[1]);
                 return b; // Return the modified block
@@ -183,7 +185,7 @@ public static class Runtime
         }, 2));
         
         // exit / quit
-        var exitNative = new Native((args, _, _) => 
+        var exitNative = new Native((args, refinements, _, _) => 
         {
             ctx.Output.WriteLine("Goodbye!");
             Environment.Exit(0); 
@@ -195,6 +197,7 @@ public static class Runtime
 
         Interop.AddInteropFunctions(ctx);
         Inspection.AddInspectionFunctions(ctx);
+        OS.AddOsFunctions(ctx);
 
         return ctx;
     }

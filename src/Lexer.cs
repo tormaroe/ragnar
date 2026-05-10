@@ -78,6 +78,25 @@ public class Lexer(string input)
 
         string raw = sb.ToString();
 
+        // 1. File Type (Rebol uses % for files)
+        if (raw.StartsWith('%'))
+        {
+            return new File(raw); 
+        }
+
+        // 2. Refinement or Path
+        if (raw.Contains('/'))
+        {
+            // If it starts with / and has no other slashes, it's a Refinement
+            if (raw.StartsWith('/') && raw.LastIndexOf('/') == 0)
+            {
+                return new Refinement(raw);
+            }
+            
+            // Otherwise, it's a Path (e.g., call/wait or a/b/1)
+            return new Path(ParsePathSegments(raw));
+        }
+
         // 1. Try Integer / Decimal (existing logic)
         if (long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out long i))
             return new Integer(i);
@@ -98,5 +117,25 @@ public class Lexer(string input)
 
         // 4. It's a regular Word
         return new Word(raw);
+    }
+
+    private List<Value> ParsePathSegments(string raw)
+    {
+        // Split by slash: "call/wait" -> ["call", "wait"]
+        var segments = raw.Split('/');
+        var parts = new List<Value>();
+
+        foreach (var seg in segments)
+        {
+            if (string.IsNullOrEmpty(seg)) continue;
+
+            // Recursively determine what each segment is.
+            // Most are Words, but "data/1" has an Integer at the end.
+            if (long.TryParse(seg, out long intVal))
+                parts.Add(new Integer(intVal));
+            else
+                parts.Add(new Word(seg));
+        }
+        return parts;
     }
 }

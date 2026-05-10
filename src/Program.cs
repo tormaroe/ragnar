@@ -24,7 +24,7 @@ class Program
 
     static void RunFile(string path, Interpreter interpreter, Context context)
     {
-        if (!File.Exists(path))
+        if (!System.IO.File.Exists(path))
         {
             Console.WriteLine($"Error: File not found '{path}'");
             return;
@@ -32,7 +32,7 @@ class Program
 
         try
         {
-            string code = File.ReadAllText(path);
+            string code = System.IO.File.ReadAllText(path);
             var tokens = new Lexer(code).Tokenize();
             var root = new Loader().Load(tokens);
             interpreter.Evaluate(root, context);

@@ -66,13 +66,20 @@ public class Block : Value
         string.Join(" ", Children.Select(c => c.ToUserString()));
 }
 
-public delegate Value NativeAction(List<Value> args, Context context, Interpreter interpreter);
+// The new signature includes the refinements HashSet
+public delegate Value NativeDelegate(
+    List<Value> args, 
+    HashSet<string> refinements, 
+    Context context, 
+    Interpreter interpreter
+);
 
-public class Native(NativeAction action, int arity) : Value
+public class Native(NativeDelegate action, int arity) : Value
 {
-    public NativeAction Action { get; } = action;
+    public NativeDelegate Action { get; } = action;
     public int Arity { get; } = arity;
-    public override string ToString() => "<native-function>";
+
+    public override string ToString() => $"<native arity:{Arity}>";
 }
 
 public class Logic(bool value) : Value
@@ -87,6 +94,25 @@ public class Function(List<string> parameters, Block body) : Value
     public Block Body { get; } = body;
 
     public override string ToString() => "<user-function>";
+}
+
+public class File(string path) : Value
+{
+    public string Path { get; } = path.TrimStart('%');
+    public override string ToString() => "%" + Path;
+}
+
+public class Refinement(string name) : Value
+{
+    public string Name { get; } = name.TrimStart('/');
+    public override string ToString() => "/" + Name;
+}
+
+public class Path(IEnumerable<Value> parts) : Value
+{
+    public List<Value> Parts { get; } = parts.ToList();
+    // Reconstruct with slashes: a/b/c
+    public override string ToString() => string.Join("/", Parts.Select(p => p.ToString()));
 }
 
 public class DotNetValue(object? instance) : Value

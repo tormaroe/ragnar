@@ -34,7 +34,7 @@ public class Interop
     public static void AddInteropFunctions(Context ctx)
     {
         // get-type "System.Text.StringBuilder"
-        ctx.Set("get-type", new Native((args, _, _) => {
+        ctx.Set("get-type", new Native((args, refinements, _, _) => {
             string typeName = (args[0] as Text)?.Content 
                 ?? throw new Exception("get-type requires a string.");
             
@@ -44,7 +44,7 @@ public class Interop
             return new DotNetValue(type);
         }, 1));
         
-        ctx.Set("new", new Native((args, context, interpreter) => {
+        ctx.Set("new", new Native((args, refinements, context, interpreter) => {
             if (args[0] is DotNetValue dnv && dnv.Instance is Type type)
             {
                 if (args[1] is not Block argBlock)
@@ -79,7 +79,7 @@ public class Interop
             throw new Exception("'new' requires a .NET Type.");
         }, 2));
         
-        ctx.Set("call-method", new Native((args, context, interpreter) => {
+        ctx.Set("call-method", new Native((args, refinements, context, interpreter) => {
             if (args[0] is DotNetValue dnv && args[1] is Text methodName && args[2] is Block argBlock)
             {
                 // 1. Evaluate every argument in the block
@@ -119,7 +119,7 @@ public class Interop
         }, 3));
 
         // get-prop obj "Length"
-        ctx.Set("get-prop", new Native((args, _, _) => {
+        ctx.Set("get-prop", new Native((args, refinements, _, _) => {
             if (args[0] is DotNetValue dnv && args[1] is Text propName)
             {
                 var prop = dnv.Instance?.GetType().GetProperty(propName.Content);
@@ -139,7 +139,7 @@ public class Interop
         }, 2));
 
         // set-prop obj "PropertyName" value
-        ctx.Set("set-prop", new Native((args, context, interpreter) => {
+        ctx.Set("set-prop", new Native((args, refinements, context, interpreter) => {
             if (args[0] is DotNetValue dnv && args[1] is Text propName)
             {
                 var instance = dnv.Instance;

@@ -29,4 +29,25 @@ public class LexerTests
         var litWord = Assert.IsType<LitWord>(tokens[0].Value); // Assert.IsType handles the null check
         Assert.Equal("apple", litWord.Name);
     }
+
+    [Fact]
+    public void Lexer_Identifies_New_Types()
+    {
+        var lexer = new Lexer("%test.txt /wait call/wait");
+        var tokens = lexer.Tokenize();
+
+        // 1. File
+        var fileToken = Assert.IsType<File>(tokens[0].Value);
+        Assert.Equal("test.txt", fileToken.Path);
+
+        // 2. Refinement
+        var refToken = Assert.IsType<Refinement>(tokens[1].Value);
+        Assert.Equal("wait", refToken.Name);
+
+        // 3. Path
+        var pathToken = Assert.IsType<Path>(tokens[2].Value);
+        Assert.Equal(2, pathToken.Parts.Count);
+        Assert.Equal("call", ((Word)pathToken.Parts[0]).Name);
+        Assert.Equal("wait", ((Word)pathToken.Parts[1]).Name);
+    }
 }

@@ -223,4 +223,28 @@ public class InterpreterTests
         var (res2, _) = Run("last [10 20 30]");
         Assert.Equal(30, Assert.IsType<Integer>(res2).Number);
     }
+    
+    [Fact]
+    public void Path_Triggers_Refinement_Logic()
+    {
+        // We'll use a mock native to check if the refinement was received
+        var ctx = Runtime.CreateGlobalContext();
+        bool flagSet = false;
+        
+        ctx.Set("test-ref", new Native((args, refs, _, _) => {
+            flagSet = refs.Contains("flag");
+            return new Word("none");
+        }, 0));
+
+        var interpreter = new Interpreter();
+        
+        // Execute call with refinement
+        interpreter.Evaluate(new Loader().Load(new Lexer("test-ref/flag").Tokenize()), ctx);
+        Assert.True(flagSet);
+
+        // Execute call WITHOUT refinement
+        flagSet = true; // Reset
+        interpreter.Evaluate(new Loader().Load(new Lexer("test-ref").Tokenize()), ctx);
+        Assert.False(flagSet);
+    }
 }

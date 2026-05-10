@@ -62,7 +62,7 @@ public class Interpreter
                     // Recursively get the next complete expression for each argument
                     args.Add(Next(block, ref index, context));
                 }
-                return native.Action(args, context, this);
+                return native.Action(args, [], context, this);
             }
 
             // --- NEW: HANDLE USER FUNCTIONS ---
@@ -88,8 +88,78 @@ public class Interpreter
             return boundValue;
         }
 
+        if (current is Path path)
+        {
+            // 1. Resolve the "head" of the path (look it up, don't evaluate it!)
+            Value head;
+            if (path.Parts[0] is Word w)
+            {
+                head = context.Get(w.Name);
+            }
+            else if (path.Parts[0] is GetWord gw)
+            {
+                head = context.Get(gw.Name);
+            }
+            else
+            {
+                head = path.Parts[0];
+            }
+
+            // 2. Handle Refinements for Natives or User Functions
+            if (head is Native native)
+            {
+                var refinements = new HashSet<string>();
+                foreach (var part in path.Parts.Skip(1))
+                {
+                    if (part is Word rw) refinements.Add(rw.Name);
+                    else throw new Exception($"Invalid refinement in path: {part}");
+                }
+
+                var args = new List<Value>();
+                for (int i = 0; i < native.Arity; i++)
+                {
+                    args.Add(Next(block, ref index, context));
+                }
+
+                return native.Action(args, refinements, context, this);
+            }
+            else if (head is Function func)
+            {
+                // We should also support refinements for user-defined functions!
+                var refinements = new HashSet<string>();
+                foreach (var part in path.Parts.Skip(1))
+                {
+                    if (part is Word rw) refinements.Add(rw.Name);
+                }
+
+                var args = new List<Value>();
+                for (int i = 0; i < func.Parameters.Count; i++)
+                {
+                    args.Add(Next(block, ref index, context));
+                }
+
+                return ExecuteFunction(func, args, refinements, context);
+            }
+            
+            throw new Exception($"Paths starting with {head.GetType().Name} are not yet supported.");
+        }
+
         // Literals (Integers, Decimals, Strings, and Blocks) evaluate to themselves.
         // A Block is just data until something like the 'do' function evaluates it.
         return current;
+    }
+
+    private Value ExecuteFunction(Function func, List<Value> args, HashSet<string> refinements, Context context)
+    {
+        var localContext = new Context(context);
+        for (int i = 0; i < func.Parameters.Count; i++)
+        {
+            localContext.Set(func.Parameters[i], args[i]);
+        }
+
+        // In a more advanced version, we would also set words for the refinements 
+        // (e.g., setting a 'wait' word to true inside the function's context).
+        
+        return Evaluate(func.Body, localContext);
     }
 }
