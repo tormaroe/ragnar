@@ -32,6 +32,45 @@ public static class Runtime
             return new Word("none");
         }, 2));
 
+        // loop 5 [ print "Hello" ]
+        ctx.Set("loop", new Native((args, context, interpreter) => {
+            if (args[0] is Integer count && args[1] is Block body)
+            {
+                Value lastResult = new Word("none");
+                for (long i = 0; i < count.Number; i++)
+                {
+                    lastResult = interpreter.Evaluate(body, context);
+                }
+                return lastResult;
+            }
+            throw new Exception("loop usage: loop [integer] [block]");
+        }, 2));
+
+        // while [ condition-block ] [ body-block ]
+        ctx.Set("while", new Native((args, context, interpreter) => {
+            if (args[0] is Block condition && args[1] is Block body)
+            {
+                Value lastResult = new Word("none");
+
+                // Keep evaluating the condition block. 
+                // If it returns Logic(true), run the body.
+                while (true)
+                {
+                    Value condResult = interpreter.Evaluate(condition, context);
+                    if (condResult is Logic l && l.Condition)
+                    {
+                        lastResult = interpreter.Evaluate(body, context);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                return lastResult;
+            }
+            throw new Exception("while usage: while [condition-block] [body-block]");
+    }, 2));
+
         // 5. equal? [val1] [val2]
         ctx.Set("equal?", new Native((args, _, _) => {
             // Simple comparison for now
@@ -47,6 +86,18 @@ public static class Runtime
             double d1 = args[0] is Decimal dec1 ? dec1.Number : (args[0] is Integer int1 ? int1.Number : 0);
             double d2 = args[1] is Decimal dec2 ? dec2.Number : (args[1] is Integer int2 ? int2.Number : 0);
             return new Decimal(d1 + d2);
+        }, 2));
+
+        ctx.Set("greater?", new Native((args, _, _) => {
+            if (args[0] is Integer i1 && args[1] is Integer i2)
+                return new Logic(i1.Number > i2.Number);
+            return new Logic(false);
+        }, 2));
+
+        ctx.Set("less?", new Native((args, _, _) => {
+            if (args[0] is Integer i1 && args[1] is Integer i2)
+                return new Logic(i1.Number < i2.Number);
+            return new Logic(false);
         }, 2));
 
         ctx.Set("mul", new Native((args, _, _) => {

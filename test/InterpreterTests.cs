@@ -113,4 +113,33 @@ public class InterpreterTests
         var logicResult = Assert.IsType<Logic>(result);
         Assert.True(logicResult.Condition);
     }
+    
+    [Fact]
+    public void Loop_Executes_Multiple_Times()
+    {
+        var code = @"
+            counter: 0
+            loop 5 [ counter: add counter 1 ]
+            counter
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal(5, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void While_Executes_Until_Condition_Is_False()
+    {
+        var code = @"
+            n: 5
+            total: 0
+            while [ greater? n 0 ] [
+                total: add total n
+                n: sub n 1
+            ]
+            total
+        ";
+        // 5 + 4 + 3 + 2 + 1 = 15
+        var (result, _) = Run(code);
+        Assert.Equal(15, Assert.IsType<Integer>(result).Number);
+    }
 }
