@@ -43,6 +43,16 @@ public class Lexer(string input)
                 Consume();
                 tokens.Add(new Token(TokenType.CloseBracket));
             }
+            else if (c == '(')
+            {
+                Consume();
+                tokens.Add(new Token(TokenType.OpenParen));
+            }
+            else if (c == ')')
+            {
+                Consume();
+                tokens.Add(new Token(TokenType.CloseParen));
+            }
             else if (c == '"')
             {
                 tokens.Add(new Token(TokenType.Value, ParseString()));
@@ -71,7 +81,9 @@ public class Lexer(string input)
     private Value ParseAtom()
     {
         var sb = new StringBuilder();
-        while (_pos < _input.Length && !char.IsWhiteSpace(Peek()) && Peek() != '[' && Peek() != ']')
+        while (_pos < _input.Length && !char.IsWhiteSpace(Peek()) && 
+                Peek() != '[' && Peek() != ']' && 
+                Peek() != '(' && Peek() != ')')
         {
             sb.Append(Consume());
         }

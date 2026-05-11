@@ -28,6 +28,14 @@ public class Interpreter
 
         Value current = block.Children[index++];
 
+        // --- PAREN EVALUATION ---
+        if (current is Paren p)
+        {
+            // We use the existing 'Evaluate' method to process the Paren's contents.
+            // This returns the result of the LAST expression inside the parentheses.
+            return Evaluate(p, context);
+        }
+
         // --- HANDLE LIT-WORD ---
         if (current is LitWord lit)
         {

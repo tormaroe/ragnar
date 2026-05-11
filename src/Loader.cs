@@ -5,43 +5,53 @@ public class Loader
     public Block Load(List<Token> tokens)
     {
         var iterator = tokens.GetEnumerator();
-        // We wrap everything in a root block so the whole program 
-        // is treated as one executable unit.
-        return ParseBlock(iterator, isRoot: true);
+        // The root is just a block that doesn't have a closing token
+        return new Block(ParseChildren(iterator, null));
     }
 
-    private Block ParseBlock(IEnumerator<Token> tokens, bool isRoot = false)
+    private List<Value> ParseChildren(IEnumerator<Token> tokens, TokenType? endType)
     {
-        var block = new Block();
+        var children = new List<Value>();
 
         while (tokens.MoveNext())
         {
             var token = tokens.Current;
 
+            // If we hit the token we are looking for (like ']' or ')'), return the list
+            if (endType.HasValue && token.Type == endType.Value)
+            {
+                return children;
+            }
+
             switch (token.Type)
             {
                 case TokenType.Value:
-                    // If it's a value (Word, Integer, etc.), just add it.
-                    if (token.Value != null) block.Children.Add(token.Value);
+                    if (token.Value != null) children.Add(token.Value);
                     break;
 
                 case TokenType.OpenBracket:
-                    // When we see '[', we recurse to create a nested block.
-                    block.Children.Add(ParseBlock(tokens));
+                    // Recurse: Start a new block and look for a CloseBracket
+                    children.Add(new Block(ParseChildren(tokens, TokenType.CloseBracket)));
+                    break;
+
+                case TokenType.OpenParen:
+                    // Recurse: Start a new Paren and look for a CloseParen
+                    children.Add(new Paren(ParseChildren(tokens, TokenType.CloseParen)));
                     break;
 
                 case TokenType.CloseBracket:
-                    // When we see ']', we are done with this specific block.
-                    if (isRoot) throw new Exception("Unexpected ']' at root level.");
-                    return block;
+                case TokenType.CloseParen:
+                    // If we hit a closing tag we weren't expecting, it's an error
+                    throw new Exception($"Unexpected closing token: {token.Type}");
             }
         }
 
-        if (!isRoot)
+        // If the loop ends but we were still looking for a closing token...
+        if (endType.HasValue)
         {
-            throw new Exception("Missing closing bracket ']'");
+            throw new Exception($"Missing closing token for {endType.Value}");
         }
 
-        return block;
+        return children;
     }
 }

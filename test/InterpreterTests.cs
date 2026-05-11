@@ -306,4 +306,54 @@ public class InterpreterTests
         var block = Assert.IsType<Block>(result);
         Assert.Empty(block.Children);
     }
+
+    [Fact]
+    public void Paren_Evaluates_And_Returns_Last_Value()
+    {
+        // A paren should behave like a mini-block that executes immediately
+        var (result, _) = Run("(add 10 20)");
+        Assert.Equal(30, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void Paren_Supports_Deep_Nesting()
+    {
+        // Testing the recursive nature of the Loader and Interpreter
+        var (result, _) = Run("(add 1 (multiply 2 (add 3 4)))");
+        // 1 + (2 * (3 + 4)) = 1 + (2 * 7) = 15
+        Assert.Equal(15, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void Paren_Works_As_Native_Argument()
+    {
+        // Ensure natives receive the evaluated result of the paren, not the paren itself
+        var code = @"
+            x: 0
+            if (greater? 10 5) [x: 1]
+            x
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal(1, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void Paren_Resolves_Words_From_Context()
+    {
+        var code = @"
+            base: 10
+            modifier: 5
+            (add base modifier)
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal(15, Assert.IsType<Integer>(result).Number);
+    }
+
+    [Fact]
+    public void Empty_Paren_Returns_None()
+    {
+        var (result, _) = Run("()");
+        // Assuming your Evaluate returns Word("none") for empty blocks
+        Assert.Equal("none", Assert.IsType<Word>(result).Name);
+    }
 }

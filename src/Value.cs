@@ -66,6 +66,11 @@ public class Block : Value
         string.Join(" ", Children.Select(c => c.ToUserString()));
 }
 
+public class Paren(IEnumerable<Value> parts) : Block(parts)
+{
+    public override string ToString() => "(" + string.Join(" ", Children) + ")";
+}
+
 // The new signature includes the refinements HashSet
 public delegate Value NativeDelegate(
     List<Value> args, 
