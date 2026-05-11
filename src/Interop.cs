@@ -112,8 +112,25 @@ public class Interop
 
         ctx.Set("new", new Native((args, refinements, context, interpreter) =>
         {
-            if (args[0] is DotNetValue dnv && dnv.Instance is Type type)
-            {
+                Type? targetType = null;
+
+                // 1. Resolve the Type from the first argument
+                if (args[0] is Text t)
+                {
+                    // Try to find the type by name
+                    targetType = Type.GetType(t.Content) ??
+                                 AppDomain.CurrentDomain.GetAssemblies()
+                                    .Select(a => a.GetType(t.Content))
+                                    .FirstOrDefault(x => x != null);
+                }
+                else if (args[0] is DotNetValue dnv && dnv.Instance is Type typeFromPath)
+                {
+                    targetType = typeFromPath;
+                }
+
+                if (targetType == null)
+                    throw new Exception($"Could not resolve .NET type: {args[0]}");
+
                 if (args[1] is not Block argBlock)
                     throw new Exception("'new' requires a block of arguments.");
 
@@ -135,15 +152,13 @@ public class Interop
 
                 try
                 {
-                    return new DotNetValue(Activator.CreateInstance(type, constructorArgs));
+                    return new DotNetValue(Activator.CreateInstance(targetType, constructorArgs));
                 }
                 catch (Exception ex)
                 {
                     var msg = ex.InnerException?.Message ?? ex.Message;
-                    throw new Exception($"Failed to instantiate {type.Name}: {msg}");
+                    throw new Exception($"Failed to instantiate {targetType.Name}: {msg}");
                 }
-            }
-            throw new Exception("'new' requires a .NET Type.");
         }, 2));
 
         ctx.Set("call-method", new Native((args, refinements, context, interpreter) =>
