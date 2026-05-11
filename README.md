@@ -9,7 +9,7 @@ Hobby project, basically just started.
 
 ## Defined functions 
 
- ```
+```
 >> what
 
 --- Defined Functions ---
@@ -32,6 +32,22 @@ rejoin          [native]  second          [native]
 set-prop        [native]  sub             [native]
 type?           [native]  what            [native]
 while           [native]  write           [native]
+```
+
+## File IO
+
+```
+file: %somefile.txt
+write :file "A"
+write/append :file "B"
+read :file
+```
+
+```
+names: read/lines %somefolder/somefile.txt
+foreach name names [
+    print [name "\n"]
+]
 ```
 
 ## TODO
