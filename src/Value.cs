@@ -79,10 +79,21 @@ public delegate Value NativeDelegate(
     Interpreter interpreter
 );
 
-public class Native(NativeDelegate action, int arity) : Value
+public class Native : Value
 {
-    public NativeDelegate Action { get; } = action;
-    public int Arity { get; } = arity;
+    public NativeDelegate Action { get; }
+    public int Arity { get; }
+    // Define which arguments should be evaluated. 
+    // True = Evaluate (default), False = Literal (Word remains a Word)
+    public bool[] EvalArgs { get; }
+
+    public Native(NativeDelegate action, int arity, bool[]? evalArgs = null)
+    {
+        Action = action;
+        Arity = arity;
+        // If no spec is provided, we default to evaluating everything.
+        EvalArgs = evalArgs ?? Enumerable.Repeat(true, arity).ToArray();
+    }
 
     public override string ToString() => $"<native arity:{Arity}>";
 }

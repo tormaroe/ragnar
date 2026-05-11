@@ -69,8 +69,17 @@ public class Interpreter
                 List<Value> args = [];
                 for (int i = 0; i < native.Arity; i++)
                 {
-                    // Recursively get the next complete expression for each argument
-                    args.Add(Next(block, ref index, context));
+                    if (native.EvalArgs[i])
+                    {
+                        // Standard behavior: Evaluate the next expression
+                        args.Add(Next(block, ref index, context));
+                    }
+                    else
+                    {
+                        // Literal behavior: Just grab the next raw value from the block
+                        if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                        args.Add(block.Children[index++]);
+                    }
                 }
                 return native.Action(args, [], context, this);
             }

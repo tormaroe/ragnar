@@ -146,11 +146,9 @@ public class InterpreterTests
     [Fact]
     public void Foreach_Iterates_Over_Block()
     {
-        // TODO: Need to implement a "Lit-Argument" system to allow us to capture the loop 
-        // variable as a word without evaluating it immediately.
         var code = @"
             sum: 0
-            foreach 'n [1 2 3 4] [
+            foreach n [1 2 3 4] [
                 sum: add sum n
             ]
             sum

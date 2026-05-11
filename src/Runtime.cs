@@ -117,7 +117,7 @@ public static class Runtime
                 return lastResult;
             }
             throw new Exception("foreach usage: foreach word series block");
-        }, 3));
+        }, 3, [false, true, true])); // Don't evaluate the loop variable name
 
         // 5. equal? [val1] [val2]
         ctx.Set("equal?", new Native((args, refinements, _, _) =>
@@ -167,7 +167,7 @@ public static class Runtime
             return new Logic(false);
         }, 2));
 
-        ctx.Set("mul", new Native((args, refinements, _, _) =>
+        ctx.Set("mul", new Native((args, refinements, _, _) => // Duplicate!!!
         {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number * i2.Number);

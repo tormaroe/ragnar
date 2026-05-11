@@ -80,7 +80,7 @@ public class IOTests
         var code = $@"
             len: 0
             names: read/lines %{tempFile.Replace("\\", "/")}
-            foreach 'name names [
+            foreach name names [
                 len: add len length? name
             ]
             len
