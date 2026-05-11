@@ -6,3 +6,8 @@
 ## Status
 
 Hobby project, basically just started.
+
+## TODO
+
+1. String manipulation functions: rejoin, find, replace, trim, uppercase, lowercase, split, copy
+1. Series manipulation functions: copy, select, pick, insert, remove, empty?, reduce, compose, at, next, back, head, tail, reverse, collect, keep, map-each, find
