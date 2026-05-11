@@ -21,7 +21,7 @@ public class Interpreter
 
     // The 'Next' method evaluates the single next expression.
     // If it's a function, it recursively evaluates its arguments.
-    private Value Next(Block block, ref int index, Context context)
+    public Value Next(Block block, ref int index, Context context)
     {
         if (index >= block.Children.Count)
             throw new Exception("Unexpected end of block: more arguments expected.");

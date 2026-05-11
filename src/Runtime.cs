@@ -13,23 +13,28 @@ public static class Runtime
         ctx.Set("false", new Logic(false));
 
         // 2. print [val]
-        ctx.Set("print", new Native((args, refinements, context, interpreter) =>
-        {
-            Value toPrint = args[0];
+        ctx.Set("print", new Native((args, refs, context, interpreter) => {
+            var val = args[0];
 
-            // If it's a block, evaluate its contents so 'name' becomes 'Alice'
-            if (toPrint is Block b)
+            if (val is Block b)
             {
-                var evaluated = b.Children.Select(c =>
+                // 1. Reduce the block (evaluate all the 'add', 'now/year', etc.)
+                var reduced = new List<Value>();
+                int index = 0;
+                while (index < b.Children.Count)
                 {
-                    // Create a tiny temporary block to evaluate the single item
-                    return interpreter.Evaluate(new Block(new[] { c }), context);
-                });
-                toPrint = new Block(evaluated);
+                    reduced.Add(interpreter.Next(b, ref index, context));
+                }
+
+                // 2. Join the results with spaces and print
+                var output = string.Join(" ", reduced.Select(r => r.ToUserString()));
+                context.Output.WriteLine(output);
+                return b; // Return the original block (or none)
             }
 
-            context.Output.WriteLine(toPrint.ToUserString());
-            return args[0];
+            // Standard non-block printing
+            context.Output.WriteLine(val.ToUserString());
+            return val;
         }, 1));
 
         // 3. do [block]
@@ -224,6 +229,23 @@ public static class Runtime
             }
             throw new Exception("append requires a block as the first argument.");
         }, 2));
+
+        ctx.Set("reduce", new Native((args, refs, context, interpreter) =>
+        {
+            if (args[0] is not Block inputBlock)
+                throw new Exception("reduce expects a block.");
+
+            var results = new List<Value>();
+            int index = 0;
+
+            // We keep calling Next until we've exhausted the block
+            while (index < inputBlock.Children.Count)
+            {
+                results.Add(interpreter.Next(inputBlock, ref index, context));
+            }
+
+            return new Block(results);
+        }, 1));
 
         // exit / quit
         var exitNative = new Native((args, refinements, _, _) =>

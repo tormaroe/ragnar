@@ -264,4 +264,46 @@ public class InterpreterTests
         interpreter.Evaluate(new Loader().Load(new Lexer("test-ref").Tokenize()), ctx);
         Assert.False(flagSet);
     }
+
+    [Fact]
+    public void Reduce_Evaluates_Mixed_Block_Contents()
+    {
+        // Testing math, strings, and words all living together
+        var code = @"
+            val: 10
+            reduce [""Result:"" add 2 2 :val]
+        ";
+        var (result, _) = Run(code);
+
+        var block = Assert.IsType<Block>(result);
+        Assert.Equal(3, block.Children.Count);
+        
+        // Check results: "Result:", 4, 10
+        Assert.Equal("Result:", ((Text)block.Children[0]).Content);
+        Assert.Equal(4, ((Integer)block.Children[1]).Number);
+        Assert.Equal(10, ((Integer)block.Children[2]).Number);
+    }
+
+    [Fact]
+    public void Reduce_Handles_Paths_And_Interop()
+    {
+        // Testing that paths are resolved inside the block during reduction
+        var code = @"
+            now: get-static ""System.DateTime"" ""Now""
+            results: reduce [now/Year]
+            results/1
+        ";
+        var (result, _) = Run(code);
+
+        var year = Assert.IsType<Integer>(result);
+        Assert.Equal(DateTime.Now.Year, (int)year.Number);
+    }
+
+    [Fact]
+    public void Reduce_Returns_Empty_Block_For_Empty_Input()
+    {
+        var (result, _) = Run("reduce []");
+        var block = Assert.IsType<Block>(result);
+        Assert.Empty(block.Children);
+    }
 }
