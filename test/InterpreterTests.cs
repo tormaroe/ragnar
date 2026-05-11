@@ -356,4 +356,30 @@ public class InterpreterTests
         // Assuming your Evaluate returns Word("none") for empty blocks
         Assert.Equal("none", Assert.IsType<Word>(result).Name);
     }
+
+    [Fact]
+    public void Join_Concatenates_Two_Values()
+    {
+        var (result, _) = Run(@"join ""Age: "" 25");
+        Assert.Equal("Age: 25", ((Text)result).Content);
+    }
+
+    [Fact]
+    public void Rejoin_Reduces_And_Joins_Block()
+    {
+        // Testing that rejoin handles math inside the block
+        var (result, _) = Run(@"rejoin [""2 + 2 = "" (add 2 2)]");
+        Assert.Equal("2 + 2 = 4", ((Text)result).Content);
+    }
+
+    [Fact]
+    public void Rejoin_Handles_Words_And_Strings()
+    {
+        var code = @"
+            name: ""Ragnar""
+            rejoin [""Hello, "" name ""!""]
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal("Hello, Ragnar!", ((Text)result).Content);
+    }
 }

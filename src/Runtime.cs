@@ -263,6 +263,36 @@ public static class Runtime
             return new Block(results);
         }, 1));
 
+        // join [base] [value]
+        ctx.Set("join", new Native((args, refs, context, interpreter) =>
+        {
+            // For now, we'll focus on string concatenation
+            // but in a full Rebol clone, join [1 2] 3 would return [1 2 3]
+            string baseStr = args[0].ToUserString();
+            string appendStr = args[1].ToUserString();
+
+            return new Text(baseStr + appendStr);
+        }, 2));
+
+        // rejoin [block]
+        ctx.Set("rejoin", new Native((args, refs, context, interpreter) =>
+        {
+            if (args[0] is not Block b)
+                throw new Exception("rejoin expects a block.");
+
+            var sb = new System.Text.StringBuilder();
+            int index = 0;
+
+            // Evaluate each expression in the block and append to string
+            while (index < b.Children.Count)
+            {
+                var evaluated = interpreter.Next(b, ref index, context);
+                sb.Append(evaluated.ToUserString());
+            }
+
+            return new Text(sb.ToString());
+        }, 1));
+
         // exit / quit
         var exitNative = new Native((args, refinements, _, _) =>
         {
