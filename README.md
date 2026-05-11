@@ -7,7 +7,34 @@
 
 Hobby project, basically just started.
 
+## Defined functions 
+
+ ```
+>> what
+
+--- Defined Functions ---
+add             [native]  append          [native]
+call            [native]  call-method     [native]
+call-static     [native]  do              [native]
+equal?          [native]  exit            [native]
+first           [native]  foreach         [native]
+func            [native]  get-prop        [native]
+get-static      [native]  get-type        [native]
+greater?        [native]  help            [native]
+if              [native]  join            [native]
+last            [native]  length?         [native]
+less?           [native]  loop            [native]
+mul             [native]  multiply        [native]
+new             [native]  print           [native]
+probe           [native]  quit            [native]
+read            [native]  reduce          [native]
+rejoin          [native]  second          [native]
+set-prop        [native]  sub             [native]
+type?           [native]  what            [native]
+while           [native]  write           [native]
+```
+
 ## TODO
 
-1. String manipulation functions: rejoin, find, replace, trim, uppercase, lowercase, split, copy
+1. String manipulation functions: find, replace, trim, uppercase, lowercase, split, copy
 1. Series manipulation functions: copy, select, pick, insert, remove, empty?, reduce, compose, at, next, back, head, tail, reverse, collect, keep, map-each, find
