@@ -1,0 +1,32 @@
+namespace Ragnar.Natives;
+
+public static class PrintFunction
+{
+    public static void Add(Context ctx)
+    {
+        ctx.Set("print", new Native((args, refs, context, interpreter) =>
+        {
+            var val = args[0];
+
+            if (val is Block b)
+            {
+                // 1. Reduce the block (evaluate all the 'add', 'now/year', etc.)
+                var reduced = new List<Value>();
+                int index = 0;
+                while (index < b.Children.Count)
+                {
+                    reduced.Add(interpreter.Next(b, ref index, context));
+                }
+
+                // 2. Join the results with spaces and print
+                var output = string.Join(" ", reduced.Select(r => r.ToUserString()));
+                context.Output.WriteLine(output);
+                return b; // Return the original block (or none)
+            }
+
+            // Standard non-block printing
+            context.Output.WriteLine(val.ToUserString());
+            return val;
+        }, 1));
+    }
+}
