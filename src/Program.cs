@@ -8,11 +8,20 @@ class Program
         var globalContext = Runtime.CreateGlobalContext();
         
         Repl.Write("""
-              (  )
-             ( o o)
-              \ - \ 
+                 ___                                                                
+                /___\                                                 
+               (|0 0|)                                                    
+             __/{\U/}\_ ___/vvv                                                
+            / \  {~}   / _|_P|                                                 
+            | /\  ~   /_/   ||                                                 
+            |_| (____)      ||                       
+            \_]/______\  /\_||_/\ 
+               _\_||_/_ |] _||_ [|            
+              (_,_||_,_) \/ [] \/
             """, ConsoleColor.Blue);
-        Repl.WritePrint("RAGNAR interpreter | https://github.com/tormaroe/ragnar\n", newline: true);
+
+        Repl.WritePrint("  RAGNAR interpreter", newline: true);
+        Repl.WritePrint("    https://github.com/tormaroe/ragnar\n", newline: true);
 
         // 1. Process files if provided
         if (args.Length > 0)
