@@ -3,54 +3,42 @@
 
 ***Ragnar*** is a scripting language inspired by Rebol. It's hosted in and have decent interop with .NET. It is made to be useful from the command line, and have a REPL.
 
-## Status
+### Status
 
 Hobby project, basically just started.
 
-## Defined functions 
 
-```
->> what
+## Native Function Reference
 
---- Defined Functions ---
-add             [native]  append          [native]
-call            [native]  call-method     [native]
-call-static     [native]  do              [native]
-equal?          [native]  exit            [native]
-first           [native]  foreach         [native]
-func            [native]  get-prop        [native]
-get-static      [native]  get-type        [native]
-greater?        [native]  help            [native]
-if              [native]  join            [native]
-last            [native]  length?         [native]
-less?           [native]  loop            [native]
-mul             [native]  multiply        [native]
-new             [native]  print           [native]
-probe           [native]  quit            [native]
-read            [native]  reduce          [native]
-rejoin          [native]  second          [native]
-set-prop        [native]  sub             [native]
-type?           [native]  what            [native]
-while           [native]  write           [native]
-```
+### `trim`
+Removes whitespace from a string. By default, it removes leading and trailing whitespace.
 
-## File IO
+**Arguments:**
+- `value` [text]: The string to trim.
 
-```
-file: %somefile.txt
-write :file "A"
-write/append :file "B"
-read :file
+**Refinements:**
+- `/all`: Removes ALL whitespace from the string.
+- `/lines`: Reduces multiple internal whitespaces/newlines to a single space, and trims head/tail.
+- `/head`: Removes only leading whitespace.
+- `/tail`: Removes only trailing whitespace.
+
+**Examples:**
+```rebol
+>> trim "  hello  "
+"hello"
+
+>> trim/all " h e l l o "
+"hello"
+
+>> trim/lines "  hello\n  world  "
+"hello world"
+
+>> trim/head "  hello  "
+"hello  "
 ```
 
-```
-names: read/lines %somefolder/somefile.txt
-foreach name names [
-    print [name "\n"]
-]
-```
 
 ## TODO
 
-1. String manipulation functions: find, replace, trim, uppercase, lowercase, split, copy
+1. String manipulation functions: find, replace, uppercase, lowercase, split, copy
 1. Series manipulation functions: copy, select, pick, insert, remove, empty?, reduce, compose, at, next, back, head, tail, reverse, collect, keep, map-each, find

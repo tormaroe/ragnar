@@ -23,6 +23,7 @@ public static class Runtime
         FuncFunction.Add(ctx);
         SeriesFunctions.Add(ctx);
         BlockFunctions.Add(ctx);
+        StringFunctions.Add(ctx);
         ExitFunction.Add(ctx);
 
         Interop.AddInteropFunctions(ctx);
