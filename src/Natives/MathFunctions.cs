@@ -54,6 +54,22 @@ public static class MathFunctions
         }, 2);
         ctx.Set("divide", divide);
         ctx.Set("/", new Op(divide.Action));
+
+        var remainder = new Native((args, refs, context, interpreter) =>
+        {
+            if (args[0] is Integer i1 && args[1] is Integer i2)
+            {
+                if (i2.Number == 0) throw new Exception("Remainder by zero.");
+                return new Integer(i1.Number % i2.Number);
+            }
+
+            double val1 = GetDoubleValue(args[0]);
+            double val2 = GetDoubleValue(args[1]);
+            if (val2 == 0) throw new Exception("Remainder by zero.");
+            return new Decimal(val1 % val2);
+        }, 2);
+        ctx.Set("remainder", remainder);
+        ctx.Set("//", new Op(remainder.Action));
     }
 
     private static double GetDoubleValue(Value v) => v switch

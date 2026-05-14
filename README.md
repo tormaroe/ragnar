@@ -16,6 +16,7 @@ Hobby project, basically just started.
         - [`divide`](#divide)
         - [`mul`](#mul)
         - [`multiply`](#multiply)
+        - [`remainder`](#remainder)
         - [`sub`](#sub)
     - [Comparison](#comparison)
         - [`equal?`](#equal)
@@ -68,6 +69,7 @@ Ragnar supports standard infix operators for math and comparisons. Infix operato
 - `-`: Subtraction
 - `*`: Multiplication
 - `/`: Division
+- `//`: Remainder
 
 ### Comparison Operators
 - `=`: Equal
@@ -123,6 +125,19 @@ Returns the product of two values.
 ```rebol
 >> multiply 3 4
 12
+```
+
+#### `remainder`
+Returns the remainder of the division of two values.
+
+**Arguments:**
+- `value1` [number]
+- `value2` [number]
+
+**Examples:**
+```rebol
+>> remainder 10 3
+1
 ```
 
 #### `sub`

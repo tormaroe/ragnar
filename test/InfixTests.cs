@@ -20,6 +20,8 @@ public class InfixTests
     [InlineData("10 - 4", 6)]
     [InlineData("3 * 4", 12)]
     [InlineData("12 / 3", 4)]
+    [InlineData("10 // 3", 1)]
+    [InlineData("11 // 4", 3)]
     public void MathInfix_BasicOperations(string code, object expected)
     {
         var result = Eval(code);
@@ -60,6 +62,7 @@ public class InfixTests
     [InlineData("add 1 2 * 3", 7)] // Rebol: add 1 (2 * 3) = 7
     [InlineData("(add 1 2) * 3", 9)] 
     [InlineData("1 + add 2 3", 6)] // 1 + (add 2 3) = 6
+    [InlineData("remainder 10 3", 1)]
     public void Infix_And_Prefix_Mixing(string code, long expected)
     {
         var result = (Integer)Eval(code);
