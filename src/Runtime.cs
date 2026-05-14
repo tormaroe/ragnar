@@ -15,7 +15,7 @@ public static class Runtime
 
         PrintFunction.Add(ctx);
         DoFunction.Add(ctx);
-        IfFunction.Add(ctx);
+        ConditionalFunctions.Add(ctx);
         LoopFunction.Add(ctx);
         WhileFunction.Add(ctx);
         ForeachFunction.Add(ctx);

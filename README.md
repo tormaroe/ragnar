@@ -128,6 +128,32 @@ none
 [ c d ]
 ```
 
+### `case`
+Evaluates a block of condition-block pairs. It evaluates each condition and executes the block associated with the first one that is true.
+
+**Arguments:**
+- `block` [block]: A block containing alternating conditions and action blocks.
+
+**Refinements:**
+- `/all`: Evaluates all conditions and executes all corresponding blocks, instead of stopping at the first match. Returns the result of the last executed block.
+
+**Examples:**
+```rebol
+>> case [
+    greater? 1 2 [ "wrong" ]
+    less? 1 2    [ "right" ]
+]
+"right"
+
+>> a: 0
+>> case/all [
+    true [ a: add a 1 ]
+    true [ a: add a 10 ]
+]
+>> a
+11
+```
+
 ## TODO
 
 1. String manipulation functions: copy
