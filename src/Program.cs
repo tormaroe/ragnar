@@ -62,9 +62,6 @@ class Program
 
             string? input = Console.ReadLine();
 
-            if (input == "quit")
-                break;
-
             if (string.IsNullOrWhiteSpace(input) && buffer.Length == 0)
                 continue;
 
