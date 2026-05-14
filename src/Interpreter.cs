@@ -19,9 +19,31 @@ public class Interpreter
         return lastValue;
     }
 
-    // The 'Next' method evaluates the single next expression.
-    // If it's a function, it recursively evaluates its arguments.
+    // The 'Next' method evaluates the single next expression, including infix operators.
     public Value Next(Block block, ref int index, Context context)
+    {
+        Value left = NextExpression(block, ref index, context);
+
+        // Greedy infix lookahead (left-associative)
+        while (index < block.Children.Count)
+        {
+            Value nextToken = block.Children[index];
+            if (nextToken is Word w && context.TryGet(w.Name, out Value? v) && v is Op op)
+            {
+                index++; // consume the Op word
+                Value right = NextExpression(block, ref index, context);
+                left = op.Action([left, right], [], context, this);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return left;
+    }
+
+    public Value NextExpression(Block block, ref int index, Context context)
     {
         if (index >= block.Children.Count)
             throw new Exception("Unexpected end of block: more arguments expected.");
@@ -31,8 +53,6 @@ public class Interpreter
         // --- PAREN EVALUATION ---
         if (current is Paren p)
         {
-            // We use the existing 'Evaluate' method to process the Paren's contents.
-            // This returns the result of the LAST expression inside the parentheses.
             return Evaluate(p, context);
         }
 
@@ -45,25 +65,22 @@ public class Interpreter
         // --- HANDLE GET-WORD ---
         if (current is GetWord getWord)
         {
-            // Just return the value as-is, no execution!
             return context.Get(getWord.Name);
         }
 
         // --- HANDLE SET-WORD ---
         if (current is SetWord setWord)
         {
-            // Evaluate the NEXT expression to get the value to assign
             Value result = Next(block, ref index, context);
             context.Set(setWord.Name, result);
             return result;
         }
 
-        // --- HANDLE REGULAR WORD (existing logic) ---
+        // --- HANDLE REGULAR WORD ---
         if (current is Word word)
         {
             Value boundValue = context.Get(word.Name);
 
-            // If the word points to a Native function, we must gather args
             if (boundValue is Native native)
             {
                 List<Value> args = [];
@@ -71,12 +88,12 @@ public class Interpreter
                 {
                     if (native.EvalArgs[i])
                     {
-                        // Standard behavior: Evaluate the next expression
+                        // Function arguments use Next to allow them to be greedy
+                        // for infix operators (giving infix higher priority than prefix)
                         args.Add(Next(block, ref index, context));
                     }
                     else
                     {
-                        // Literal behavior: Just grab the next raw value from the block
                         if (index >= block.Children.Count) throw new Exception("Argument missing.");
                         args.Add(block.Children[index++]);
                     }
@@ -84,44 +101,28 @@ public class Interpreter
                 return native.Action(args, [], context, this);
             }
 
-            // --- NEW: HANDLE USER FUNCTIONS ---
             if (boundValue is Function func)
             {
-                // 1. Create a local scope for this function call
                 var localCtx = new Context(context);
-
-                // 2. Gather arguments and bind them to parameter names
                 foreach (var paramName in func.Parameters)
                 {
-                    // Evaluate the next expression in the CALLER'S context
                     Value argValue = Next(block, ref index, context);
-                    // Set it in the FUNCTION'S local context
                     localCtx.Set(paramName, argValue);
                 }
-
-                // 3. Run the body in the local context
                 return Evaluate(func.Body, localCtx);
             }
 
-            // If it's just a variable (like an Integer), return it
             return boundValue;
         }
 
         if (current is SetPath setPath)
         {
-            // 1. Resolve the head - DO NOT re-evaluate it, just get the reference
             Value container = ResolvePathHead(context, setPath);
-
-            // 2. Navigate to the second-to-last element
             for (int i = 1; i < setPath.Parts.Count - 1; i++)
             {
                 container = NavigatePath(container, setPath.Parts[i]);
             }
-
-            // 3. Evaluate the VALUE to be set (the next thing in the block)
             Value valueToSet = Next(block, ref index, context);
-
-            // 4. Perform the assignment
             Value lastSegment = setPath.Parts.Last();
 
             if (container is Block b && lastSegment is Integer idx)
@@ -129,7 +130,7 @@ public class Interpreter
                 int listIdx = (int)idx.Number - 1;
                 if (listIdx >= 0 && listIdx < b.Children.Count)
                 {
-                    b.Children[listIdx] = valueToSet; // This mutates the actual list
+                    b.Children[listIdx] = valueToSet;
                     return valueToSet;
                 }
             }
@@ -144,26 +145,19 @@ public class Interpreter
 
         if (current is Path path)
         {
-            // 1. Start with the head
             Value currentVal = ResolvePathHead(context, path);
-
-            // 2. Iterate through segments (starting from the second part)
             for (int i = 1; i < path.Parts.Count; i++)
             {
                 var segment = path.Parts[i];
 
-                // --- BRANCH A: It's a Function/Native ---
-                // If we hit a function, the rest of the path parts are REFINEMENTS.
                 if (currentVal is Native or Function)
                 {
-                    // Gather the rest of the path as strings
                     var refinements = new HashSet<string>();
                     for (int j = i; j < path.Parts.Count; j++)
                     {
                         if (path.Parts[j] is Word rw) refinements.Add(rw.Name);
                     }
 
-                    // Standard argument collection and execution
                     if (currentVal is Native n)
                     {
                         var args = new List<Value>();
@@ -178,32 +172,27 @@ public class Interpreter
                     }
                 }
 
-                // --- BRANCH B: It's a .NET Object ---
                 if (currentVal is DotNetValue dnv)
                 {
                     currentVal = GetDotNetMember(dnv.Instance, segment.ToString());
                     continue;
                 }
 
-                // --- BRANCH C: It's a Block (Index Access) ---
                 if (currentVal is Block b && segment is Integer idx)
                 {
-                    int listIdx = (int)idx.Number - 1; // Rebol is 1-indexed
+                    int listIdx = (int)idx.Number - 1;
                     currentVal = (listIdx >= 0 && listIdx < b.Children.Count)
                                  ? b.Children[listIdx]
                                  : new Word("none");
                     continue;
                 }
 
-                // If we get here and haven't 'continued' or 'returned', it's an error
                 throw new Exception($"Cannot navigate into {currentVal.GetType().Name} with segment {segment}");
             }
 
             return currentVal;
         }
 
-        // Literals (Integers, Decimals, Strings, and Blocks) evaluate to themselves.
-        // A Block is just data until something like the 'do' function evaluates it.
         return current;
     }
 

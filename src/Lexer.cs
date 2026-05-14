@@ -101,7 +101,7 @@ public class Lexer(string input)
         }
 
         // 2. Refinement or Path
-        if (raw.Contains('/'))
+        if (raw.Contains('/') && raw != "/")
         {
             bool isSetPath = raw.EndsWith(':');
             string pathContent = isSetPath ? raw.TrimEnd(':') : raw;

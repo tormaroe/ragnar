@@ -23,17 +23,28 @@ public class Context
     // Look up a value, searching up the parent chain if necessary
     public Value Get(string name)
     {
-        if (_bindings.TryGetValue(name, out var value))
+        if (TryGet(name, out var value))
         {
-            return value;
+            return value!;
+        }
+
+        throw new Exception($"Word '{name}' has no value.");
+    }
+
+    public bool TryGet(string name, out Value? value)
+    {
+        if (_bindings.TryGetValue(name, out value))
+        {
+            return true;
         }
 
         if (_parent != null)
         {
-            return _parent.Get(name);
+            return _parent.TryGet(name, out value);
         }
 
-        throw new Exception($"Word '{name}' has no value.");
+        value = null;
+        return false;
     }
 
     // Check if a word exists in this context or parents

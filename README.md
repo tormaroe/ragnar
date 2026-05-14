@@ -7,6 +7,26 @@
 
 Hobby project, basically just started.
 
+## Operators
+
+Ragnar supports standard infix operators for math and comparisons. Infix operators have higher precedence than prefix functions (e.g., `add 1 2 * 3` is evaluated as `add 1 (2 * 3)`). Math operators are left-associative.
+
+### Math Operators
+- `+`: Addition
+- `-`: Subtraction
+- `*`: Multiplication
+- `/`: Division
+
+### Comparison Operators
+- `=`: Equal
+- `==`: Strict equal
+- `<>`: Not equal
+- `!=`: Not equal (alias)
+- `<`: Less than
+- `>`: Greater than
+- `<=`: Less than or equal
+- `>=`: Greater than or equal
+
 ## Native Function Reference
 
 ### `trim`

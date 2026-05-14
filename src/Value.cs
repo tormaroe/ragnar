@@ -124,6 +124,11 @@ public class Native : Value
     public override string ToString() => $"<native arity:{Arity}>";
 }
 
+public class Op(NativeDelegate action) : Native(action, 2)
+{
+    public override string ToString() => "<op>";
+}
+
 public class Logic(bool value) : Value
 {
     public bool Condition { get; } = value;

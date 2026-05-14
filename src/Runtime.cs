@@ -24,6 +24,7 @@ public static class Runtime
         SeriesFunctions.Add(ctx);
         BlockFunctions.Add(ctx);
         StringFunctions.Add(ctx);
+        ComparisonFunctions.Add(ctx);
         ExitFunction.Add(ctx);
 
         Interop.AddInteropFunctions(ctx);
