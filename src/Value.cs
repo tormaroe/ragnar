@@ -19,11 +19,26 @@ public class Decimal(double value) : Value
     public override string ToString() => Number.ToString();
 }
 
-public class Text(string value) : Value
+public abstract class Series : Value
 {
-    public string Content { get; } = value;
-    public override string ToString() => $"\"{Content}\"";
-    public override string ToUserString() => Content;
+    public int Index { get; set; } = 0;
+    public abstract int Length { get; }
+}
+
+public class Text : Series
+{
+    public string Content { get; }
+    public override int Length => Math.Max(0, Content.Length - Index);
+    
+    public Text(string value, int index = 0) 
+    { 
+        Content = value; 
+        Index = index; 
+    }
+
+    public override string ToString() => $"\"{Content[Index..]}\"";
+    public override string ToUserString() => Content[Index..];
+    public Text At(int newIndex) => new Text(Content, newIndex);
 }
 
 public class Word(string name) : Value
@@ -52,23 +67,34 @@ public class GetWord(string name) : Value
     public override string ToString() => ":" + Name;
 }
 
-public class Block : Value
+public class Block : Series
 {
     public List<Value> Children { get; } = [];
+    public override int Length => Math.Max(0, Children.Count - Index);
 
-    public Block() { }
-    public Block(IEnumerable<Value> values) => Children.AddRange(values);
+    public Block(int index = 0) { Index = index; }
+    public Block(IEnumerable<Value> values, int index = 0)
+    {
+        Children.AddRange(values);
+        Index = index;
+    }
 
-    public override string ToString() => "[ " + string.Join(" ", Children) + " ]";
+    public override string ToString() => "[ " + string.Join(" ", Children.Skip(Index)) + " ]";
 
     // Flatten the block: no brackets, and use the user-friendly version of children
     public override string ToUserString() => 
-        string.Join(" ", Children.Select(c => c.ToUserString()));
+        string.Join(" ", Children.Skip(Index).Select(c => c.ToUserString()));
+
+    public Block At(int newIndex) => new Block(Children, newIndex);
 }
 
-public class Paren(IEnumerable<Value> parts) : Block(parts)
+public class Paren : Block
 {
-    public override string ToString() => "(" + string.Join(" ", Children) + ")";
+    public Paren(int index = 0) : base(index) { }
+    public Paren(IEnumerable<Value> parts, int index = 0) : base(parts, index) { }
+
+    public override string ToString() => "(" + string.Join(" ", Children.Skip(Index)) + ")";
+    public new Paren At(int newIndex) => new Paren(Children, newIndex);
 }
 
 // The new signature includes the refinements HashSet
