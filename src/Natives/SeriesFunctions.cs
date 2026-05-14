@@ -57,23 +57,137 @@ public static class SeriesFunctions
             if (args[0] is not Series s) throw new Exception("find requires a series.");
             Value target = args[1];
 
+            bool caseSens = refinements.Contains("case");
+            bool any = refinements.Contains("any");
+            bool last = refinements.Contains("last");
+            bool tail = refinements.Contains("tail");
+            bool match = refinements.Contains("match");
+
             if (s is Text t)
             {
+                string input = t.Content;
                 string search = target is Text targetText ? targetText.Content : target.ToUserString();
-                int pos = t.Content.IndexOf(search, t.Index);
-                if (pos >= 0) return t.At(pos);
+                
+                int foundPos = -1;
+                int matchLength = search.Length;
+
+                if (any)
+                {
+                    // Convert glob (*, ?) to Regex
+                    string pattern = System.Text.RegularExpressions.Regex.Escape(search).Replace("\\*", ".*").Replace("\\?", ".");
+                    var options = caseSens ? System.Text.RegularExpressions.RegexOptions.None : System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+                    
+                    if (match)
+                    {
+                        var regex = new System.Text.RegularExpressions.Regex("^" + pattern, options);
+                        // We need to match the whole substring from current index to some point?
+                        // Actually Rebol's find/any/match is quite specific. 
+                        // For simplicity, let's just try to match from current index.
+                        var m = regex.Match(input, t.Index);
+                        if (m.Success && m.Index == t.Index)
+                        {
+                            foundPos = m.Index;
+                            matchLength = m.Length;
+                        }
+                    }
+                    else if (last)
+                    {
+                        var regex = new System.Text.RegularExpressions.Regex(pattern, options);
+                        var matches = regex.Matches(input);
+                        var lastMatch = matches.Cast<System.Text.RegularExpressions.Match>().LastOrDefault(m => m.Index >= t.Index);
+                        if (lastMatch != null)
+                        {
+                            foundPos = lastMatch.Index;
+                            matchLength = lastMatch.Length;
+                        }
+                    }
+                    else
+                    {
+                        var regex = new System.Text.RegularExpressions.Regex(pattern, options);
+                        var m = regex.Match(input, t.Index);
+                        if (m.Success)
+                        {
+                            foundPos = m.Index;
+                            matchLength = m.Length;
+                        }
+                    }
+                }
+                else
+                {
+                    var comparison = caseSens ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                    if (match)
+                    {
+                        if (input.AsSpan(t.Index).StartsWith(search, comparison))
+                        {
+                            foundPos = t.Index;
+                        }
+                    }
+                    else if (last)
+                    {
+                        foundPos = input.LastIndexOf(search, comparison);
+                        if (foundPos < t.Index) foundPos = -1;
+                    }
+                    else
+                    {
+                        foundPos = input.IndexOf(search, t.Index, comparison);
+                    }
+                }
+
+                if (foundPos >= 0)
+                {
+                    return t.At(foundPos + (tail ? matchLength : 0));
+                }
                 return new Word("none");
             }
 
             if (s is Block b)
             {
-                string targetStr = target.ToString();
-                for (int i = s.Index; i < b.Children.Count; i++)
+                int foundIdx = -1;
+                int matchLen = 1; // Default for block elements
+
+                // Comparison helper
+                bool IsMatch(Value v1, Value v2)
                 {
-                    if (b.Children[i].ToString() == targetStr)
+                    if (v1 is Text t1 && v2 is Text t2)
                     {
-                        return b.At(i);
+                        return string.Equals(t1.Content, t2.Content, caseSens ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
                     }
+                    return v1.ToString() == v2.ToString();
+                }
+
+                if (match)
+                {
+                    if (s.Index < b.Children.Count && IsMatch(b.Children[s.Index], target))
+                    {
+                        foundIdx = s.Index;
+                    }
+                }
+                else if (last)
+                {
+                    for (int i = b.Children.Count - 1; i >= s.Index; i--)
+                    {
+                        if (IsMatch(b.Children[i], target))
+                        {
+                            foundIdx = i;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = s.Index; i < b.Children.Count; i++)
+                    {
+                        if (IsMatch(b.Children[i], target))
+                        {
+                            foundIdx = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (foundIdx >= 0)
+                {
+                    return b.At(foundIdx + (tail ? matchLen : 0));
                 }
                 return new Word("none");
             }

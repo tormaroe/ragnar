@@ -87,4 +87,55 @@ public class SeriesTests
         var (resBlock, _) = Run("last find [10 20 30 40] 20");
         Assert.Equal(40, ((Integer)resBlock).Number);
     }
+
+    [Fact]
+    public void Find_Case_Works()
+    {
+        var (res1, _) = Run("find \"ABC\" \"a\"");
+        Assert.Equal("ABC", ((Text)res1).ToUserString());
+
+        var (res2, _) = Run("find/case \"ABC\" \"a\"");
+        Assert.Equal("none", ((Word)res2).Name);
+    }
+
+    [Fact]
+    public void Find_Last_Works()
+    {
+        var (resText, _) = Run("find/last \"banana\" \"a\"");
+        Assert.Equal(1, ((Text)resText).Length); // Just the last "a"
+        Assert.Equal("a", ((Text)resText).ToUserString());
+
+        var (resBlock, _) = Run("find/last [a b a c] 'a");
+        Assert.Equal("[ a c ]", resBlock.ToString());
+    }
+
+    [Fact]
+    public void Find_Tail_Works()
+    {
+        var (resText, _) = Run("find/tail \"abcdef\" \"cd\"");
+        Assert.Equal("ef", ((Text)resText).ToUserString());
+
+        var (resBlock, _) = Run("find/tail [10 20 30 40] 30");
+        Assert.Equal("[ 40 ]", resBlock.ToString());
+    }
+
+    [Fact]
+    public void Find_Match_Works()
+    {
+        var (res1, _) = Run("find/match \"abcdef\" \"abc\"");
+        Assert.Equal("abcdef", ((Text)res1).ToUserString());
+
+        var (res2, _) = Run("find/match \"abcdef\" \"bcd\"");
+        Assert.Equal("none", ((Word)res2).Name);
+    }
+
+    [Fact]
+    public void Find_Any_Works()
+    {
+        var (res1, _) = Run("find/any \"abcdef\" \"a?c\"");
+        Assert.Equal("abcdef", ((Text)res1).ToUserString());
+
+        var (res2, _) = Run("find/any \"abcdef\" \"a*e\"");
+        Assert.Equal("abcdef", ((Text)res2).ToUserString());
+    }
 }

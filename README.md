@@ -93,7 +93,42 @@ Splits a string into a block of strings based on a delimiter.
 [ "one" "two" "three" ]
 ```
 
+### `find`
+Finds a value in a series (text or block). Returns the series at the start of the match, or `none`.
+
+**Arguments:**
+- `series` [series]: The series to search in.
+- `value` [any]: The value to search for.
+
+**Refinements:**
+- `/case`: Performs a case-sensitive search.
+- `/any`: Enables wildcard matching (`*` for any sequence, `?` for any single character).
+- `/last`: Searches from the end of the series.
+- `/tail`: Returns the series starting immediately *after* the match.
+- `/match`: Only matches if the value is at the current series position.
+
+**Examples:**
+```rebol
+>> find "abcdef" "cd"
+"cdef"
+
+>> find/tail "abcdef" "cd"
+"ef"
+
+>> find/case "ABC" "a"
+none
+
+>> find/any "abcdef" "a?c"
+"abcdef"
+
+>> find/last "banana" "a"
+"a"
+
+>> find [a b c d] 'c
+[ c d ]
+```
+
 ## TODO
 
-1. String manipulation functions: find, copy
+1. String manipulation functions: copy
 1. Series manipulation functions: copy, select, pick, insert, remove, empty?, reduce, compose, at, next, back, head, tail, reverse, collect, keep, map-each, find
