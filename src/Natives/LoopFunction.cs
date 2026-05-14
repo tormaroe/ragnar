@@ -10,13 +10,27 @@ public static class LoopFunction
             if (args[0] is Integer count && args[1] is Block body)
             {
                 Value lastResult = new Word("none");
-                for (long i = 0; i < count.Number; i++)
+                try
                 {
-                    lastResult = interpreter.Evaluate(body, context);
+                    for (long i = 0; i < count.Number; i++)
+                    {
+                        try
+                        {
+                            lastResult = interpreter.Evaluate(body, context);
+                        }
+                        catch (ContinueException) { continue; }
+                    }
                 }
+                catch (BreakException) { }
                 return lastResult;
             }
             throw new Exception("loop usage: loop [integer] [block]");
         }, 2));
+
+        // break
+        ctx.Set("break", new Native((args, refs, _, _) => throw new BreakException(), 0));
+
+        // continue
+        ctx.Set("continue", new Native((args, refs, _, _) => throw new ContinueException(), 0));
     }
 }

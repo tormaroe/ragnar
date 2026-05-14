@@ -109,7 +109,15 @@ public class Interpreter
                     Value argValue = Next(block, ref index, context);
                     localCtx.Set(paramName, argValue);
                 }
-                return Evaluate(func.Body, localCtx);
+                
+                try
+                {
+                    return Evaluate(func.Body, localCtx);
+                }
+                catch (ReturnException ex)
+                {
+                    return ex.Value;
+                }
             }
 
             return boundValue;
@@ -282,9 +290,13 @@ public class Interpreter
             localContext.Set(func.Parameters[i], args[i]);
         }
 
-        // In a more advanced version, we would also set words for the refinements 
-        // (e.g., setting a 'wait' word to true inside the function's context).
-
-        return Evaluate(func.Body, localContext);
+        try
+        {
+            return Evaluate(func.Body, localContext);
+        }
+        catch (ReturnException ex)
+        {
+            return ex.Value;
+        }
     }
 }

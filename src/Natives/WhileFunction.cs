@@ -11,20 +11,33 @@ public static class WhileFunction
             {
                 Value lastResult = new Word("none");
 
-                // Keep evaluating the condition block. 
-                // If it returns Logic(true), run the body.
-                while (true)
+                try
                 {
-                    Value condResult = interpreter.Evaluate(condition, context);
-                    if (condResult is Logic l && l.Condition)
+                    while (true)
                     {
-                        lastResult = interpreter.Evaluate(body, context);
-                    }
-                    else
-                    {
-                        break;
+                        Value condResult = interpreter.Evaluate(condition, context);
+                        
+                        // Rebol-style truthiness: everything except false and none is true
+                        bool isTrue = true;
+                        if (condResult is Logic l && !l.Condition) isTrue = false;
+                        else if (condResult is Word w && w.Name == "none") isTrue = false;
+
+                        if (isTrue)
+                        {
+                            try
+                            {
+                                lastResult = interpreter.Evaluate(body, context);
+                            }
+                            catch (ContinueException) { /* just continue loop */ }
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
+                catch (BreakException) { /* break out of loop */ }
+
                 return lastResult;
             }
             throw new Exception("while usage: while [condition-block] [body-block]");

@@ -28,6 +28,12 @@ public class Repl
 
     public string ReadLine(string prompt)
     {
+        if (Console.IsInputRedirected)
+        {
+            WritePrompt(prompt);
+            return Console.ReadLine() ?? "";
+        }
+
         WritePrompt(prompt);
 
         var line = new StringBuilder();

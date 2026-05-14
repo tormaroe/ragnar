@@ -27,7 +27,7 @@ public abstract class Series : Value
 
 public class Text : Series
 {
-    public string Content { get; }
+    public string Content { get; set; }
     public override int Length => Math.Max(0, Content.Length - Index);
     
     public Text(string value, int index = 0) 

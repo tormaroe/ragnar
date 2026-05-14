@@ -4,16 +4,58 @@ public static class ConditionalFunctions
 {
     public static void Add(Context ctx)
     {
+        static bool IsTruthy(Value v)
+        {
+            if (v is Logic l) return l.Condition;
+            if (v is Word w && w.Name == "none") return false;
+            return true;
+        }
+
         // if [condition] [block]
         ctx.Set("if", new Native((args, refinements, context, interpreter) =>
         {
-            bool isTrue = (args[0] is Logic l && l.Condition);
-            if (isTrue && args[1] is Block b)
+            if (IsTruthy(args[0]) && args[1] is Block b)
             {
                 return interpreter.Evaluate(b, context);
             }
             return new Word("none");
         }, 2));
+
+        // either [condition] [true-block] [false-block]
+        ctx.Set("either", new Native((args, refinements, context, interpreter) =>
+        {
+            Block branch = (IsTruthy(args[0]) ? args[1] : args[2]) as Block 
+                ?? throw new Exception("either requires blocks for its branches.");
+            
+            return interpreter.Evaluate(branch, context);
+        }, 3));
+
+        // all [block]
+        ctx.Set("all", new Native((args, refinements, context, interpreter) =>
+        {
+            if (args[0] is not Block b) throw new Exception("all requires a block.");
+            Value lastResult = new Word("none");
+            int index = 0;
+            while (index < b.Children.Count)
+            {
+                lastResult = interpreter.Next(b, ref index, context);
+                if (!IsTruthy(lastResult)) return new Word("none");
+            }
+            return lastResult;
+        }, 1));
+
+        // any [block]
+        ctx.Set("any", new Native((args, refinements, context, interpreter) =>
+        {
+            if (args[0] is not Block b) throw new Exception("any requires a block.");
+            int index = 0;
+            while (index < b.Children.Count)
+            {
+                Value result = interpreter.Next(b, ref index, context);
+                if (IsTruthy(result)) return result;
+            }
+            return new Word("none");
+        }, 1));
 
         // case [block]
         ctx.Set("case", new Native((args, refinements, context, interpreter) =>
@@ -23,7 +65,6 @@ public static class ConditionalFunctions
 
             bool all = refinements.Contains("all");
             Value lastResult = new Word("none");
-            bool found = false;
 
             int index = 0;
             while (index < b.Children.Count)
@@ -37,8 +78,7 @@ public static class ConditionalFunctions
 
                 // Condition is true if it's a Logic true, or in Rebol/Ragnar 
                 // usually any value except false/none is true. 
-                // For now, let's match 'if' logic: Logic(true)
-                bool isTrue = (condition is Logic l && l.Condition);
+                bool isTrue = IsTruthy(condition);
 
                 if (isTrue)
                 {
@@ -47,7 +87,6 @@ public static class ConditionalFunctions
                     if (branch is Block branchBlock)
                     {
                         lastResult = interpreter.Evaluate(branchBlock, context);
-                        found = true;
                         if (!all) return lastResult;
                     }
                 }

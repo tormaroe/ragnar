@@ -17,5 +17,8 @@ public static class FuncFunction
 
             return new Function(parameters, body);
         }, 2));
+
+        // return [value]
+        ctx.Set("return", new Native((args, refs, _, _) => throw new ReturnException(args[0]), 1));
     }
 }

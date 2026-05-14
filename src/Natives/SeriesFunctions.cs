@@ -203,7 +203,12 @@ public static class SeriesFunctions
                 b.Children.Add(args[1]);
                 return b; // Return the modified block
             }
-            throw new Exception("append requires a block as the first argument.");
+            if (args[0] is Text t)
+            {
+                t.Content += args[1].ToUserString();
+                return t;
+            }
+            throw new Exception("append requires a block or text as the first argument.");
         }, 2));
 
         // join [base] [value]
@@ -234,6 +239,53 @@ public static class SeriesFunctions
             }
 
             return new Text(sb.ToString());
+        }, 1));
+
+        // pick [series] [index]
+        ctx.Set("pick", new Native((args, refs, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("pick requires a series.");
+            if (args[1] is not Integer i) throw new Exception("pick requires an integer index.");
+
+            return GetAt(s, (int)i.Number - 1);
+        }, 2));
+
+        // poke [series] [index] [value]
+        ctx.Set("poke", new Native((args, refs, _, _) =>
+        {
+            if (args[0] is not Block b) throw new Exception("poke currently only supports blocks.");
+            if (args[1] is not Integer i) throw new Exception("poke requires an integer index.");
+            
+            int targetIdx = b.Index + (int)i.Number - 1;
+            if (targetIdx >= 0 && targetIdx < b.Children.Count)
+            {
+                b.Children[targetIdx] = args[2];
+                return args[2];
+            }
+            throw new Exception("poke index out of range.");
+        }, 3));
+
+        // index? [series]
+        ctx.Set("index?", new Native((args, refs, _, _) =>
+        {
+            if (args[0] is Series s) return new Integer(s.Index + 1);
+            throw new Exception("index? requires a series.");
+        }, 1));
+
+        // copy [value]
+        ctx.Set("copy", new Native((args, refs, _, _) =>
+        {
+            if (args[0] is Block b)
+            {
+                // Create a new block with a shallow copy of the children (from current index)
+                return new Block(b.Children.Skip(b.Index));
+            }
+            if (args[0] is Text t)
+            {
+                return new Text(t.Content[t.Index..]);
+            }
+            // For non-series, copy is identity
+            return args[0];
         }, 1));
     }
 }

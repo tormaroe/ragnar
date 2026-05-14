@@ -7,18 +7,38 @@ public static class ForeachFunction
         // foreach line lines [ print line ]
         ctx.Set("foreach", new Native((args, refinements, context, interpreter) =>
         {
-            if (args[0] is Word word && args[1] is Block series && args[2] is Block body)
+            if (args[0] is Word word && args[1] is Series series && args[2] is Block body)
             {
                 Value lastResult = new Word("none");
 
-                foreach (var item in series.Children)
+                try
                 {
-                    // 1. Set the loop variable in the current context
-                    context.Set(word.Name, item);
-
-                    // 2. Evaluate the body
-                    lastResult = interpreter.Evaluate(body, context);
+                    if (series is Block b)
+                    {
+                        for (int i = b.Index; i < b.Children.Count; i++)
+                        {
+                            context.Set(word.Name, b.Children[i]);
+                            try
+                            {
+                                lastResult = interpreter.Evaluate(body, context);
+                            }
+                            catch (ContinueException) { continue; }
+                        }
+                    }
+                    else if (series is Text t)
+                    {
+                        for (int i = t.Index; i < t.Content.Length; i++)
+                        {
+                            context.Set(word.Name, new Text(t.Content[i].ToString()));
+                            try
+                            {
+                                lastResult = interpreter.Evaluate(body, context);
+                            }
+                            catch (ContinueException) { continue; }
+                        }
+                    }
                 }
+                catch (BreakException) { }
 
                 return lastResult;
             }

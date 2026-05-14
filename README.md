@@ -27,14 +27,22 @@ Hobby project, basically just started.
         - [`less?`](#less)
         - [`not-equal?`](#not-equal)
     - [Conditional Logic](#conditional-logic)
+        - [`all`](#all)
+        - [`any`](#any)
         - [`case`](#case)
+        - [`either`](#either)
         - [`if`](#if)
+    - [Conversion](#conversion)
+        - [`to-decimal`](#to-decimal)
+        - [`to-integer`](#to-integer)
+        - [`to-string`](#to-string)
     - [Core Functions](#core-functions)
         - [`do`](#do)
         - [`exit`](#exit)
         - [`func`](#func)
         - [`quit`](#quit)
         - [`reduce`](#reduce)
+        - [`return`](#return)
     - [File IO](#file-io)
         - [`read`](#read)
         - [`write`](#write)
@@ -275,43 +283,103 @@ true
 
 ### Conditional Logic
 
-#### `case`
-Evaluates a block of condition-block pairs. It evaluates each condition and executes the block associated with the first one that is true.
+#### `all`
+Evaluates a block of expressions and returns the result of the last expression if ALL expressions are truthy. If any expression is false or `none`, it stops and returns `none`.
 
 **Arguments:**
-- `block` [block]: A block containing alternating conditions and action blocks.
-
-**Refinements:**
-- `/all`: Evaluates all conditions and executes all corresponding blocks, instead of stopping at the first match. Returns the result of the last executed block.
+- `block` [block]
 
 **Examples:**
 ```rebol
->> case [
-    greater? 1 2 [ "wrong" ]
-    less? 1 2    [ "right" ]
-]
-"right"
+>> all [ 1 < 2 3 < 4 ]
+true
 
->> a: 0
->> case/all [
-    true [ a: add a 1 ]
-    true [ a: add a 10 ]
-]
->> a
-11
+>> all [ 1 < 2 3 > 4 ]
+none
+```
+
+#### `any`
+Evaluates a block of expressions and returns the first truthy result. If all expressions are false or `none`, it returns `none`.
+
+**Arguments:**
+- `block` [block]
+
+**Examples:**
+```rebol
+>> any [ 1 > 2 3 < 4 ]
+true
+
+>> any [ 1 > 2 3 > 4 ]
+none
+```
+
+#### `case`
+...
+```
+
+#### `either`
+Evaluates one of two blocks based on a condition.
+
+**Arguments:**
+- `condition` [any]
+- `true-block` [block]
+- `false-block` [block]
+
+**Examples:**
+```rebol
+>> either 1 < 2 [ print "Yes" ] [ print "No" ]
+Yes
 ```
 
 #### `if`
-Evaluates a block if a condition is true.
+Evaluates a block if a condition is truthy.
 
 **Arguments:**
-- `condition` [logic]
+- `condition` [any]
 - `body` [block]
 
 **Examples:**
 ```rebol
 >> if 1 < 2 [ print "Yes!" ]
 Yes!
+```
+
+### Conversion
+
+#### `to-decimal`
+Converts a value to a decimal.
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> to-decimal "12.3"
+12.3
+```
+
+#### `to-integer`
+Converts a value to an integer.
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> to-integer "123"
+123
+```
+
+#### `to-string`
+Converts a value to a string.
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> to-string 123
+"123"
 ```
 
 ### Core Functions
@@ -358,6 +426,19 @@ Evaluates all expressions within a block and returns a new block with the result
 ```rebol
 >> reduce [ 1 + 2 3 * 4 ]
 [ 3 12 ]
+```
+
+#### `return`
+Returns a value from a user-defined function.
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> f: func [x] [ if x < 0 [ return "neg" ] "pos" ]
+>> f -1
+"neg"
 ```
 
 ### File IO
@@ -517,6 +598,45 @@ ask             [native]
 ...
 ```
 
+### Logical Functions
+
+#### `and`
+Returns `true` if both values are truthy.
+
+**Arguments:**
+- `value1` [any]
+- `value2` [any]
+
+**Examples:**
+```rebol
+>> and true true
+true
+```
+
+#### `not`
+Returns `true` if the value is falsey (`false` or `none`).
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> not false
+true
+```
+
+#### `or`
+Returns `true` if either value is truthy.
+
+**Arguments:**
+- `value1` [any]
+- `value2` [any]
+
+**Examples:**
+```rebol
+>> or true false
+true
+```
 
 ### Looping
 
@@ -565,6 +685,12 @@ Repeatedly evaluates a body block as long as a condition block evaluates to true
 1
 2
 ```
+
+#### `break`
+Breaks out of the innermost loop (`loop`, `while`, `foreach`).
+
+#### `continue`
+Skips the rest of the current loop iteration and moves to the next one.
 
 ### .NET Interop
 
@@ -701,16 +827,31 @@ Sets the value of a property on a .NET object.
 ### Series & Searching
 
 #### `append`
-Appends a value to the end of a block.
+Appends a value to the end of a series (block or text). If the series is a block, the value is added as a new element. If it's text, the value is converted to a string and appended to the end.
 
 **Arguments:**
-- `series` [block]
+- `series` [block or text]
 - `value` [any]
 
 **Examples:**
 ```rebol
 >> b: [1 2] append b 3
 [ 1 2 3 ]
+
+>> t: "hello" append t " world"
+"hello world"
+```
+
+#### `copy`
+Returns a shallow copy of a series or value. For series, the copy starts from the current index.
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> b1: [1 2 3]
+>> b2: copy b1
 ```
 
 #### `find`
@@ -760,6 +901,18 @@ Returns the first value in a series at its current index.
 10
 ```
 
+#### `index?`
+Returns the current 1-based index of a series.
+
+**Arguments:**
+- `series` [series]
+
+**Examples:**
+```rebol
+>> index? find "abcdef" "cd"
+3
+```
+
 #### `join`
 Concatenates two values. Currently implemented as string concatenation.
 
@@ -795,6 +948,36 @@ Returns the number of elements in a series from its current index to the end.
 ```rebol
 >> length? [1 2 3]
 3
+```
+
+#### `pick`
+Returns the value at a specific 1-based index in a series.
+
+**Arguments:**
+- `series` [series]
+- `index` [integer]
+
+**Examples:**
+```rebol
+>> pick [10 20 30] 2
+20
+```
+
+#### `poke`
+Replaces the value at a specific 1-based index in a block.
+
+**Arguments:**
+- `series` [block]
+- `index` [integer]
+- `value` [any]
+
+**Examples:**
+```rebol
+>> b: [10 20 30]
+>> poke b 2 99
+== 99
+>> b
+[ 10 99 30 ]
 ```
 
 #### `rejoin`
@@ -923,8 +1106,3 @@ Executes a system command.
 >> call "dir"
 >> code: call/wait "git status"
 ```
-
-## TODO
-
-1. String manipulation functions: copy
-1. Series manipulation functions: copy, select, pick, insert, remove, empty?, compose, at, next, back, head, tail, reverse, collect, keep, map-each

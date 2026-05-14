@@ -12,6 +12,7 @@ public static class Runtime
         // 1. Constants
         ctx.Set("true", new Logic(true));
         ctx.Set("false", new Logic(false));
+        ctx.Set("none", new Word("none"));
 
         PrintFunction.Add(ctx);
         DoFunction.Add(ctx);
@@ -25,6 +26,8 @@ public static class Runtime
         BlockFunctions.Add(ctx);
         StringFunctions.Add(ctx);
         ComparisonFunctions.Add(ctx);
+        LogicalFunctions.Add(ctx);
+        ConversionFunctions.Add(ctx);
         ExitFunction.Add(ctx);
 
         Interop.AddInteropFunctions(ctx);

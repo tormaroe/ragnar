@@ -17,6 +17,46 @@ public class ConditionalTests : TestBase
     }
 
     [Fact]
+    public void Either_Works()
+    {
+        var (res1, _) = Run("either true [ 1 ] [ 2 ]");
+        Assert.Equal(1, ((Integer)res1).Number);
+
+        var (res2, _) = Run("either false [ 1 ] [ 2 ]");
+        Assert.Equal(2, ((Integer)res2).Number);
+    }
+
+    [Fact]
+    public void All_Works()
+    {
+        var (res1, _) = Run("all [ true 10 \"hi\" ]");
+        Assert.Equal("hi", ((Text)res1).ToUserString());
+
+        var (res2, _) = Run("all [ true false 10 ]");
+        Assert.Equal("none", ((Word)res2).Name);
+    }
+
+    [Fact]
+    public void Any_Works()
+    {
+        var (res1, _) = Run("any [ false none 10 false ]");
+        Assert.Equal(10, ((Integer)res1).Number);
+
+        var (res2, _) = Run("any [ false none ]");
+        Assert.Equal("none", ((Word)res2).Name);
+    }
+
+    [Fact]
+    public void Truthiness_Works()
+    {
+        var (res1, _) = Run("if 10 [ true ]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("either none [ 1 ] [ 2 ]");
+        Assert.Equal(2, ((Integer)res2).Number);
+    }
+
+    [Fact]
     public void Case_Basic_Works()
     {
         var code = @"

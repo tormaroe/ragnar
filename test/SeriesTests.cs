@@ -7,6 +7,58 @@ namespace Ragnar.Tests;
 public class SeriesTests : TestBase
 {
     [Fact]
+    public void Pick_And_Poke_Work()
+    {
+        var code = @"
+            b: [10 20 30]
+            p1: pick b 1
+            poke b 2 99
+            p2: pick b 2
+        ";
+        var (_, ctx) = Run(code);
+        Assert.Equal(10, ((Integer)ctx.Get("p1")).Number);
+        Assert.Equal(99, ((Integer)ctx.Get("p2")).Number);
+    }
+
+    [Fact]
+    public void Index_Works()
+    {
+        var code = @"
+            s: ""abcdef""
+            s2: find s ""cd""
+            idx: index? s2
+        ";
+        var (_, ctx) = Run(code);
+        Assert.Equal(3, ((Integer)ctx.Get("idx")).Number);
+    }
+
+    [Fact]
+    public void Copy_Works()
+    {
+        var code = @"
+            b1: [1 2 3]
+            b2: copy b1
+            append b1 4
+        ";
+        var (_, ctx) = Run(code);
+        var b1 = (Block)ctx.Get("b1");
+        var b2 = (Block)ctx.Get("b2");
+        Assert.Equal(4, b1.Children.Count);
+        Assert.Equal(3, b2.Children.Count);
+    }
+
+    [Fact]
+    public void Append_Text_Works()
+    {
+        var code = @"
+            t: ""hello""
+            append t "" world""
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal("hello world", ((Text)result).ToUserString());
+    }
+
+    [Fact]
     public void Find_In_Text_Returns_Tail()
     {
         var (result, _) = Run("find \"abcdef\" \"cd\"");

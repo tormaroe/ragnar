@@ -1,0 +1,38 @@
+using Xunit;
+using Ragnar;
+using System;
+
+namespace Ragnar.Tests;
+
+public class ConversionTests : TestBase
+{
+    [Fact]
+    public void To_Integer_Works()
+    {
+        var (res1, _) = Run("to-integer \"123\"");
+        Assert.Equal(123, ((Integer)res1).Number);
+
+        var (res2, _) = Run("to-integer 12.3");
+        Assert.Equal(12, ((Integer)res2).Number);
+    }
+
+    [Fact]
+    public void To_Decimal_Works()
+    {
+        var (res1, _) = Run("to-decimal \"12.3\"");
+        Assert.Equal(12.3, ((Decimal)res1).Number);
+
+        var (res2, _) = Run("to-decimal 12");
+        Assert.Equal(12.0, ((Decimal)res2).Number);
+    }
+
+    [Fact]
+    public void To_String_Works()
+    {
+        var (res1, _) = Run("to-string 123");
+        Assert.Equal("123", ((Text)res1).ToUserString());
+
+        var (res2, _) = Run("to-string true");
+        Assert.Equal("true", ((Text)res2).ToUserString());
+    }
+}
