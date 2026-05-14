@@ -34,15 +34,32 @@ Hobby project, basically just started.
         - [`func`](#func)
         - [`quit`](#quit)
         - [`reduce`](#reduce)
+    - [File IO](#file-io)
+        - [`read`](#read)
+        - [`write`](#write)
     - [Input & Output](#input--output)
         - [`ask`](#ask)
         - [`confirm`](#confirm)
         - [`input`](#input)
         - [`print`](#print)
+    - [Inspection](#inspection)
+        - [`help`](#help)
+        - [`probe`](#probe)
+        - [`type?`](#type)
+        - [`what`](#what)
     - [Looping](#looping)
         - [`foreach`](#foreach)
         - [`loop`](#loop)
         - [`while`](#while)
+    - [.NET Interop](#net-interop)
+        - [Path Navigation](#path-navigation)
+        - [`call-method`](#call-method)
+        - [`call-static`](#call-static)
+        - [`get-prop`](#get-prop)
+        - [`get-static`](#get-static)
+        - [`get-type`](#get-type)
+        - [`new`](#new)
+        - [`set-prop`](#set-prop)
     - [Series & Searching](#series--searching)
         - [`append`](#append)
         - [`find`](#find)
@@ -58,6 +75,8 @@ Hobby project, basically just started.
         - [`split`](#split)
         - [`trim`](#trim)
         - [`uppercase`](#uppercase)
+    - [System & OS](#system--os)
+        - [`call`](#call)
 - [TODO](#todo)
 
 ## Operators
@@ -320,6 +339,40 @@ Evaluates all expressions within a block and returns a new block with the result
 [ 3 12 ]
 ```
 
+### File IO
+
+#### `read`
+Reads the content of a file.
+
+**Arguments:**
+- `source` [file! or text!]: The path to the file.
+
+**Refinements:**
+- `/lines`: Returns a block of strings, one for each line in the file.
+
+**Examples:**
+```rebol
+>> text: read %data.txt
+>> lines: read/lines %data.txt
+```
+
+#### `write`
+Writes data to a file.
+
+**Arguments:**
+- `target` [file! or text!]: The path to the file.
+- `data` [any]: The data to write (will be converted to string).
+
+**Refinements:**
+- `/append`: Appends the data to the end of the file instead of overwriting.
+
+**Examples:**
+```rebol
+>> write %log.txt "Session started"
+>> write/append %log.txt " - Event 1"
+```
+
+
 ### Input & Output
 
 #### `ask`
@@ -390,6 +443,60 @@ Hello
 1 + 2 = 3
 ```
 
+### Inspection
+
+#### `help`
+Displays help information for a word.
+
+**Arguments:**
+- `word` [word]: The word to look up.
+
+**Examples:**
+```rebol
+>> help print
+WORD: print
+TYPE: Native Function
+ARITY: 1 arguments
+```
+
+#### `probe`
+Prints the internal representation of a value and returns the value itself. Useful for debugging within expressions.
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> a: probe add 1 2
+3
+== 3
+```
+
+#### `type?`
+Returns the type of a value as a word (e.g., `integer!`, `text!`).
+
+**Arguments:**
+- `value` [any]
+
+**Examples:**
+```rebol
+>> type? 10
+integer!
+```
+
+#### `what`
+Lists all defined functions in the current context.
+
+**Examples:**
+```rebol
+>> what
+--- Defined Functions ---
+add             [native]  
+ask             [native]  
+...
+```
+
+
 ### Looping
 
 #### `foreach`
@@ -437,6 +544,138 @@ Repeatedly evaluates a body block as long as a condition block evaluates to true
 1
 2
 ```
+
+### .NET Interop
+
+Ragnar provides deep integration with the .NET runtime. You can instantiate classes, call methods, and access properties using both native functions and idiomatic path navigation.
+
+#### Path Navigation
+
+You can use the slash syntax (`/`) to access properties and fields of .NET objects or static types. This is often cleaner than using `get-prop` or `get-static`.
+
+**Instance Access:**
+```rebol
+>> now: get-static "System.DateTime" "Now"
+>> print now/Year
+2026
+```
+
+**Static Access:**
+If a word is not defined in the Ragnar context, the interpreter will try to resolve it as a .NET type name.
+```rebol
+>> print System.Math/PI
+3.141592653589793
+```
+
+**Setting Properties:**
+You can use the set-path syntax (colon suffix) to set properties or fields.
+```rebol
+>> sb: new "System.Text.StringBuilder" []
+>> sb/Capacity: 100
+>> print sb/Capacity
+100
+```
+
+**Case Insensitivity:**
+Ragnar's .NET interop is case-insensitive by default.
+```rebol
+>> now/year  ; same as now/Year
+```
+
+#### `call-method`
+Calls an instance method on a .NET object.
+
+**Arguments:**
+- `object` [dotnet!]: The .NET instance.
+- `name` [text]: The name of the method.
+- `args` [block]: A block of arguments to pass to the method.
+
+**Examples:**
+```rebol
+>> sb: new "System.Text.StringBuilder" [ "Hello" ]
+>> call-method sb "Append" [ " World" ]
+>> print sb
+Hello World
+```
+
+#### `call-static`
+Calls a static method on a .NET type.
+
+**Arguments:**
+- `type` [text]: The full name of the .NET type.
+- `name` [text]: The name of the static method.
+- `args` [block]: A block of arguments.
+
+**Examples:**
+```rebol
+>> call-static "System.Math" "Sqrt" [ 25.0 ]
+5.0
+```
+
+#### `get-prop`
+Gets the value of a property from a .NET object.
+
+**Arguments:**
+- `object` [dotnet!]
+- `name` [text]: Property name.
+
+**Examples:**
+```rebol
+>> sb: new "System.Text.StringBuilder" [ "Hi" ]
+>> get-prop sb "Length"
+2
+```
+
+#### `get-static`
+Gets the value of a static property or field.
+
+**Arguments:**
+- `type` [text]: Full type name.
+- `name` [text]: Property or field name.
+
+**Examples:**
+```rebol
+>> get-static "System.DateTime" "Now"
+2026-05-14 14:30:00
+```
+
+#### `get-type`
+Resolves a .NET type name into a type object.
+
+**Arguments:**
+- `name` [text]: Full type name.
+
+**Examples:**
+```rebol
+>> t: get-type "System.Int32"
+```
+
+#### `new`
+Instantiates a new .NET object.
+
+**Arguments:**
+- `type` [text or dotnet!]: The type name or type object.
+- `args` [block]: Constructor arguments.
+
+**Examples:**
+```rebol
+>> list: new "System.Collections.Generic.List`1[System.String]" []
+```
+
+#### `set-prop`
+Sets the value of a property on a .NET object.
+
+**Arguments:**
+- `object` [dotnet!]
+- `name` [text]: Property name.
+- `value` [any]
+
+**Examples:**
+```rebol
+>> sb: new "System.Text.StringBuilder" []
+>> set-prop sb "Capacity" 100
+```
+
 
 ### Series & Searching
 
@@ -647,7 +886,24 @@ Converts a string to uppercase.
 "HELLO"
 ```
 
+### System & OS
+
+#### `call`
+Executes a system command.
+
+**Arguments:**
+- `command` [text]: The command to execute.
+
+**Refinements:**
+- `/wait`: Waits for the command to finish and returns the exit code.
+
+**Examples:**
+```rebol
+>> call "dir"
+>> code: call/wait "git status"
+```
+
 ## TODO
 
 1. String manipulation functions: copy
-1. Series manipulation functions: copy, select, pick, insert, remove, empty?, reduce, compose, at, next, back, head, tail, reverse, collect, keep, map-each, find
+1. Series manipulation functions: copy, select, pick, insert, remove, empty?, compose, at, next, back, head, tail, reverse, collect, keep, map-each
