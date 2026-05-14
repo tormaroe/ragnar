@@ -6,8 +6,13 @@ class Program
     {
         var interpreter = new Interpreter();
         var globalContext = Runtime.CreateGlobalContext();
-
-        Console.WriteLine("\n [][][][][][][][][][ RAGNAR ][][][][][][][][][]\n");
+        
+        Repl.Write("""
+              (  )
+             ( o o)
+              \ - \ 
+            """, ConsoleColor.Blue);
+        Repl.WritePrint("RAGNAR interpreter | https://github.com/tormaroe/ragnar\n", newline: true);
 
         // 1. Process files if provided
         if (args.Length > 0)
@@ -26,7 +31,7 @@ class Program
     {
         if (!System.IO.File.Exists(path))
         {
-            Console.WriteLine($"Error: File not found '{path}'");
+            Repl.WriteError($"Error: File not found '{path}'");
             return;
         }
 
@@ -39,13 +44,16 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in {path}: {ex.Message}");
+            Repl.WriteError($"Error in {path}: {ex.Message}");
         }
     }
 
     static void RunRepl(Interpreter interpreter, Context context)
     {
-        Console.WriteLine("REPL Mode (type 'quit' to exit)");
+        Repl.WritePrompt("REPL Mode (type 'quit' to exit)", newline: true);
+
+        // Wrap the output in a colored writer for 'print' statements
+        context.Output = new ColoredTextWriter(Console.Out, ReplConfig.PrinterColor);
 
         var repl = new Repl();
         var buffer = new System.Text.StringBuilder();
@@ -70,20 +78,21 @@ class Program
                 // Print the result of the last expression
                 if (result != null)
                 {
-                    Console.WriteLine($"== {result}");
+                    Repl.WriteResult($"== {result}");
                 }
 
                 // Add the successfully evaluated block to history
                 repl.AddHistory(code.TrimEnd('\r', '\n'));
                 buffer.Clear();
-            }            catch (IncompleteInputException)
+            }
+            catch (IncompleteInputException)
             {
                 // Wait for more input
                 continue;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Repl.WriteError($"Error: {ex.Message}");
                 buffer.Clear();
             }
         }

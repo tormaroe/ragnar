@@ -12,9 +12,24 @@ public class Repl
     private string _savedInput = "";
     private int _lastMaxTextLength = 0;
 
+    public static void WritePrompt(string text, bool newline = false) => Write(text, ReplConfig.PromptColor, newline);
+    public static void WriteInput(string text, bool newline = false) => Write(text, ReplConfig.InputColor, newline);
+    public static void WritePrint(string text, bool newline = false) => Write(text, ReplConfig.PrinterColor, newline);
+    public static void WriteResult(string text, bool newline = true) => Write(text, ReplConfig.ResultColor, newline);
+    public static void WriteError(string text, bool newline = true) => Write(text, ReplConfig.ErrorColor, newline);
+
+    public static void Write(string text, ConsoleColor color, bool newline = false)
+    {
+        Console.ForegroundColor = color;
+        if (newline) Console.WriteLine(text);
+        else Console.Write(text);
+        Console.ResetColor();
+    }
+
     public string ReadLine(string prompt)
     {
-        Console.Write(prompt);
+        WritePrompt(prompt);
+
         var line = new StringBuilder();
         int pos = 0;
         _historyIndex = _history.Count;
@@ -33,6 +48,7 @@ public class Repl
             {
                 MoveToEnd(prompt, line.Length, startTop, startLeft);
                 Console.WriteLine();
+                Console.ResetColor();
                 return line.ToString();
             }
             else if (key == ConsoleKey.Backspace)
@@ -115,7 +131,6 @@ public class Repl
     {
         if (string.IsNullOrWhiteSpace(line)) return;
         
-        // Sanitize: trim each line and join with space
         string sanitized = string.Join(" ", line.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                                                 .Select(l => l.Trim()));
         
@@ -127,20 +142,21 @@ public class Repl
 
     private void Redraw(string prompt, StringBuilder line, int pos, int startTop, int startLeft)
     {
-        // Calculate the actual starting position (accounting for scrolling)
         int promptStartLeft = startLeft - prompt.Length;
         Console.SetCursorPosition(promptStartLeft, startTop);
         
-        string fullText = prompt + line.ToString();
-        Console.Write(fullText);
+        WritePrompt(prompt);
         
-        // If current text is shorter than the longest we've seen this session, clear the tail
-        if (fullText.Length < _lastMaxTextLength)
+        string text = line.ToString();
+        Console.Write(text);
+        
+        int currentTotalLength = prompt.Length + text.Length;
+        if (currentTotalLength < _lastMaxTextLength)
         {
-            Console.Write(new string(' ', _lastMaxTextLength - fullText.Length));
+            Console.Write(new string(' ', _lastMaxTextLength - currentTotalLength));
         }
         
-        _lastMaxTextLength = Math.Max(_lastMaxTextLength, fullText.Length);
+        _lastMaxTextLength = Math.Max(_lastMaxTextLength, currentTotalLength);
         
         SetCursor(prompt, pos, startTop, startLeft);
     }
@@ -153,7 +169,6 @@ public class Repl
         int left = totalPos % width;
         int top = startTop + (totalPos / width);
         
-        // Clamp to buffer
         top = Math.Min(top, Console.BufferHeight - 1);
         Console.SetCursorPosition(left, top);
     }
