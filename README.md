@@ -7,7 +7,6 @@
 
 Hobby project, basically just started.
 
-
 ## Native Function Reference
 
 ### `trim`
@@ -37,8 +36,64 @@ Removes whitespace from a string. By default, it removes leading and trailing wh
 "hello  "
 ```
 
+### `replace`
+Replaces occurrences of a search string with a replacement string.
+
+**Arguments:**
+- `target` [text]: The string to modify.
+- `search` [text]: The string to look for.
+- `replacement` [text]: The string to replace it with.
+
+**Refinements:**
+- `/all`: Replaces all occurrences instead of just the first one.
+
+**Examples:**
+```rebol
+>> replace "banana" "a" "o"
+"bonana"
+
+>> replace/all "banana" "a" "o"
+"bonono"
+```
+
+### `uppercase`
+Converts a string to uppercase.
+
+**Arguments:**
+- `value` [text]: The string to convert.
+
+**Examples:**
+```rebol
+>> uppercase "hello"
+"HELLO"
+```
+
+### `lowercase`
+Converts a string to lowercase.
+
+**Arguments:**
+- `value` [text]: The string to convert.
+
+**Examples:**
+```rebol
+>> lowercase "HELLO"
+"hello"
+```
+
+### `split`
+Splits a string into a block of strings based on a delimiter.
+
+**Arguments:**
+- `value` [text]: The string to split.
+- `delimiter` [text]: The delimiter to split by.
+
+**Examples:**
+```rebol
+>> split "one,two,three" ","
+[ "one" "two" "three" ]
+```
 
 ## TODO
 
-1. String manipulation functions: find, replace, uppercase, lowercase, split, copy
+1. String manipulation functions: find, copy
 1. Series manipulation functions: copy, select, pick, insert, remove, empty?, reduce, compose, at, next, back, head, tail, reverse, collect, keep, map-each, find

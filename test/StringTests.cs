@@ -61,4 +61,43 @@ public class StringTests
         var (result, _) = Run("trim/head/tail \"  hello  \"");
         Assert.Equal("hello", ((Text)result).Content);
     }
+
+    [Fact]
+    public void Replace_First_Works()
+    {
+        var (result, _) = Run("replace \"banana\" \"a\" \"o\"");
+        Assert.Equal("bonana", ((Text)result).Content);
+    }
+
+    [Fact]
+    public void Replace_All_Works()
+    {
+        var (result, _) = Run("replace/all \"banana\" \"a\" \"o\"");
+        Assert.Equal("bonono", ((Text)result).Content);
+    }
+
+    [Fact]
+    public void Uppercase_Works()
+    {
+        var (result, _) = Run("uppercase \"hello\"");
+        Assert.Equal("HELLO", ((Text)result).Content);
+    }
+
+    [Fact]
+    public void Lowercase_Works()
+    {
+        var (result, _) = Run("lowercase \"HELLO\"");
+        Assert.Equal("hello", ((Text)result).Content);
+    }
+
+    [Fact]
+    public void Split_Works()
+    {
+        var (result, _) = Run("split \"one,two,three\" \",\"");
+        var block = Assert.IsType<Block>(result);
+        Assert.Equal(3, block.Children.Count);
+        Assert.Equal("one", ((Text)block.Children[0]).Content);
+        Assert.Equal("two", ((Text)block.Children[1]).Content);
+        Assert.Equal("three", ((Text)block.Children[2]).Content);
+    }
 }
