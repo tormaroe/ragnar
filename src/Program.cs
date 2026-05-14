@@ -46,21 +46,14 @@ class Program
     static void RunRepl(Interpreter interpreter, Context context)
     {
         Console.WriteLine("REPL Mode (type 'quit' to exit)");
-        
+
+        var repl = new Repl();
         var buffer = new System.Text.StringBuilder();
 
         while (true)
         {
-            if (buffer.Length == 0)
-            {
-                Console.Write(">> ");
-            }
-            else
-            {
-                Console.Write(".. ");
-            }
-
-            string? input = Console.ReadLine();
+            string prompt = buffer.Length == 0 ? ">> " : ".. ";
+            string input = repl.ReadLine(prompt);
 
             if (string.IsNullOrWhiteSpace(input) && buffer.Length == 0)
                 continue;
@@ -73,16 +66,17 @@ class Program
                 var tokens = new Lexer(code).Tokenize();
                 var root = new Loader().Load(tokens);
                 var result = interpreter.Evaluate(root, context);
-                
+
                 // Print the result of the last expression
                 if (result != null)
                 {
                     Console.WriteLine($"== {result}");
                 }
 
+                // Add the successfully evaluated block to history
+                repl.AddHistory(code.TrimEnd('\r', '\n'));
                 buffer.Clear();
-            }
-            catch (IncompleteInputException)
+            }            catch (IncompleteInputException)
             {
                 // Wait for more input
                 continue;
