@@ -70,7 +70,36 @@ public static class MathFunctions
         }, 2);
         ctx.Set("remainder", remainder);
         ctx.Set("//", new Op(remainder.Action));
+
+        var random = new Native((args, refs, context, interpreter) =>
+        {
+            if (refs.Contains("seed"))
+            {
+                int seedValue = (int)GetDoubleValue(args[0]);
+                _rng = new Random(seedValue);
+                return new Word("none");
+            }
+
+            if (args[0] is Integer i)
+            {
+                if (i.Number <= 0) throw new Exception("random expects a positive integer.");
+                // Rebol: random 10 returns 1 to 10 inclusive
+                return new Integer(_rng.Next(1, (int)i.Number + 1));
+            }
+
+            if (args[0] is Decimal d)
+            {
+                if (d.Number <= 0) throw new Exception("random expects a positive decimal.");
+                // Rebol: random 10.0 returns 0.0 to 10.0
+                return new Decimal(_rng.NextDouble() * d.Number);
+            }
+
+            throw new Exception("random expects an integer or decimal.");
+        }, 1);
+        ctx.Set("random", random);
     }
+
+    private static Random _rng = new Random();
 
     private static double GetDoubleValue(Value v) => v switch
     {

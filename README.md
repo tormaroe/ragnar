@@ -16,6 +16,7 @@ Hobby project, basically just started.
         - [`divide`](#divide)
         - [`mul`](#mul)
         - [`multiply`](#multiply)
+        - [`random`](#random)
         - [`remainder`](#remainder)
         - [`sub`](#sub)
     - [Comparison](#comparison)
@@ -144,6 +145,26 @@ Returns the product of two values.
 ```rebol
 >> multiply 3 4
 12
+```
+
+#### `random`
+Returns a random value within a specified range.
+
+**Arguments:**
+- `value` [number]: If integer, returns a value from 1 up to the value (inclusive). If decimal, returns a value from 0.0 up to the value.
+
+**Refinements:**
+- `/seed`: Seeds the random number generator with the given value. Returns `none`.
+
+**Examples:**
+```rebol
+>> random 10
+7
+
+>> random 1.0
+0.42
+
+>> random/seed 123
 ```
 
 #### `remainder`
