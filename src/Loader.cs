@@ -49,7 +49,7 @@ public class Loader
         // If the loop ends but we were still looking for a closing token...
         if (endType.HasValue)
         {
-            throw new Exception($"Missing closing token for {endType.Value}");
+            throw new IncompleteInputException($"Missing closing token for {endType.Value}");
         }
 
         return children;

@@ -47,17 +47,33 @@ class Program
     {
         Console.WriteLine("REPL Mode (type 'quit' to exit)");
         
+        var buffer = new System.Text.StringBuilder();
+
         while (true)
         {
-            Console.Write(">> ");
+            if (buffer.Length == 0)
+            {
+                Console.Write(">> ");
+            }
+            else
+            {
+                Console.Write(".. ");
+            }
+
             string? input = Console.ReadLine();
 
-            if (string.IsNullOrWhiteSpace(input))
+            if (input == "quit")
+                break;
+
+            if (string.IsNullOrWhiteSpace(input) && buffer.Length == 0)
                 continue;
+
+            buffer.AppendLine(input);
 
             try
             {
-                var tokens = new Lexer(input).Tokenize();
+                var code = buffer.ToString();
+                var tokens = new Lexer(code).Tokenize();
                 var root = new Loader().Load(tokens);
                 var result = interpreter.Evaluate(root, context);
                 
@@ -66,10 +82,18 @@ class Program
                 {
                     Console.WriteLine($"== {result}");
                 }
+
+                buffer.Clear();
+            }
+            catch (IncompleteInputException)
+            {
+                // Wait for more input
+                continue;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+                buffer.Clear();
             }
         }
     }

@@ -70,10 +70,14 @@ public class Lexer(string input)
     {
         Consume(); // Skip opening "
         var sb = new StringBuilder();
-        while (Peek() != '"' && _pos < _input.Length)
+        while (_pos < _input.Length && Peek() != '"')
         {
             sb.Append(Consume());
         }
+
+        if (_pos >= _input.Length)
+            throw new IncompleteInputException("Unclosed string");
+
         Consume(); // Skip closing "
         return new Text(sb.ToString());
     }
