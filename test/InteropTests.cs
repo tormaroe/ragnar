@@ -1,23 +1,8 @@
 
 namespace Ragnar.Tests;
 
-public class InteropTests
+public class InteropTests : TestBase
 {
-    // Re-using the same Run helper logic from your previous InterpreterTests
-    private (Value Result, Context Context) Run(string code)
-    {
-        var lexer = new Lexer(code);
-        var tokens = lexer.Tokenize();
-        var loader = new Loader();
-        var root = loader.Load(tokens);
-
-        var ctx = Runtime.CreateGlobalContext();
-        var interpreter = new Interpreter();
-
-        var result = interpreter.Evaluate(root, ctx);
-        return (result, ctx);
-    }
-
     [Fact]
     public void GetType_Resolves_Valid_DotNet_Type()
     {

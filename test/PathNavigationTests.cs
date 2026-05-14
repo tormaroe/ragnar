@@ -1,17 +1,7 @@
 namespace Ragnar.Tests;
 
-public class PathNavigationTests
+public class PathNavigationTests : TestBase
 {
-    private (Value Result, string Output) Run(string code)
-    {
-        var lexer = new Lexer(code);
-        var tokens = lexer.Tokenize();
-        var root = new Loader().Load(tokens);
-        var ctx = Runtime.CreateGlobalContext();
-        var interpreter = new Interpreter();
-        return (interpreter.Evaluate(root, ctx), "");
-    }
-
     [Fact]
     public void Path_Navigates_Block_Index()
     {

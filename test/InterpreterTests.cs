@@ -1,26 +1,8 @@
 
 namespace Ragnar.Tests;
 
-public class InterpreterTests
+public class InterpreterTests : TestBase
 {
-    /// <summary>
-    /// Helper to execute a snippet of Ragnar code and return the final 
-    /// evaluation result and the state of the context.
-    /// </summary>
-    private (Value Result, Context Context) Run(string code)
-    {
-        var lexer = new Lexer(code);
-        var tokens = lexer.Tokenize();
-        var loader = new Loader();
-        var root = loader.Load(tokens);
-
-        var ctx = Runtime.CreateGlobalContext();
-        var interpreter = new Interpreter();
-
-        var result = interpreter.Evaluate(root, ctx);
-        return (result, ctx);
-    }
-
     [Fact]
     public void Basic_Math_And_Assignment_Works()
     {
@@ -207,18 +189,8 @@ public class InterpreterTests
             print [""Hello"" name]
         ";
 
-        var lexer = new Lexer(code);
-        var tokens = lexer.Tokenize();
-        var root = new Loader().Load(tokens);
-        var ctx = Runtime.CreateGlobalContext();
-        var interpreter = new Interpreter();
+        var (_, output) = RunWithOutput(code);
 
-        using var sw = new StringWriter();
-        ctx.Output = sw; // Redirect output to our StringWriter
-
-        interpreter.Evaluate(root, ctx);
-
-        var output = sw.ToString().Trim();
         // Should NOT have brackets or quotes
         Assert.Equal("Hello Alice", output);
     }

@@ -1,30 +1,7 @@
 namespace Ragnar.Tests;
 
-public class HelpTests
+public class HelpTests : TestBase
 {
-    private (Value Result, string Output) RunWithOutput(string code)
-    {
-        // 1. Setup the private buffer
-        using var sw = new StringWriter();
-        
-        // 2. Standard pipeline
-        var lexer = new Lexer(code);
-        var tokens = lexer.Tokenize();
-        var root = new Loader().Load(tokens);
-        
-        // 3. Inject the StringWriter into the Context
-        var ctx = Runtime.CreateGlobalContext();
-        ctx.Output = sw; 
-        
-        var interpreter = new Interpreter();
-        
-        // 4. Evaluate
-        var result = interpreter.Evaluate(root, ctx);
-        
-        // 5. Return both the functional result and the text output
-        return (result, sw.ToString().Trim());
-    }
-
     [Fact]
     public void Help_Displays_Native_Info()
     {
