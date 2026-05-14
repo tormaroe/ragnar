@@ -154,6 +154,60 @@ Evaluates a block of condition-block pairs. It evaluates each condition and exec
 11
 ```
 
+### `ask`
+Prompts the user for input with a specific message. Returns the user's response as a `text!` value.
+
+**Arguments:**
+- `prompt` [text]: The message to display to the user.
+
+**Examples:**
+```rebol
+>> name: ask "What is your name? "
+What is your name? Torbjørn
+== "Torbjørn"
+```
+
+### `input`
+Reads a line of text from the console. Unlike `ask`, it does not display a prompt.
+
+**Returns:**
+- [text]: The text entered by the user.
+
+**Examples:**
+```rebol
+>> data: input
+Hello world
+== "Hello world"
+```
+
+### `confirm`
+Prompts the user for a confirmation from a set of options. 
+
+**Arguments:**
+- `question` [text]: The question to ask.
+
+**Refinements:**
+- `/with`: Allows specifying custom options. Requires a block with two or more values.
+
+**Returns:**
+- If exactly 2 options (including the default `y/n`): Returns `true` for the first option and `false` for the second.
+- If more than 2 options: Returns the selected value itself.
+
+**Examples:**
+```rebol
+>> if confirm "Delete file?" [ print "Deleting..." ]
+Delete file? (y/n) y
+Deleting...
+
+>> confirm/with "Install?" [ "yes" "no" ]
+Install? (yes/no) yes
+== true
+
+>> choice: confirm/with "Action?" [ "edit" "delete" "cancel" ]
+Action? (edit/delete/cancel) delete
+== "delete"
+```
+
 ## TODO
 
 1. String manipulation functions: copy

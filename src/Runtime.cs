@@ -30,6 +30,7 @@ public static class Runtime
         Inspection.AddInspectionFunctions(ctx);
         OS.AddOsFunctions(ctx);
         IO.AddIoFunctions(ctx);
+        IoFunctions.Add(ctx);
 
         return ctx;
     }
