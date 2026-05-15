@@ -7,6 +7,8 @@
 
 Hobby project, basically just started. Vibecoding with Gemini CLI.
 
+[![.NET](https://github.com/tormaroe/ragnar/actions/workflows/dotnet.yml/badge.svg)](https://github.com/tormaroe/ragnar/actions/workflows/dotnet.yml)
+
 ## REPL demo
 
 ![Ragnar REPL Dice demo](assets/repl-dice-demo.png)
