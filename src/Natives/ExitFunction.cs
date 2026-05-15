@@ -5,7 +5,7 @@ public static class ExitFunction
     public static void Add(Context ctx)
     {
         // exit / quit
-        var exitNative = new Native((args, refinements, _, _) =>
+        var exitNative = new Native((args, refinements, _, _, _) =>
         {
             ctx.Output.WriteLine("Goodbye!");
             Environment.Exit(0);

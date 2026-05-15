@@ -5,7 +5,7 @@ public class Inspection
     public static void AddInspectionFunctions(Context ctx)
     {
         // what (no arguments)
-        ctx.Set("what", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("what", new Native((args, refinements, context, interpreter, isTail) => {
             var all = context.GetAllBindings();
             
             // Filter for function types
@@ -31,7 +31,7 @@ public class Inspection
         }, 0));
 
         // help 'print
-        ctx.Set("help", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("help", new Native((args, refinements, context, interpreter, isTail) => {
             // We expect a Word (e.g., help print)
             if (args[0] is not Word w)
             {
@@ -79,7 +79,7 @@ public class Inspection
         }, 1));
 
         // probe [value]
-        ctx.Set("probe", new Native((args, refinements, _, _) => {
+        ctx.Set("probe", new Native((args, refinements, _, _, isTail) => {
             // Print the literal representation (code-friendly)
             ctx.Output.WriteLine(args[0].ToString());
             
@@ -88,7 +88,7 @@ public class Inspection
         }, 1));
 
         // type? [value]
-        ctx.Set("type?", new Native((args, refinements, _, _) => {
+        ctx.Set("type?", new Native((args, refinements, _, _, isTail) => {
             string typeName = args[0] switch {
                 Integer  => "integer!",
                 Decimal  => "decimal!",

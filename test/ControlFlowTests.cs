@@ -53,4 +53,48 @@ public class ControlFlowTests : TestBase
         Assert.Equal("negative", ((Text)ctx.Get("r1")).ToUserString());
         Assert.Equal("positive", ((Text)ctx.Get("r2")).ToUserString());
     }
+
+    [Fact]
+    public void Deep_Recursion_Succeeds_With_TCO()
+    {
+        // This would definitely overflow without TCO
+        var code = @"
+            count: func [n acc] [
+                either n = 0 [
+                    acc
+                ] [
+                    count (n - 1) (acc + 1)
+                ]
+            ]
+            count 5000 0
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal(5000, ((Integer)result).Number);
+    }
+
+    [Fact]
+    public void Euler_1_Solution_2_Works()
+    {
+        var code = @"
+            include?: func [x] [ or (x // 3 = 0) (x // 5 = 0) ]
+
+            f: func [limit] [
+                 inner: func [acc n] [
+                      either n > 0 [
+                        if include? n [
+                          acc: acc + n
+                        ]
+                        inner acc (n - 1)
+                      ] [
+                        acc
+                      ]
+                 ]
+                 inner 0 (limit - 1)
+            ]
+            f 1000
+        ";
+        var (result, _) = Run(code);
+        // Solution to Euler 1 for 1000 is 233168
+        Assert.Equal(233168, ((Integer)result).Number);
+    }
 }

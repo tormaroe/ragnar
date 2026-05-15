@@ -4,7 +4,7 @@ public static class BlockFunctions
 {
     public static void Add(Context ctx)
     {
-        ctx.Set("reduce", new Native((args, refs, context, interpreter) =>
+        ctx.Set("reduce", new Native((args, refs, context, interpreter, isTail) =>
         {
             if (args[0] is not Block inputBlock)
                 throw new Exception("reduce expects a block.");

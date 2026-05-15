@@ -5,7 +5,7 @@ public static class MathFunctions
     public static void Add(Context ctx)
     {
         // prefix versions
-        var add = new Native((args, refinements, _, _) =>
+        var add = new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number + i2.Number);
@@ -17,7 +17,7 @@ public static class MathFunctions
         ctx.Set("add", add);
         ctx.Set("+", new Op(add.Action));
 
-        var sub = new Native((args, refinements, _, _) =>
+        var sub = new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number - i2.Number);
@@ -29,7 +29,7 @@ public static class MathFunctions
         ctx.Set("sub", sub);
         ctx.Set("-", new Op(sub.Action));
 
-        var multiply = new Native((args, refs, context, interpreter) =>
+        var multiply = new Native((args, refs, context, interpreter, _) =>
         {
             if (args[0] is Integer i1 && args[1] is Integer i2)
                 return new Integer(i1.Number * i2.Number);
@@ -42,7 +42,7 @@ public static class MathFunctions
         ctx.Set("mul", multiply);
         ctx.Set("*", new Op(multiply.Action));
 
-        var divide = new Native((args, refs, context, interpreter) =>
+        var divide = new Native((args, refs, context, interpreter, _) =>
         {
             double val1 = GetDoubleValue(args[0]);
             double val2 = GetDoubleValue(args[1]);
@@ -55,7 +55,7 @@ public static class MathFunctions
         ctx.Set("divide", divide);
         ctx.Set("/", new Op(divide.Action));
 
-        var remainder = new Native((args, refs, context, interpreter) =>
+        var remainder = new Native((args, refs, context, interpreter, _) =>
         {
             if (args[0] is Integer i1 && args[1] is Integer i2)
             {
@@ -71,7 +71,7 @@ public static class MathFunctions
         ctx.Set("remainder", remainder);
         ctx.Set("//", new Op(remainder.Action));
 
-        var random = new Native((args, refs, context, interpreter) =>
+        var random = new Native((args, refs, context, interpreter, _) =>
         {
             if (refs.Contains("seed"))
             {

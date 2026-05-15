@@ -5,17 +5,20 @@
 
 ; Solution 1: Function and while loop
 
-f: func [n limit] [
+f: func [limit] [
      sum: 0
-     i:   0
+     i:   1
      while [ i < limit ] [
-       i:   add i n
-       sum: add sum i
+       if or (i // 3 = 0) (i // 5 = 0) [
+         sum: add sum i
+       ]
+       i: add i 1
      ]
+     sum
    ]
 
 limit:  1000
-answer: (f 3 limit) + (f 5 limit) - (f 15 limit)
+answer: f limit
 print ["Solution 1: The answer is" answer]
 
 
@@ -27,19 +30,17 @@ include?: func [x] [ or zero? x // 3
 
 f: func [limit] [
      inner: func [acc n] [
-	      print [acc n]
 	      either n > 0 [
 	        if include? n [
 	          acc: add acc n
-		]
+          ]
 	        inner acc (n - 1)
 	      ] [
-                acc
+          acc
 	      ]
-            ]
+     ]
      inner 0 (limit - 1)
    ]
 
-; THIS CURRENTLY BLOWS UP with a stack overflow. Implement tail call optimization!
 print ["Solution 2: The answer is" f 1000]
 

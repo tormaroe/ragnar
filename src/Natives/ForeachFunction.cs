@@ -5,7 +5,7 @@ public static class ForeachFunction
     public static void Add(Context ctx)
     {
         // foreach line lines [ print line ]
-        ctx.Set("foreach", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("foreach", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is Word word && args[1] is Series series && args[2] is Block body)
             {

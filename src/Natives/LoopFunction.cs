@@ -5,7 +5,7 @@ public static class LoopFunction
     public static void Add(Context ctx)
     {
         // loop 5 [ print "Hello" ]
-        ctx.Set("loop", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("loop", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is Integer count && args[1] is Block body)
             {
@@ -28,9 +28,9 @@ public static class LoopFunction
         }, 2));
 
         // break
-        ctx.Set("break", new Native((args, refs, _, _) => throw new BreakException(), 0));
+        ctx.Set("break", new Native((args, refs, _, _, _) => throw new BreakException(), 0));
 
         // continue
-        ctx.Set("continue", new Native((args, refs, _, _) => throw new ContinueException(), 0));
+        ctx.Set("continue", new Native((args, refs, _, _, _) => throw new ContinueException(), 0));
     }
 }

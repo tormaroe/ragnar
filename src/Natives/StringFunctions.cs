@@ -6,7 +6,7 @@ public static class StringFunctions
 {
     public static void Add(Context ctx)
     {
-        ctx.Set("trim", new Native((args, refinements, _, _) =>
+        ctx.Set("trim", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text t)
                 throw new Exception("trim requires a string (Text).");
@@ -44,7 +44,7 @@ public static class StringFunctions
             return new Text(input.Trim());
         }, 1));
 
-        ctx.Set("replace", new Native((args, refinements, _, _) =>
+        ctx.Set("replace", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text target) throw new Exception("replace requires a target string.");
             if (args[1] is not Text search) throw new Exception("replace requires a search string.");
@@ -66,19 +66,19 @@ public static class StringFunctions
             }
         }, 3));
 
-        ctx.Set("uppercase", new Native((args, refinements, _, _) =>
+        ctx.Set("uppercase", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text t) throw new Exception("uppercase requires a string.");
             return new Text(t.Content.ToUpperInvariant());
         }, 1));
 
-        ctx.Set("lowercase", new Native((args, refinements, _, _) =>
+        ctx.Set("lowercase", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text t) throw new Exception("lowercase requires a string.");
             return new Text(t.Content.ToLowerInvariant());
         }, 1));
 
-        ctx.Set("split", new Native((args, refinements, _, _) =>
+        ctx.Set("split", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text t) throw new Exception("split requires a string to split.");
             if (args[1] is not Text d) throw new Exception("split requires a delimiter string.");

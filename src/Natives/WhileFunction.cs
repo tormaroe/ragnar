@@ -5,7 +5,7 @@ public static class WhileFunction
     public static void Add(Context ctx)
     {
         // while [ condition-block ] [ body-block ]
-        ctx.Set("while", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("while", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is Block condition && args[1] is Block body)
             {
@@ -15,7 +15,7 @@ public static class WhileFunction
                 {
                     while (true)
                     {
-                        Value condResult = interpreter.Evaluate(condition, context);
+                        Value condResult = interpreter.Evaluate(condition, context, false);
                         
                         // Rebol-style truthiness: everything except false and none is true
                         bool isTrue = true;
@@ -26,7 +26,7 @@ public static class WhileFunction
                         {
                             try
                             {
-                                lastResult = interpreter.Evaluate(body, context);
+                                lastResult = interpreter.Evaluate(body, context, false);
                             }
                             catch (ContinueException) { /* just continue loop */ }
                         }

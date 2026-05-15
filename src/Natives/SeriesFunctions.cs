@@ -20,21 +20,21 @@ public static class SeriesFunctions
         }
 
         // first [10 20] -> 10
-        ctx.Set("first", new Native((args, refinements, _, _) =>
+        ctx.Set("first", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s) return GetAt(s, 0);
             throw new Exception("first requires a series.");
         }, 1));
 
         // second [10 20] -> 20
-        ctx.Set("second", new Native((args, refinements, _, _) =>
+        ctx.Set("second", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s) return GetAt(s, 1);
             throw new Exception("second requires a series.");
         }, 1));
 
         // last [10 20] -> 20
-        ctx.Set("last", new Native((args, refinements, _, _) =>
+        ctx.Set("last", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s)
             {
@@ -45,14 +45,14 @@ public static class SeriesFunctions
         }, 1));
 
         // length? [1 2 3] -> 3
-        ctx.Set("length?", new Native((args, refinements, _, _) =>
+        ctx.Set("length?", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s) return new Integer(s.Length);
             throw new Exception("length? requires a series.");
         }, 1));
 
         // find [series] [value]
-        ctx.Set("find", new Native((args, refinements, _, _) =>
+        ctx.Set("find", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Series s) throw new Exception("find requires a series.");
             Value target = args[1];
@@ -196,7 +196,7 @@ public static class SeriesFunctions
         }, 2));
 
         // append [1 2] 3 -> [1 2 3]
-        ctx.Set("append", new Native((args, refinements, _, _) =>
+        ctx.Set("append", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Block b)
             {
@@ -212,7 +212,7 @@ public static class SeriesFunctions
         }, 2));
 
         // join [base] [value]
-        ctx.Set("join", new Native((args, refs, context, interpreter) =>
+        ctx.Set("join", new Native((args, refs, context, interpreter, _) =>
         {
             // For now, we'll focus on string concatenation
             // but in a full Rebol clone, join [1 2] 3 would return [1 2 3]
@@ -223,7 +223,7 @@ public static class SeriesFunctions
         }, 2));
 
         // rejoin [block]
-        ctx.Set("rejoin", new Native((args, refs, context, interpreter) =>
+        ctx.Set("rejoin", new Native((args, refs, context, interpreter, _) =>
         {
             if (args[0] is not Block b)
                 throw new Exception("rejoin expects a block.");
@@ -242,7 +242,7 @@ public static class SeriesFunctions
         }, 1));
 
         // pick [series] [index]
-        ctx.Set("pick", new Native((args, refs, _, _) =>
+        ctx.Set("pick", new Native((args, refs, _, _, _) =>
         {
             if (args[0] is not Series s) throw new Exception("pick requires a series.");
             if (args[1] is not Integer i) throw new Exception("pick requires an integer index.");
@@ -251,7 +251,7 @@ public static class SeriesFunctions
         }, 2));
 
         // poke [series] [index] [value]
-        ctx.Set("poke", new Native((args, refs, _, _) =>
+        ctx.Set("poke", new Native((args, refs, _, _, _) =>
         {
             if (args[0] is not Block b) throw new Exception("poke currently only supports blocks.");
             if (args[1] is not Integer i) throw new Exception("poke requires an integer index.");
@@ -266,14 +266,14 @@ public static class SeriesFunctions
         }, 3));
 
         // index? [series]
-        ctx.Set("index?", new Native((args, refs, _, _) =>
+        ctx.Set("index?", new Native((args, refs, _, _, _) =>
         {
             if (args[0] is Series s) return new Integer(s.Index + 1);
             throw new Exception("index? requires a series.");
         }, 1));
 
         // copy [value]
-        ctx.Set("copy", new Native((args, refs, _, _) =>
+        ctx.Set("copy", new Native((args, refs, _, _, _) =>
         {
             if (args[0] is Block b)
             {

@@ -5,7 +5,7 @@ public static class FuncFunction
     public static void Add(Context ctx)
     {
         // func [spec] [body]
-        ctx.Set("func", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("func", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is not Block spec) throw new Exception("func spec must be a block.");
             if (args[1] is not Block body) throw new Exception("func body must be a block.");
@@ -19,6 +19,6 @@ public static class FuncFunction
         }, 2));
 
         // return [value]
-        ctx.Set("return", new Native((args, refs, _, _) => throw new ReturnException(args[0]), 1));
+        ctx.Set("return", new Native((args, refs, _, _, _) => throw new ReturnException(args[0]), 1));
     }
 }

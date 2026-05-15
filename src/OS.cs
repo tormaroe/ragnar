@@ -4,7 +4,7 @@ public class OS
 {
     public static void AddOsFunctions(Context ctx)
     {
-        ctx.Set("call", new Native((args, refinements, context, interpreter) => {
+        ctx.Set("call", new Native((args, refinements, context, interpreter, isTail) => {
             if (args[0] is Text cmd)
             {
                 var processInfo = new System.Diagnostics.ProcessStartInfo

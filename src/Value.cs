@@ -97,12 +97,13 @@ public class Paren : Block
     public new Paren At(int newIndex) => new Paren(Children, newIndex);
 }
 
-// The new signature includes the refinements HashSet
+// The new signature includes the refinements HashSet and isTail flag
 public delegate Value NativeDelegate(
     List<Value> args, 
     HashSet<string> refinements, 
     Context context, 
-    Interpreter interpreter
+    Interpreter interpreter,
+    bool isTail
 );
 
 public class Native : Value
@@ -171,4 +172,12 @@ public class DotNetValue(object? instance) : Value
 {
     public object? Instance { get; } = instance;
     public override string ToString() => Instance?.ToString() ?? "null";
+}
+
+public class TailCall(Function function, List<Value> args, Context context) : Value
+{
+    public Function Function { get; } = function;
+    public List<Value> Args { get; } = args;
+    public Context Context { get; } = context;
+    public override string ToString() => "<tail-call>";
 }

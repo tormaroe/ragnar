@@ -5,7 +5,7 @@ public class IO
     public static void AddIoFunctions(Context ctx)
     {
         // read %file.txt (returns string) or read/lines %file.txt (returns block)
-        ctx.Set("read", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("read", new Native((args, refinements, context, interpreter, isTail) =>
         {
             string path = GetPathFromValue(args[0]);
 
@@ -23,7 +23,7 @@ public class IO
         }, 1));
 
         // write %file.txt "data" or write/append %file.txt "data"
-        ctx.Set("write", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("write", new Native((args, refinements, context, interpreter, isTail) =>
         {
             string path = GetPathFromValue(args[0]);
             string content = args[1].ToUserString();

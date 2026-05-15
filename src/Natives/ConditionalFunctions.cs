@@ -12,53 +12,55 @@ public static class ConditionalFunctions
         }
 
         // if [condition] [block]
-        ctx.Set("if", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("if", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (IsTruthy(args[0]) && args[1] is Block b)
             {
-                return interpreter.Evaluate(b, context);
+                return interpreter.Evaluate(b, context, isTail);
             }
             return new Word("none");
         }, 2));
 
         // either [condition] [true-block] [false-block]
-        ctx.Set("either", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("either", new Native((args, refinements, context, interpreter, isTail) =>
         {
             Block branch = (IsTruthy(args[0]) ? args[1] : args[2]) as Block 
                 ?? throw new Exception("either requires blocks for its branches.");
             
-            return interpreter.Evaluate(branch, context);
+            return interpreter.Evaluate(branch, context, isTail);
         }, 3));
 
         // all [block]
-        ctx.Set("all", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("all", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is not Block b) throw new Exception("all requires a block.");
             Value lastResult = new Word("none");
             int index = 0;
             while (index < b.Children.Count)
             {
-                lastResult = interpreter.Next(b, ref index, context);
+                bool last = index == b.Children.Count - 1;
+                lastResult = interpreter.Next(b, ref index, context, isTail && last);
                 if (!IsTruthy(lastResult)) return new Word("none");
             }
             return lastResult;
         }, 1));
 
         // any [block]
-        ctx.Set("any", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("any", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is not Block b) throw new Exception("any requires a block.");
             int index = 0;
             while (index < b.Children.Count)
             {
-                Value result = interpreter.Next(b, ref index, context);
+                bool last = index == b.Children.Count - 1;
+                Value result = interpreter.Next(b, ref index, context, isTail && last);
                 if (IsTruthy(result)) return result;
             }
             return new Word("none");
         }, 1));
 
         // case [block]
-        ctx.Set("case", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("case", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is not Block b)
                 throw new Exception("case requires a block.");
@@ -70,7 +72,7 @@ public static class ConditionalFunctions
             while (index < b.Children.Count)
             {
                 // Evaluate condition
-                Value condition = interpreter.Next(b, ref index, context);
+                Value condition = interpreter.Next(b, ref index, context, false);
                 
                 // If there's no block following the condition, it's an error in Rebol, 
                 // but let's be safe and check.
@@ -86,7 +88,12 @@ public static class ConditionalFunctions
                     Value branch = b.Children[index++];
                     if (branch is Block branchBlock)
                     {
-                        lastResult = interpreter.Evaluate(branchBlock, context);
+                        // For 'case', it's a tail call ONLY if 'all' is not present 
+                        // and it's the branch being executed.
+                        // Or if 'all' is present and it's the LAST branch.
+                        // But wait, if 'all' is not present, the first true branch is the last thing evaluated.
+                        bool isLastBranch = index >= b.Children.Count;
+                        lastResult = interpreter.Evaluate(branchBlock, context, isTail && (isLastBranch || !all));
                         if (!all) return lastResult;
                     }
                 }

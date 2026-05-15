@@ -33,14 +33,14 @@ public class Context
 
     public bool TryGet(string name, out Value? value)
     {
-        if (_bindings.TryGetValue(name, out value))
+        Context? current = this;
+        while (current != null)
         {
-            return true;
-        }
-
-        if (_parent != null)
-        {
-            return _parent.TryGet(name, out value);
+            if (current._bindings.TryGetValue(name, out value))
+            {
+                return true;
+            }
+            current = current._parent;
         }
 
         value = null;

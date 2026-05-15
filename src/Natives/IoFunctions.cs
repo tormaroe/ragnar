@@ -10,7 +10,7 @@ public static class IoFunctions
     {
         // input
         // Reads a line from the console without a prompt.
-        ctx.Set("input", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("input", new Native((args, refinements, context, interpreter, isTail) =>
         {
             var repl = new Repl();
             return new Text(repl.ReadLine(""));
@@ -18,7 +18,7 @@ public static class IoFunctions
 
         // ask "Question?"
         // Prompts the user and returns their input.
-        ctx.Set("ask", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("ask", new Native((args, refinements, context, interpreter, isTail) =>
         {
             string prompt = args[0].ToUserString();
             var repl = new Repl();
@@ -29,7 +29,7 @@ public static class IoFunctions
         // confirm/with "Continue?" [ "y" "n" ]
         // confirm/with "Choice?" [ "a" "b" "c" ]
         // Returns logic! (true/false) for 2 options, or the selected value for > 2 options.
-        ctx.Set("confirm", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("confirm", new Native((args, refinements, context, interpreter, isTail) =>
         {
             string question = args[0].ToUserString();
             List<Value> options = new List<Value> { new Text("y"), new Text("n") };

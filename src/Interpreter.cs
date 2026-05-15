@@ -5,7 +5,7 @@ namespace Ragnar;
 
 public class Interpreter
 {
-    public Value Evaluate(Block block, Context context)
+    public Value Evaluate(Block block, Context context, bool isTail = false)
     {
         Value lastValue = new Word("none"); // Default return value
         int index = 0;
@@ -13,16 +13,32 @@ public class Interpreter
         // Loop through every item in the block
         while (index < block.Children.Count)
         {
-            lastValue = Next(block, ref index, context);
+            lastValue = Next(block, ref index, context, isTail);
+
+            if (lastValue is TailCall tc)
+            {
+                if (index < block.Children.Count)
+                {
+                    // This was NOT the last expression in the block, so we cannot return a TailCall.
+                    // We must trampoline it here and continue with the next expression.
+                    lastValue = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Context);
+                }
+                else
+                {
+                    // This IS the last expression. Return the TailCall to the caller to handle.
+                    return lastValue;
+                }
+            }
         }
 
         return lastValue;
     }
 
     // The 'Next' method evaluates the single next expression, including infix operators.
-    public Value Next(Block block, ref int index, Context context)
+    public Value Next(Block block, ref int index, Context context, bool isTail = false)
     {
-        Value left = NextExpression(block, ref index, context);
+        // A prefix call is in tail position ONLY if there is no infix operator following it.
+        Value left = NextExpression(block, ref index, context, isTail && !HasInfix(block, index, context));
 
         // Greedy infix lookahead (left-associative)
         while (index < block.Children.Count)
@@ -31,8 +47,27 @@ public class Interpreter
             if (nextToken is Word w && context.TryGet(w.Name, out Value? v) && v is Op op)
             {
                 index++; // consume the Op word
-                Value right = NextExpression(block, ref index, context);
-                left = op.Action([left, right], [], context, this);
+                // An infix call is in tail position ONLY if it's the very last thing in the block 
+                // and there are no more infix operators following THIS one.
+                bool lastInfix = !HasInfix(block, index, context);
+                
+                // Arguments to operators are NEVER in tail position.
+                Value right = NextExpression(block, ref index, context, false);
+                left = op.Action([left, right], [], context, this, isTail && lastInfix);
+                
+                // If the operator call itself was a tail call (unlikely for built-ins, but possible),
+                // we should handle it.
+                if (left is TailCall tc)
+                {
+                    if (index < block.Children.Count || !isTail)
+                    {
+                        left = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Context);
+                    }
+                    else
+                    {
+                        return left; // Return the TailCall
+                    }
+                }
             }
             else
             {
@@ -43,7 +78,14 @@ public class Interpreter
         return left;
     }
 
-    public Value NextExpression(Block block, ref int index, Context context)
+    private bool HasInfix(Block block, int index, Context context)
+    {
+        if (index >= block.Children.Count) return false;
+        Value nextToken = block.Children[index];
+        return nextToken is Word w && context.TryGet(w.Name, out Value? v) && v is Op;
+    }
+
+    public Value NextExpression(Block block, ref int index, Context context, bool isTail = false)
     {
         if (index >= block.Children.Count)
             throw new Exception("Unexpected end of block: more arguments expected.");
@@ -53,7 +95,7 @@ public class Interpreter
         // --- PAREN EVALUATION ---
         if (current is Paren p)
         {
-            return Evaluate(p, context);
+            return Evaluate(p, context, isTail);
         }
 
         // --- HANDLE LIT-WORD ---
@@ -71,7 +113,8 @@ public class Interpreter
         // --- HANDLE SET-WORD ---
         if (current is SetWord setWord)
         {
-            Value result = Next(block, ref index, context);
+            // Set-word result is never a tail call
+            Value result = Next(block, ref index, context, false);
             context.Set(setWord.Name, result);
             return result;
         }
@@ -88,9 +131,8 @@ public class Interpreter
                 {
                     if (native.EvalArgs[i])
                     {
-                        // Function arguments use Next to allow them to be greedy
-                        // for infix operators (giving infix higher priority than prefix)
-                        args.Add(Next(block, ref index, context));
+                        // Function arguments are never in tail position
+                        args.Add(Next(block, ref index, context, false));
                     }
                     else
                     {
@@ -98,26 +140,19 @@ public class Interpreter
                         args.Add(block.Children[index++]);
                     }
                 }
-                return native.Action(args, [], context, this);
+                return native.Action(args, [], context, this, isTail);
             }
 
             if (boundValue is Function func)
             {
-                var localCtx = new Context(context);
+                var args = new List<Value>();
                 foreach (var paramName in func.Parameters)
                 {
-                    Value argValue = Next(block, ref index, context);
-                    localCtx.Set(paramName, argValue);
+                    args.Add(Next(block, ref index, context, false));
                 }
                 
-                try
-                {
-                    return Evaluate(func.Body, localCtx);
-                }
-                catch (ReturnException ex)
-                {
-                    return ex.Value;
-                }
+                if (isTail) return new TailCall(func, args, context);
+                return ExecuteWithTrampoline(func, args, context);
             }
 
             return boundValue;
@@ -130,7 +165,7 @@ public class Interpreter
             {
                 container = NavigatePath(container, setPath.Parts[i]);
             }
-            Value valueToSet = Next(block, ref index, context);
+            Value valueToSet = Next(block, ref index, context, false);
             Value lastSegment = setPath.Parts.Last();
 
             if (container is Block b && lastSegment is Integer idx)
@@ -169,14 +204,16 @@ public class Interpreter
                     if (currentVal is Native n)
                     {
                         var args = new List<Value>();
-                        for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context));
-                        return n.Action(args, refinements, context, this);
+                        for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
+                        return n.Action(args, refinements, context, this, isTail);
                     }
                     else if (currentVal is Function f)
                     {
                         var args = new List<Value>();
-                        for (int k = 0; k < f.Parameters.Count; k++) args.Add(Next(block, ref index, context));
-                        return ExecuteFunction(f, args, refinements, context);
+                        for (int k = 0; k < f.Parameters.Count; k++) args.Add(Next(block, ref index, context, false));
+                        
+                        if (isTail) return new TailCall(f, args, context);
+                        return ExecuteWithTrampoline(f, args, context);
                     }
                 }
 
@@ -221,30 +258,11 @@ public class Interpreter
                 : new Word("none");
         }
 
-        // 3. Handle Word-based navigation for nested Ragnar structures (like Objects)
-        // If you haven't implemented Ragnar Objects yet, this will be your future hook.
-
         throw new Exception($"Cannot navigate into {container.GetType().Name} with segment {segment}");
     }
 
     private static Value ResolvePathHead(Context context, Path path)
     {
-        // 1. Resolve the "head" of the path (look it up, don't evaluate it!)
-        // Value head;
-        // if (path.Parts[0] is Word w)
-        // {
-        //     head = context.Get(w.Name);
-        // }
-        // else if (path.Parts[0] is GetWord gw)
-        // {
-        //     head = context.Get(gw.Name);
-        // }
-        // else
-        // {
-        //     head = path.Parts[0];
-        // }
-
-        // return head;
         var first = path.Parts[0];
         if (first is Word w)
         {
@@ -282,6 +300,16 @@ public class Interpreter
         throw new Exception($"Member '{memberName}' not found on {type.Name}");
     }
 
+    private Value ExecuteWithTrampoline(Function func, List<Value> args, Context context)
+    {
+        Value result = ExecuteFunction(func, args, [], context);
+        while (result is TailCall tc)
+        {
+            result = ExecuteFunction(tc.Function, tc.Args, [], tc.Context);
+        }
+        return result;
+    }
+
     private Value ExecuteFunction(Function func, List<Value> args, HashSet<string> refinements, Context context)
     {
         var localContext = new Context(context);
@@ -292,7 +320,7 @@ public class Interpreter
 
         try
         {
-            return Evaluate(func.Body, localContext);
+            return Evaluate(func.Body, localContext, isTail: true);
         }
         catch (ReturnException ex)
         {

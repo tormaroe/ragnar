@@ -217,7 +217,7 @@ public class InterpreterTests : TestBase
         var ctx = Runtime.CreateGlobalContext();
         bool flagSet = false;
 
-        ctx.Set("test-ref", new Native((args, refs, _, _) =>
+        ctx.Set("test-ref", new Native((args, refs, _, _, _) =>
         {
             flagSet = refs.Contains("flag");
             return new Word("none");

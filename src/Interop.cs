@@ -99,7 +99,7 @@ public class Interop
     public static void AddInteropFunctions(Context ctx)
     {
         // get-type "System.Text.StringBuilder"
-        ctx.Set("get-type", new Native((args, refinements, _, _) =>
+        ctx.Set("get-type", new Native((args, refinements, _, _, isTail) =>
         {
             string typeName = (args[0] as Text)?.Content
                 ?? throw new Exception("get-type requires a string.");
@@ -110,7 +110,7 @@ public class Interop
             return new DotNetValue(type);
         }, 1));
 
-        ctx.Set("new", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("new", new Native((args, refinements, context, interpreter, isTail) =>
         {
                 Type? targetType = null;
 
@@ -161,7 +161,7 @@ public class Interop
                 }
         }, 2));
 
-        ctx.Set("call-method", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("call-method", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is DotNetValue dnv && args[1] is Text methodName && args[2] is Block argBlock)
             {
@@ -193,7 +193,7 @@ public class Interop
         }, 3));
 
         // get-prop obj "Length"
-        ctx.Set("get-prop", new Native((args, refinements, _, _) =>
+        ctx.Set("get-prop", new Native((args, refinements, _, _, isTail) =>
         {
             if (args[0] is DotNetValue dnv && args[1] is Text propName)
             {
@@ -207,7 +207,7 @@ public class Interop
         }, 2));
 
         // set-prop obj "PropertyName" value
-        ctx.Set("set-prop", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("set-prop", new Native((args, refinements, context, interpreter, isTail) =>
         {
             if (args[0] is DotNetValue dnv && args[1] is Text propName)
             {
@@ -244,7 +244,7 @@ public class Interop
         }, 3));
 
         // get-static "System.DateTime" "Now"
-        ctx.Set("get-static", new Native((args, refs, context, interpreter) =>
+        ctx.Set("get-static", new Native((args, refs, context, interpreter, isTail) =>
         {
             string typeName = (args[0] as Text)?.Content ?? "";
             string memberName = (args[1] as Text)?.Content ?? "";
@@ -262,7 +262,7 @@ public class Interop
         }, 2));
 
         // call-static "System.Math" "Sqrt" [25.0]
-        ctx.Set("call-static", new Native((args, refs, context, interpreter) =>
+        ctx.Set("call-static", new Native((args, refs, context, interpreter, isTail) =>
         {
             string typeName = (args[0] as Text)?.Content ?? throw new Exception("Type name required.");
             string methodName = (args[1] as Text)?.Content ?? throw new Exception("Method name required.");

@@ -5,7 +5,7 @@ public static class ConversionFunctions
     public static void Add(Context ctx)
     {
         // to-integer [value]
-        ctx.Set("to-integer", new Native((args, refs, _, _) =>
+        ctx.Set("to-integer", new Native((args, refs, _, _, isTail) =>
         {
             if (args[0] is Integer i) return i;
             if (args[0] is Decimal d) return new Integer((long)d.Number);
@@ -17,7 +17,7 @@ public static class ConversionFunctions
         }, 1));
 
         // to-decimal [value]
-        ctx.Set("to-decimal", new Native((args, refs, _, _) =>
+        ctx.Set("to-decimal", new Native((args, refs, _, _, isTail) =>
         {
             if (args[0] is Decimal d) return d;
             if (args[0] is Integer i) return new Decimal((double)i.Number);
@@ -29,7 +29,7 @@ public static class ConversionFunctions
         }, 1));
 
         // to-string [value]
-        ctx.Set("to-string", new Native((args, refs, _, _) =>
+        ctx.Set("to-string", new Native((args, refs, _, _, isTail) =>
         {
             return new Text(args[0].ToUserString());
         }, 1));

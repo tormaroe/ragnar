@@ -6,9 +6,9 @@ public static class DoFunction
     {
         // 3. do [block]
         // This is the core of homoiconicity: treating data as code.
-        ctx.Set("do", new Native((args, refinements, context, interpreter) =>
+        ctx.Set("do", new Native((args, refinements, context, interpreter, isTail) =>
         {
-            if (args[0] is Block b) return interpreter.Evaluate(b, context);
+            if (args[0] is Block b) return interpreter.Evaluate(b, context, isTail);
             return args[0]; // If not a block, just return the value
         }, 1));
     }

@@ -4,7 +4,7 @@ public static class PrintFunction
 {
     public static void Add(Context ctx)
     {
-        ctx.Set("print", new Native((args, refs, context, interpreter) =>
+        ctx.Set("print", new Native((args, refs, context, interpreter, isTail) =>
         {
             var val = args[0];
 
@@ -15,7 +15,7 @@ public static class PrintFunction
                 int index = 0;
                 while (index < b.Children.Count)
                 {
-                    reduced.Add(interpreter.Next(b, ref index, context));
+                    reduced.Add(interpreter.Next(b, ref index, context, false));
                 }
 
                 // 2. Join the results with spaces and print

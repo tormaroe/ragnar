@@ -8,7 +8,7 @@ public static class ComparisonFunctions
     public static void Add(Context ctx)
     {
         // greater? [val1] [val2]
-        var greater = new Native((args, refs, _, _) =>
+        var greater = new Native((args, refs, _, _, isTail) =>
         {
             double d1 = ToDouble(args[0]);
             double d2 = ToDouble(args[1]);
@@ -18,7 +18,7 @@ public static class ComparisonFunctions
         ctx.Set(">", new Op(greater.Action));
 
         // less? [val1] [val2]
-        var less = new Native((args, refs, _, _) =>
+        var less = new Native((args, refs, _, _, isTail) =>
         {
             double d1 = ToDouble(args[0]);
             double d2 = ToDouble(args[1]);
@@ -28,7 +28,7 @@ public static class ComparisonFunctions
         ctx.Set("<", new Op(less.Action));
 
         // equal? [val1] [val2]
-        var equal = new Native((args, refs, _, _) =>
+        var equal = new Native((args, refs, _, _, isTail) =>
         {
             // For now, simple object equality or string representation comparison
             if (args[0] is Integer i1 && args[1] is Integer i2) return new Logic(i1.Number == i2.Number);
@@ -40,7 +40,7 @@ public static class ComparisonFunctions
         ctx.Set("==", new Op(equal.Action));
 
         // not-equal? [val1] [val2]
-        var notEqual = new Native((args, refs, _, _) =>
+        var notEqual = new Native((args, refs, _, _, isTail) =>
         {
             if (args[0] is Integer i1 && args[1] is Integer i2) return new Logic(i1.Number != i2.Number);
             if (args[0] is Decimal dec1 && args[1] is Decimal dec2) return new Logic(dec1.Number != dec2.Number);
@@ -51,7 +51,7 @@ public static class ComparisonFunctions
         ctx.Set("!=", new Op(notEqual.Action));
 
         // greater-or-equal? [val1] [val2]
-        var greaterOrEqual = new Native((args, refs, _, _) =>
+        var greaterOrEqual = new Native((args, refs, _, _, isTail) =>
         {
             double d1 = ToDouble(args[0]);
             double d2 = ToDouble(args[1]);
@@ -61,7 +61,7 @@ public static class ComparisonFunctions
         ctx.Set(">=", new Op(greaterOrEqual.Action));
 
         // less-or-equal? [val1] [val2]
-        var lessOrEqual = new Native((args, refs, _, _) =>
+        var lessOrEqual = new Native((args, refs, _, _, isTail) =>
         {
             double d1 = ToDouble(args[0]);
             double d2 = ToDouble(args[1]);
