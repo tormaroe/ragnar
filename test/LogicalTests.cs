@@ -47,4 +47,34 @@ public class LogicalTests : TestBase
         var (res3, _) = Run("or none 10");
         Assert.True(((Logic)res3).Condition);
     }
+
+    [Fact]
+    public void None_Question_Works()
+    {
+        var (res1, _) = Run("none? none");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("none? 10");
+        Assert.False(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Not_Equal_Question_Works()
+    {
+        var (res1, _) = Run("not-equal? 10 20");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("not-equal? 10 10");
+        Assert.False(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Zero_Question_Works()
+    {
+        var (res1, _) = Run("zero? 0");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("zero? 10");
+        Assert.False(((Logic)res2).Condition);
+    }
 }

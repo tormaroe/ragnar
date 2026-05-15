@@ -207,4 +207,19 @@ public class InteropTests : TestBase
         // Path.Combine is OS sensitive, so we check for the name
         Assert.Contains("Ragnar", text.Content);
     }
+
+    [Fact]
+    public void Get_Env_Retrieves_Environment_Variable()
+    {
+        Environment.SetEnvironmentVariable("RAGNAR_TEST", "rocks");
+        try
+        {
+            var (result, _) = Run("get-env \"RAGNAR_TEST\"");
+            Assert.Equal("rocks", ((Text)result).Content);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("RAGNAR_TEST", null);
+        }
+    }
 }

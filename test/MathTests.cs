@@ -37,4 +37,34 @@ public class MathTests : TestBase
         Assert.Equal(((Integer)res1).Number, ((Integer)res3).Number);
         Assert.Equal(((Integer)res2).Number, ((Integer)res4).Number);
     }
+
+    [Fact]
+    public void Max_Returns_Greater_Value()
+    {
+        var (res1, _) = Run("max 10 20");
+        Assert.Equal(20, ((Integer)res1).Number);
+
+        var (res2, _) = Run("max 100 50");
+        Assert.Equal(100, ((Integer)res2).Number);
+    }
+
+    [Fact]
+    public void Min_Returns_Lesser_Value()
+    {
+        var (res1, _) = Run("min 10 20");
+        Assert.Equal(10, ((Integer)res1).Number);
+
+        var (res2, _) = Run("min 100 50");
+        Assert.Equal(50, ((Integer)res2).Number);
+    }
+
+    [Fact]
+    public void Negate_Multiplies_By_Negative_One()
+    {
+        var (res1, _) = Run("negate 10");
+        Assert.Equal(-10, ((Integer)res1).Number);
+
+        var (res2, _) = Run("negate -50");
+        Assert.Equal(50, ((Integer)res2).Number);
+    }
 }

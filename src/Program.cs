@@ -23,6 +23,8 @@ class Program
         Repl.WritePrint("  RAGNAR interpreter", newline: true);
         Repl.WritePrint("    https://github.com/tormaroe/ragnar\n", newline: true);
 
+        RunCode(interpreter, globalContext, Mezzanine.SOURCE);
+
         // 1. Process files if provided
         if (args.Length > 0)
         {
@@ -47,14 +49,19 @@ class Program
         try
         {
             string code = System.IO.File.ReadAllText(path);
-            var tokens = new Lexer(code).Tokenize();
-            var root = new Loader().Load(tokens);
-            interpreter.Evaluate(root, context);
+            RunCode(interpreter, context, code);
         }
         catch (Exception ex)
         {
             Repl.WriteError($"Error in {path}: {ex.Message}");
         }
+    }
+
+    private static void RunCode(Interpreter interpreter, Context context, string code)
+    {
+        var tokens = new Lexer(code).Tokenize();
+        var root = new Loader().Load(tokens);
+        interpreter.Evaluate(root, context);
     }
 
     static void RunRepl(Interpreter interpreter, Context context)

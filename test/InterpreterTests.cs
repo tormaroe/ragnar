@@ -352,4 +352,15 @@ public class InterpreterTests : TestBase
         var (result, _) = Run(code);
         Assert.Equal("Hello, Ragnar!", ((Text)result).Content);
     }
+
+    [Fact]
+    public void Does_Creates_A_Function_Without_Arguments()
+    {
+        var code = @"
+            say-hi: does [ ""hi"" ]
+            say-hi
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal("hi", ((Text)result).Content);
+    }
 }
