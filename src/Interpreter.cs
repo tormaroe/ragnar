@@ -122,7 +122,15 @@ public class Interpreter
         // --- HANDLE REGULAR WORD ---
         if (current is Word word)
         {
-            Value boundValue = context.Get(word.Name);
+            Value boundValue;
+            if (word.Binding != null)
+            {
+                boundValue = word.Binding.Get(word.Name);
+            }
+            else
+            {
+                boundValue = context.Get(word.Name);
+            }
 
             if (boundValue is Native native)
             {
@@ -131,7 +139,8 @@ public class Interpreter
                 {
                     if (native.EvalArgs[i])
                     {
-                        // Function arguments are never in tail position
+                        // Function arguments use Next to allow them to be greedy
+                        // for infix operators (giving infix higher priority than prefix)
                         args.Add(Next(block, ref index, context, false));
                     }
                     else
@@ -177,6 +186,11 @@ public class Interpreter
                     return valueToSet;
                 }
             }
+            else if (container is ObjectValue obj && lastSegment is Word w)
+            {
+                obj.Context.Set(w.Name, valueToSet);
+                return valueToSet;
+            }
             else if (container is DotNetValue dnv)
             {
                 Interop.SetDotNetMember(dnv.Instance!, lastSegment.ToString(), valueToSet);
@@ -217,6 +231,21 @@ public class Interpreter
                     }
                 }
 
+                if (currentVal is ObjectValue obj && segment is Word key)
+                {
+                    currentVal = obj.Context.Get(key.Name);
+                    if (currentVal is Function f)
+                    {
+                        // Auto-execute if it's a zero-argument function?
+                        // Rebol: any word lookup that results in a function EXECUTES it.
+                        if (f.Parameters.Count == 0)
+                        {
+                            currentVal = ExecuteWithTrampoline(f, [], obj.Context);
+                        }
+                    }
+                    continue;
+                }
+
                 if (currentVal is DotNetValue dnv)
                 {
                     currentVal = GetDotNetMember(dnv.Instance, segment.ToString());
@@ -243,13 +272,19 @@ public class Interpreter
 
     private Value NavigatePath(Value container, Value segment)
     {
-        // 1. Handle .NET Instance or Static Type access
+        // 1. Handle Object property access
+        if (container is ObjectValue obj && segment is Word key)
+        {
+            return obj.Context.Get(key.Name);
+        }
+
+        // 2. Handle .NET Instance or Static Type access
         if (container is DotNetValue dnv)
         {
             return GetDotNetMember(dnv.Instance, segment.ToString());
         }
 
-        // 2. Handle Block index access (e.g., b/1)
+        // 3. Handle Block index access (e.g., b/1)
         if (container is Block b && segment is Integer idx)
         {
             int listIdx = (int)idx.Number - 1; // Ragnar is 1-indexed
@@ -320,7 +355,18 @@ public class Interpreter
 
         try
         {
-            return Evaluate(func.Body, localContext, isTail: true);
+            var result = Evaluate(func.Body, localContext, isTail: true);
+            
+            // If the result is a user function, bind it to this local context
+            // This allows things like: obj/greet: func [] [ self/name ]
+            if (result is Function f)
+            {
+                // Note: This is a simplistic binding model. 
+                // In Rebol, words are bound, not functions. 
+                // But for Ragnar, this helps with the method pattern.
+            }
+            
+            return result;
         }
         catch (ReturnException ex)
         {

@@ -22,8 +22,13 @@ public static class SeriesFunctions
         // first [10 20] -> 10
         ctx.Set("first", new Native((args, refinements, _, _, _) =>
         {
+            if (args[0] is ObjectValue obj)
+            {
+                var keys = obj.Context.GetOwnBindings().Keys.Select(k => new Word(k)).ToList();
+                return new Block(keys);
+            }
             if (args[0] is Series s) return GetAt(s, 0);
-            throw new Exception("first requires a series.");
+            throw new Exception("first requires a series or object.");
         }, 1));
 
         // second [10 20] -> 20
@@ -31,6 +36,13 @@ public static class SeriesFunctions
         {
             if (args[0] is Series s) return GetAt(s, 1);
             throw new Exception("second requires a series.");
+        }, 1));
+
+        // next [10 20] -> [20]
+        ctx.Set("next", new Native((args, refinements, _, _, _) =>
+        {
+            if (args[0] is Series s) return s.At(s.Index + 1);
+            throw new Exception("next requires a series.");
         }, 1));
 
         // last [10 20] -> 20

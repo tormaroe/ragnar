@@ -28,6 +28,7 @@ public static class Runtime
         ComparisonFunctions.Add(ctx);
         LogicalFunctions.Add(ctx);
         ConversionFunctions.Add(ctx);
+        ObjectFunctions.Add(ctx);
         ExitFunction.Add(ctx);
 
         Interop.AddInteropFunctions(ctx);

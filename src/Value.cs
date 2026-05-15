@@ -23,6 +23,7 @@ public abstract class Series : Value
 {
     public int Index { get; set; } = 0;
     public abstract int Length { get; }
+    public abstract Series At(int newIndex);
 }
 
 public class Text : Series
@@ -38,13 +39,20 @@ public class Text : Series
 
     public override string ToString() => $"\"{Content[Index..]}\"";
     public override string ToUserString() => Content[Index..];
-    public Text At(int newIndex) => new Text(Content, newIndex);
+    public override Series At(int newIndex) => new Text(Content, newIndex);
 }
 
-public class Word(string name) : Value
+public class Word(string name, Context? binding = null) : Value
 {
     public string Name { get; } = name;
+    public Context? Binding { get; set; } = binding;
     public override string ToString() => Name;
+}
+
+public class ObjectValue(Context context) : Value
+{
+    public Context Context { get; } = context;
+    public override string ToString() => "make object! [...]";
 }
 
 public class LitWord(string name) : Value
@@ -85,7 +93,7 @@ public class Block : Series
     public override string ToUserString() => 
         string.Join(" ", Children.Skip(Index).Select(c => c.ToUserString()));
 
-    public Block At(int newIndex) => new Block(Children, newIndex);
+    public override Series At(int newIndex) => new Block(Children, newIndex);
 }
 
 public class Paren : Block
@@ -94,7 +102,7 @@ public class Paren : Block
     public Paren(IEnumerable<Value> parts, int index = 0) : base(parts, index) { }
 
     public override string ToString() => "(" + string.Join(" ", Children.Skip(Index)) + ")";
-    public new Paren At(int newIndex) => new Paren(Children, newIndex);
+    public override Series At(int newIndex) => new Paren(Children, newIndex);
 }
 
 // The new signature includes the refinements HashSet and isTail flag

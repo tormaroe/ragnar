@@ -67,4 +67,9 @@ public class Context
 
         return all;
     }
+
+    public Dictionary<string, Value> GetOwnBindings()
+    {
+        return new Dictionary<string, Value>(_bindings);
+    }
 }
