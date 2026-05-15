@@ -6,3 +6,7 @@
 ### Status
 
 Hobby project, basically just started. Vibecoding with Gemini CLI.
+
+## REPL demo
+
+![Ragnar REPL Dice demo](assets/repl-dice-demo.png)
