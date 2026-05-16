@@ -18,12 +18,36 @@ public static class FuncFunction
                 specList = specList.Skip(1).ToList();
             }
 
-            // Convert the words in the spec block into a list of strings
-            var parameters = specList
-                .Select(v => (v as Word)?.Name ?? throw new Exception("Spec must contain words."))
-                .ToList();
+            var mainParams = new List<string>();
+            var userRefinements = new List<(string Name, List<string> Args)>();
 
-            return new Function(parameters, body, title);
+            int i = 0;
+            while (i < specList.Count && specList[i] is Word w)
+            {
+                mainParams.Add(w.Name);
+                i++;
+            }
+
+            while (i < specList.Count)
+            {
+                if (specList[i] is Refinement r)
+                {
+                    var refArgs = new List<string>();
+                    i++;
+                    while (i < specList.Count && specList[i] is Word argW)
+                    {
+                        refArgs.Add(argW.Name);
+                        i++;
+                    }
+                    userRefinements.Add((r.Name, refArgs));
+                }
+                else
+                {
+                    throw new Exception($"Unexpected token {specList[i]} in func spec. Parameters must come before refinements.");
+                }
+            }
+
+            return new Function(mainParams, userRefinements, body, title);
         }, 2).WithTitle("Defines a function."));
 
         // return [value]

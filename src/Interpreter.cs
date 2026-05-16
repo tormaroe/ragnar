@@ -21,7 +21,7 @@ public class Interpreter
                 {
                     // This was NOT the last expression in the block, so we cannot return a TailCall.
                     // We must trampoline it here and continue with the next expression.
-                    lastValue = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Context);
+                    lastValue = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Refinements, tc.Context);
                 }
                 else
                 {
@@ -61,7 +61,7 @@ public class Interpreter
                 {
                     if (index < block.Children.Count || !isTail)
                     {
-                        left = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Context);
+                        left = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Refinements, tc.Context);
                     }
                     else
                     {
@@ -155,13 +155,13 @@ public class Interpreter
             if (boundValue is Function func)
             {
                 var args = new List<Value>();
-                foreach (var paramName in func.Parameters)
+                foreach (var paramName in func.MainParameters)
                 {
                     args.Add(Next(block, ref index, context, false));
                 }
                 
-                if (isTail) return new TailCall(func, args, context);
-                return ExecuteWithTrampoline(func, args, context);
+                if (isTail) return new TailCall(func, args, [], context);
+                return ExecuteWithTrampoline(func, args, [], context);
             }
 
             return boundValue;
@@ -209,7 +209,7 @@ public class Interpreter
 
                 if (currentVal is Native or Function)
                 {
-                    var refinements = new HashSet<string>();
+                    var refinements = new List<string>();
                     for (int j = i; j < path.Parts.Count; j++)
                     {
                         if (path.Parts[j] is Word rw) refinements.Add(rw.Name);
@@ -219,15 +219,29 @@ public class Interpreter
                     {
                         var args = new List<Value>();
                         for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
-                        return n.Action(args, refinements, context, this, isTail);
+                        return n.Action(args, new HashSet<string>(refinements), context, this, isTail);
                     }
                     else if (currentVal is Function f)
                     {
                         var args = new List<Value>();
-                        for (int k = 0; k < f.Parameters.Count; k++) args.Add(Next(block, ref index, context, false));
+                        // Main args
+                        for (int k = 0; k < f.MainParameters.Count; k++) args.Add(Next(block, ref index, context, false));
                         
-                        if (isTail) return new TailCall(f, args, context);
-                        return ExecuteWithTrampoline(f, args, context);
+                        // Refinement args in order of refinements in the path
+                        foreach (var refName in refinements)
+                        {
+                            var refSpec = f.Refinements.FirstOrDefault(r => r.Name == refName);
+                            if (refSpec.Name != null)
+                            {
+                                foreach (var _ in refSpec.Args)
+                                {
+                                    args.Add(Next(block, ref index, context, false));
+                                }
+                            }
+                        }
+
+                        if (isTail) return new TailCall(f, args, new HashSet<string>(refinements), context);
+                        return ExecuteWithTrampoline(f, args, refinements, context);
                     }
                 }
 
@@ -238,9 +252,9 @@ public class Interpreter
                     {
                         // Auto-execute if it's a zero-argument function?
                         // Rebol: any word lookup that results in a function EXECUTES it.
-                        if (f.Parameters.Count == 0)
+                        if (f.MainParameters.Count == 0)
                         {
-                            currentVal = ExecuteWithTrampoline(f, [], obj.Context);
+                            currentVal = ExecuteWithTrampoline(f, [], [], obj.Context);
                         }
                     }
                     continue;
@@ -335,37 +349,64 @@ public class Interpreter
         throw new Exception($"Member '{memberName}' not found on {type.Name}");
     }
 
-    private Value ExecuteWithTrampoline(Function func, List<Value> args, Context context)
+    private Value ExecuteWithTrampoline(Function func, List<Value> args, IEnumerable<string> refinements, Context context)
     {
-        Value result = ExecuteFunction(func, args, [], context);
+        Value result = ExecuteFunction(func, args, refinements, context);
         while (result is TailCall tc)
         {
-            result = ExecuteFunction(tc.Function, tc.Args, [], tc.Context);
+            result = ExecuteFunction(tc.Function, tc.Args, tc.Refinements, tc.Context);
         }
         return result;
     }
 
-    private Value ExecuteFunction(Function func, List<Value> args, HashSet<string> refinements, Context context)
+    private Value ExecuteFunction(Function func, List<Value> args, IEnumerable<string> refinements, Context context)
     {
         var localContext = new Context(context);
-        for (int i = 0; i < func.Parameters.Count; i++)
+        int argIdx = 0;
+
+        // Bind main parameters
+        foreach (var param in func.MainParameters)
         {
-            localContext.Set(func.Parameters[i], args[i]);
+            localContext.Set(param, argIdx < args.Count ? args[argIdx++] : new Word("none"));
+        }
+
+        // Bind refinements and their args
+        var pathRefinements = refinements.ToList();
+        var activeRefSet = new HashSet<string>(pathRefinements);
+
+        // We need to associate refinement args in the order they appeared in the path
+        var refArgMap = new Dictionary<string, List<Value>>();
+        foreach (var refName in pathRefinements)
+        {
+            var refSpec = func.Refinements.FirstOrDefault(r => r.Name == refName);
+            if (refSpec.Name != null)
+            {
+                var refArgs = new List<Value>();
+                foreach (var _ in refSpec.Args)
+                {
+                    refArgs.Add(argIdx < args.Count ? args[argIdx++] : new Word("none"));
+                }
+                refArgMap[refName] = refArgs;
+            }
+        }
+
+        foreach (var refSpec in func.Refinements)
+        {
+            bool isActive = activeRefSet.Contains(refSpec.Name);
+            localContext.Set(refSpec.Name, new Logic(isActive));
+            
+            for (int i = 0; i < refSpec.Args.Count; i++)
+            {
+                Value val = (isActive && refArgMap.ContainsKey(refSpec.Name)) 
+                    ? refArgMap[refSpec.Name][i] 
+                    : new Word("none");
+                localContext.Set(refSpec.Args[i], val);
+            }
         }
 
         try
         {
             var result = Evaluate(func.Body, localContext, isTail: true);
-            
-            // If the result is a user function, bind it to this local context
-            // This allows things like: obj/greet: func [] [ self/name ]
-            if (result is Function f)
-            {
-                // Note: This is a simplistic binding model. 
-                // In Rebol, words are bound, not functions. 
-                // But for Ragnar, this helps with the method pattern.
-            }
-            
             return result;
         }
         catch (ReturnException ex)

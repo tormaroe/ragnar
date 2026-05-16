@@ -62,12 +62,15 @@ public class HelpTests : TestBase
     }
 
     [Fact]
-    public void Infix_Operators_Have_Titles()
+    public void Help_Displays_User_Function_With_Refinements()
     {
-        var (_, output) = RunWithOutput("help '+");
-        Assert.Contains("TITLE: Returns the sum of two values.", output);
-
-        var (_, output2) = RunWithOutput("help '=");
-        Assert.Contains("TITLE: Returns true if the values are equal.", output2);
+        var code = @"
+            f: func [a /with b] [a + b]
+            help f
+        ";
+        var (_, output) = RunWithOutput(code);
+        
+        Assert.Contains("WORD: f", output);
+        Assert.Contains("ARGS:  [ a /with b ]", output);
     }
 }

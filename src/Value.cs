@@ -153,13 +153,15 @@ public class Logic(bool value) : Value
 
 public class Function : Value
 {
-    public List<string> Parameters { get; }
+    public List<string> MainParameters { get; }
+    public List<(string Name, List<string> Args)> Refinements { get; }
     public Block Body { get; }
     public string Title { get; set; } = "";
 
-    public Function(List<string> parameters, Block body, string title = "")
+    public Function(List<string> mainParameters, List<(string Name, List<string> Args)> refinements, Block body, string title = "")
     {
-        Parameters = parameters;
+        MainParameters = mainParameters;
+        Refinements = refinements;
         Body = body;
         Title = title;
     }
@@ -197,10 +199,20 @@ public class DotNetValue(object? instance) : Value
     public override string ToString() => Instance?.ToString() ?? "null";
 }
 
-public class TailCall(Function function, List<Value> args, Context context) : Value
+public class TailCall : Value
 {
-    public Function Function { get; } = function;
-    public List<Value> Args { get; } = args;
-    public Context Context { get; } = context;
+    public Function Function { get; }
+    public List<Value> Args { get; }
+    public HashSet<string> Refinements { get; }
+    public Context Context { get; }
+
+    public TailCall(Function function, List<Value> args, HashSet<string> refinements, Context context)
+    {
+        Function = function;
+        Args = args;
+        Refinements = refinements;
+        Context = context;
+    }
+
     public override string ToString() => "<tail-call>";
 }

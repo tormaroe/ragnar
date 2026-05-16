@@ -61,7 +61,15 @@ public class Inspection
                     ctx.Output.WriteLine("TYPE:  User-Defined Function");
                     if (!string.IsNullOrEmpty(func.Title))
                         ctx.Output.WriteLine($"TITLE: {func.Title}");
-                    ctx.Output.WriteLine($"ARGS:  [ {string.Join(" ", func.Parameters)} ]");
+                    
+                    var spec = new List<string>(func.MainParameters);
+                    foreach (var r in func.Refinements)
+                    {
+                        spec.Add("/" + r.Name);
+                        spec.AddRange(r.Args);
+                    }
+
+                    ctx.Output.WriteLine($"ARGS:  [ {string.Join(" ", spec)} ]");
                     ctx.Output.WriteLine($"BODY:  {func.Body}");
                 }
                 else if (val is DotNetValue dnv)
