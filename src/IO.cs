@@ -46,6 +46,55 @@ public class IO
                 throw new Exception($"IO Error: {ex.Message}");
             }
         }, 2).WithTitle("Writes content to a file."));
+
+        // load %file or load "1 2 3"
+        ctx.Set("load", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            string source;
+            if (args[0] is File f)
+            {
+                if (!System.IO.File.Exists(f.Path))
+                    throw new Exception($"File not found: {f.Path}");
+                source = System.IO.File.ReadAllText(f.Path);
+            }
+            else if (args[0] is Text t)
+            {
+                source = t.Content;
+            }
+            else
+            {
+                throw new Exception("load expects a file! or text! source.");
+            }
+
+            var tokens = new Lexer(source).Tokenize();
+            var root = new Loader().Load(tokens);
+
+            if (root.Children.Count == 1) return root.Children[0];
+            return root;
+        }, 1).WithTitle("Loads Ragnar data from a file or string."));
+
+        // save %file value or save text-value value
+        ctx.Set("save", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            Value target = args[0];
+            Value val = args[1];
+            string serialized = val.ToString();
+
+            if (target is File f)
+            {
+                System.IO.File.WriteAllText(f.Path, serialized);
+            }
+            else if (target is Text t)
+            {
+                t.Content = serialized;
+            }
+            else
+            {
+                throw new Exception("save expects a file! or text! destination.");
+            }
+
+            return val;
+        }, 2).WithTitle("Saves a value to a file or string."));
     }
 
     // Helper for the natives

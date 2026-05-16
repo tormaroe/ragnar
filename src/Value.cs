@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Ragnar;
 
 public abstract class Value
@@ -37,7 +39,7 @@ public class Text : Series
         Index = index; 
     }
 
-    public override string ToString() => $"\"{Content[Index..]}\"";
+    public override string ToString() => $"\"{Content[Index..].Replace("\"", "\\\"")}\"";
     public override string ToUserString() => Content[Index..];
     public override Series At(int newIndex) => new Text(Content, newIndex);
 }
@@ -52,7 +54,21 @@ public class Word(string name, Context? binding = null) : Value
 public class ObjectValue(Context context) : Value
 {
     public Context Context { get; } = context;
-    public override string ToString() => "make object! [...]";
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append("make object! [ ");
+        foreach (var kvp in Context.GetOwnBindings())
+        {
+            if (kvp.Key == "self") continue;
+            sb.Append(kvp.Key);
+            sb.Append(": ");
+            sb.Append(kvp.Value.ToString());
+            sb.Append(" ");
+        }
+        sb.Append("]");
+        return sb.ToString();
+    }
 }
 
 public class LitWord(string name) : Value
@@ -166,7 +182,25 @@ public class Function : Value
         Title = title;
     }
 
-    public override string ToString() => "<user-function>";
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append("func [ ");
+        if (!string.IsNullOrEmpty(Title))
+        {
+            sb.Append($"\"{Title.Replace("\"", "\\\"")}\" ");
+        }
+
+        foreach (var p in MainParameters) sb.Append(p + " ");
+        foreach (var r in Refinements)
+        {
+            sb.Append("/" + r.Name + " ");
+            foreach (var arg in r.Args) sb.Append(arg + " ");
+        }
+        sb.Append("] ");
+        sb.Append(Body.ToString());
+        return sb.ToString();
+    }
 }
 
 public class File(string path) : Value

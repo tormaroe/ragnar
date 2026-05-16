@@ -70,9 +70,24 @@ public class Lexer(string input)
     {
         Consume(); // Skip opening "
         var sb = new StringBuilder();
-        while (_pos < _input.Length && Peek() != '"')
+        while (_pos < _input.Length)
         {
-            sb.Append(Consume());
+            char c = Peek();
+            if (c == '"') break;
+            
+            if (c == '\\')
+            {
+                Consume(); // Skip \
+                if (_pos < _input.Length)
+                {
+                    char escaped = Consume();
+                    sb.Append(escaped); // Add the escaped character literally
+                }
+            }
+            else
+            {
+                sb.Append(Consume());
+            }
         }
 
         if (_pos >= _input.Length)
