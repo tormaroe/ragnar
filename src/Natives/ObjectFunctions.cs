@@ -54,5 +54,42 @@ public static class ObjectFunctions
             }
             return args[0]; // get on non-word is identity
         }, 1).WithTitle("Returns the value of a word."));
+
+        // set word value
+        ctx.Set("set", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            if (args[0] is Word w)
+            {
+                if (w.Binding != null) w.Binding.Set(w.Name, args[1]);
+                else context.Set(w.Name, args[1]);
+                return args[1];
+            }
+            throw new Exception("set requires a word.");
+        }, 2).WithTitle("Sets a word to a value."));
+
+        // bind block object
+        ctx.Set("bind", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            if (args[0] is not Block block) throw new Exception("bind requires a block.");
+            if (args[1] is not ObjectValue obj) throw new Exception("bind requires an object.");
+
+            BindBlock(block, obj.Context);
+            return block;
+        }, 2).WithTitle("Binds all words in a block to an object's context."));
+
+        // context?
+        ctx.Set("context?", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            return new ObjectValue(context);
+        }, 0).WithTitle("Returns the current context as an object."));
+    }
+
+    private static void BindBlock(Block block, Context context)
+    {
+        foreach (var child in block.Children)
+        {
+            if (child is Word w) w.Binding = context;
+            else if (child is Block b) BindBlock(b, context);
+        }
     }
 }

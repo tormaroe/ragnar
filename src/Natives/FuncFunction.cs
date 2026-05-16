@@ -18,13 +18,24 @@ public static class FuncFunction
                 specList = specList.Skip(1).ToList();
             }
 
-            var mainParams = new List<string>();
+            var mainParams = new List<(string Name, bool Evaluate)>();
             var userRefinements = new List<(string Name, List<string> Args)>();
 
             int i = 0;
-            while (i < specList.Count && specList[i] is Word w)
+            while (i < specList.Count)
             {
-                mainParams.Add(w.Name);
+                if (specList[i] is Word w)
+                {
+                    mainParams.Add((w.Name, true));
+                }
+                else if (specList[i] is LitWord lw)
+                {
+                    mainParams.Add((lw.Name, false));
+                }
+                else
+                {
+                    break;
+                }
                 i++;
             }
 

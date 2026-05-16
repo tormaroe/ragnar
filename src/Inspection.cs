@@ -62,7 +62,11 @@ public class Inspection
                     if (!string.IsNullOrEmpty(func.Title))
                         ctx.Output.WriteLine($"TITLE: {func.Title}");
                     
-                    var spec = new List<string>(func.MainParameters);
+                    var spec = new List<string>();
+                    foreach (var p in func.MainParameters)
+                    {
+                        spec.Add((p.Evaluate ? "" : "'") + p.Name);
+                    }
                     foreach (var r in func.Refinements)
                     {
                         spec.Add("/" + r.Name);

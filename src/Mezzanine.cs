@@ -39,6 +39,22 @@ public static class Mezzanine
         ]
         does: func ["Defines a function with no arguments." block] [ func [] block ]
         get-env: func ["Returns the value of an environment variable." name] [call-static "System.Environment" "GetEnvironmentVariable" reduce [name]]
+        enumerate: func ["Iterates a .NET IEnumerable, binding word to each item and evaluating block." enumerable 'word block] [
+            enumerator: call-method enumerable "GetEnumerator" []
+            while [call-method enumerator "MoveNext" []] [
+                set word enumerator/current
+                do block
+            ]
+        ]
+        list-env: func ["Lists all environment variables as a block of name-value pairs."] [
+            vars: call-static "System.Environment" "GetEnvironmentVariables" []
+            result: []
+            enumerate vars item [
+                append result item/key 
+                append result item/value
+            ]
+            result
+        ]
         max: func ["Returns the greater of two values." a b] [ either greater? a b [a] [b] ]
         min: func ["Returns the lesser of two values." a b] [ either greater? a b [b] [a] ]
         negate: func ["Returns the negative of a number." n] [ n * -1 ]
@@ -50,6 +66,7 @@ public static class Mezzanine
         ]
         what-dir: func ["Returns the current working directory."] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
         zero?: func ["Returns true if the value is zero." x] [ x = 0 ]
+
     """;
 
 }

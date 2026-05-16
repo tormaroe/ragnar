@@ -169,12 +169,12 @@ public class Logic(bool value) : Value
 
 public class Function : Value
 {
-    public List<string> MainParameters { get; }
+    public List<(string Name, bool Evaluate)> MainParameters { get; }
     public List<(string Name, List<string> Args)> Refinements { get; }
     public Block Body { get; }
     public string Title { get; set; } = "";
 
-    public Function(List<string> mainParameters, List<(string Name, List<string> Args)> refinements, Block body, string title = "")
+    public Function(List<(string Name, bool Evaluate)> mainParameters, List<(string Name, List<string> Args)> refinements, Block body, string title = "")
     {
         MainParameters = mainParameters;
         Refinements = refinements;
@@ -191,7 +191,11 @@ public class Function : Value
             sb.Append($"\"{Title.Replace("\"", "\\\"")}\" ");
         }
 
-        foreach (var p in MainParameters) sb.Append(p + " ");
+        foreach (var p in MainParameters)
+        {
+            if (!p.Evaluate) sb.Append("'");
+            sb.Append(p.Name + " ");
+        }
         foreach (var r in Refinements)
         {
             sb.Append("/" + r.Name + " ");

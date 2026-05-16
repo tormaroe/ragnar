@@ -155,9 +155,17 @@ public class Interpreter
             if (boundValue is Function func)
             {
                 var args = new List<Value>();
-                foreach (var paramName in func.MainParameters)
+                foreach (var param in func.MainParameters)
                 {
-                    args.Add(Next(block, ref index, context, false));
+                    if (param.Evaluate)
+                    {
+                        args.Add(Next(block, ref index, context, false));
+                    }
+                    else
+                    {
+                        if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                        args.Add(block.Children[index++]);
+                    }
                 }
                 
                 if (isTail) return new TailCall(func, args, [], context);
@@ -225,7 +233,15 @@ public class Interpreter
                     {
                         var args = new List<Value>();
                         // Main args
-                        for (int k = 0; k < f.MainParameters.Count; k++) args.Add(Next(block, ref index, context, false));
+                        foreach (var param in f.MainParameters)
+                        {
+                            if (param.Evaluate) args.Add(Next(block, ref index, context, false));
+                            else
+                            {
+                                if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                                args.Add(block.Children[index++]);
+                            }
+                        }
                         
                         // Refinement args in order of refinements in the path
                         foreach (var refName in refinements)
@@ -367,7 +383,7 @@ public class Interpreter
         // Bind main parameters
         foreach (var param in func.MainParameters)
         {
-            localContext.Set(param, argIdx < args.Count ? args[argIdx++] : new Word("none"));
+            localContext.Set(param.Name, argIdx < args.Count ? args[argIdx++] : new Word("none"));
         }
 
         // Bind refinements and their args
