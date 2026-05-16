@@ -14,7 +14,7 @@ public static class ConversionFunctions
                 if (long.TryParse(t.Content.Trim(), out long val)) return new Integer(val);
             }
             throw new Exception($"Cannot convert '{args[0].ToUserString()}' to integer.");
-        }, 1));
+        }, 1).WithTitle("Converts a value to an integer."));
 
         // to-decimal [value]
         ctx.Set("to-decimal", new Native((args, refs, _, _, isTail) =>
@@ -26,12 +26,12 @@ public static class ConversionFunctions
                 if (double.TryParse(t.Content.Trim(), out double val)) return new Decimal(val);
             }
             throw new Exception($"Cannot convert '{args[0].ToUserString()}' to decimal.");
-        }, 1));
+        }, 1).WithTitle("Converts a value to a decimal."));
 
         // to-string [value]
         ctx.Set("to-string", new Native((args, refs, _, _, isTail) =>
         {
             return new Text(args[0].ToUserString());
-        }, 1));
+        }, 1).WithTitle("Converts a value to a string."));
     }
 }

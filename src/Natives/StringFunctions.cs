@@ -42,7 +42,7 @@ public static class StringFunctions
 
             // Default: trim head and tail
             return new Text(input.Trim());
-        }, 1));
+        }, 1).WithTitle("Removes whitespace from a string."));
 
         ctx.Set("replace", new Native((args, refinements, _, _, _) =>
         {
@@ -64,19 +64,19 @@ public static class StringFunctions
                 if (index < 0) return target;
                 return new Text(input.Remove(index, pattern.Length).Insert(index, substitute));
             }
-        }, 3));
+        }, 3).WithTitle("Replaces occurrences of a pattern in a string."));
 
         ctx.Set("uppercase", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text t) throw new Exception("uppercase requires a string.");
             return new Text(t.Content.ToUpperInvariant());
-        }, 1));
+        }, 1).WithTitle("Converts a string to uppercase."));
 
         ctx.Set("lowercase", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is not Text t) throw new Exception("lowercase requires a string.");
             return new Text(t.Content.ToLowerInvariant());
-        }, 1));
+        }, 1).WithTitle("Converts a string to lowercase."));
 
         ctx.Set("split", new Native((args, refinements, _, _, _) =>
         {
@@ -85,6 +85,6 @@ public static class StringFunctions
 
             var parts = t.Content.Split(new[] { d.Content }, StringSplitOptions.None);
             return new Block(parts.Select(p => new Text(p)));
-        }, 2));
+        }, 2).WithTitle("Splits a string into a block based on a delimiter."));
     }
 }

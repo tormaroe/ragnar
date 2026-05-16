@@ -29,21 +29,21 @@ public static class SeriesFunctions
             }
             if (args[0] is Series s) return GetAt(s, 0);
             throw new Exception("first requires a series or object.");
-        }, 1));
+        }, 1).WithTitle("Returns the first value of a series."));
 
         // second [10 20] -> 20
         ctx.Set("second", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s) return GetAt(s, 1);
             throw new Exception("second requires a series.");
-        }, 1));
+        }, 1).WithTitle("Returns the second value of a series."));
 
         // next [10 20] -> [20]
         ctx.Set("next", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s) return s.At(s.Index + 1);
             throw new Exception("next requires a series.");
-        }, 1));
+        }, 1).WithTitle("Returns the series at its next position."));
 
         // last [10 20] -> 20
         ctx.Set("last", new Native((args, refinements, _, _, _) =>
@@ -54,14 +54,14 @@ public static class SeriesFunctions
                 if (s is Text t) return GetAt(s, t.Content.Length - s.Index - 1);
             }
             throw new Exception("last requires a series.");
-        }, 1));
+        }, 1).WithTitle("Returns the last value of a series."));
 
         // length? [1 2 3] -> 3
         ctx.Set("length?", new Native((args, refinements, _, _, _) =>
         {
             if (args[0] is Series s) return new Integer(s.Length);
             throw new Exception("length? requires a series.");
-        }, 1));
+        }, 1).WithTitle("Returns the length of a series."));
 
         // find [series] [value]
         ctx.Set("find", new Native((args, refinements, _, _, _) =>
@@ -205,7 +205,7 @@ public static class SeriesFunctions
             }
 
             return new Word("none");
-        }, 2));
+        }, 2).WithTitle("Finds a value in a series and returns the series at that position."));
 
         // append [1 2] 3 -> [1 2 3]
         ctx.Set("append", new Native((args, refinements, _, _, _) =>
@@ -221,7 +221,7 @@ public static class SeriesFunctions
                 return t;
             }
             throw new Exception("append requires a block or text as the first argument.");
-        }, 2));
+        }, 2).WithTitle("Appends a value to a series."));
 
         // join [base] [value]
         ctx.Set("join", new Native((args, refs, context, interpreter, _) =>
@@ -232,7 +232,7 @@ public static class SeriesFunctions
             string appendStr = args[1].ToUserString();
 
             return new Text(baseStr + appendStr);
-        }, 2));
+        }, 2).WithTitle("Concatenates two values into a string."));
 
         // rejoin [block]
         ctx.Set("rejoin", new Native((args, refs, context, interpreter, _) =>
@@ -251,7 +251,7 @@ public static class SeriesFunctions
             }
 
             return new Text(sb.ToString());
-        }, 1));
+        }, 1).WithTitle("Reduces and joins a block of values into a string."));
 
         // pick [series] [index]
         ctx.Set("pick", new Native((args, refs, _, _, _) =>
@@ -260,7 +260,7 @@ public static class SeriesFunctions
             if (args[1] is not Integer i) throw new Exception("pick requires an integer index.");
 
             return GetAt(s, (int)i.Number - 1);
-        }, 2));
+        }, 2).WithTitle("Returns a value at a specified index in a series."));
 
         // poke [series] [index] [value]
         ctx.Set("poke", new Native((args, refs, _, _, _) =>
@@ -275,14 +275,14 @@ public static class SeriesFunctions
                 return args[2];
             }
             throw new Exception("poke index out of range.");
-        }, 3));
+        }, 3).WithTitle("Changes a value at a specified index in a series."));
 
         // index? [series]
         ctx.Set("index?", new Native((args, refs, _, _, _) =>
         {
             if (args[0] is Series s) return new Integer(s.Index + 1);
             throw new Exception("index? requires a series.");
-        }, 1));
+        }, 1).WithTitle("Returns the current index position in a series."));
 
         // copy [value]
         ctx.Set("copy", new Native((args, refs, _, _, _) =>
@@ -298,6 +298,6 @@ public static class SeriesFunctions
             }
             // For non-series, copy is identity
             return args[0];
-        }, 1));
+        }, 1).WithTitle("Returns a copy of a value."));
     }
 }

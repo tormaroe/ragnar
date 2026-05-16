@@ -43,6 +43,6 @@ public static class ForeachFunction
                 return lastResult;
             }
             throw new Exception("foreach usage: foreach word series block");
-        }, 3, [false, true, true])); // Don't evaluate the loop variable name
+        }, 3, [false, true, true]).WithTitle("Evaluates a block for each value in a series.")); // Don't evaluate the loop variable name
     }
 }

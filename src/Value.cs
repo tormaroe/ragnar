@@ -121,6 +121,7 @@ public class Native : Value
     // Define which arguments should be evaluated. 
     // True = Evaluate (default), False = Literal (Word remains a Word)
     public bool[] EvalArgs { get; }
+    public string Title { get; set; } = "";
 
     public Native(NativeDelegate action, int arity, bool[]? evalArgs = null)
     {
@@ -128,6 +129,12 @@ public class Native : Value
         Arity = arity;
         // If no spec is provided, we default to evaluating everything.
         EvalArgs = evalArgs ?? Enumerable.Repeat(true, arity).ToArray();
+    }
+
+    public Native WithTitle(string title)
+    {
+        Title = title;
+        return this;
     }
 
     public override string ToString() => $"<native arity:{Arity}>";
@@ -144,10 +151,18 @@ public class Logic(bool value) : Value
     public override string ToString() => Condition ? "true" : "false";
 }
 
-public class Function(List<string> parameters, Block body) : Value
+public class Function : Value
 {
-    public List<string> Parameters { get; } = parameters;
-    public Block Body { get; } = body;
+    public List<string> Parameters { get; }
+    public Block Body { get; }
+    public string Title { get; set; } = "";
+
+    public Function(List<string> parameters, Block body, string title = "")
+    {
+        Parameters = parameters;
+        Body = body;
+        Title = title;
+    }
 
     public override string ToString() => "<user-function>";
 }

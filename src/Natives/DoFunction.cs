@@ -10,6 +10,6 @@ public static class DoFunction
         {
             if (args[0] is Block b) return interpreter.Evaluate(b, context, isTail);
             return args[0]; // If not a block, just return the value
-        }, 1));
+        }, 1).WithTitle("Evaluates a block of code or returns a value."));
     }
 }

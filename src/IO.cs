@@ -20,7 +20,7 @@ public class IO
             }
 
             return new Text(System.IO.File.ReadAllText(path));
-        }, 1));
+        }, 1).WithTitle("Reads the content of a file."));
 
         // write %file.txt "data" or write/append %file.txt "data"
         ctx.Set("write", new Native((args, refinements, context, interpreter, isTail) =>
@@ -45,7 +45,7 @@ public class IO
             {
                 throw new Exception($"IO Error: {ex.Message}");
             }
-        }, 2));
+        }, 2).WithTitle("Writes content to a file."));
     }
 
     // Helper for the natives

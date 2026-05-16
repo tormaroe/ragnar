@@ -32,7 +32,7 @@ public static class ObjectFunctions
             }
 
             throw new Exception($"make does not support type {args[0]}");
-        }, 2));
+        }, 2).WithTitle("Creates a new value or object."));
 
         // in object word
         ctx.Set("in", new Native((args, refs, context, interpreter, isTail) =>
@@ -42,7 +42,7 @@ public static class ObjectFunctions
 
             // Return a new word bound to the object's context
             return new Word(word.Name, obj.Context);
-        }, 2));
+        }, 2).WithTitle("Returns a word bound to an object's context."));
 
         // get word
         ctx.Set("get", new Native((args, refs, context, interpreter, isTail) =>
@@ -53,6 +53,6 @@ public static class ObjectFunctions
                 return context.Get(w.Name);
             }
             return args[0]; // get on non-word is identity
-        }, 1));
+        }, 1).WithTitle("Returns the value of a word."));
     }
 }

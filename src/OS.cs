@@ -28,6 +28,6 @@ public class OS
                 return new Word("none");
             }
             throw new Exception("call requires a string command.");
-        }, 1));
+        }, 1).WithTitle("Executes an external shell command."));
     }
 }

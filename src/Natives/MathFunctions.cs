@@ -13,9 +13,9 @@ public static class MathFunctions
             double d1 = GetDoubleValue(args[0]);
             double d2 = GetDoubleValue(args[1]);
             return new Decimal(d1 + d2);
-        }, 2);
+        }, 2).WithTitle("Returns the sum of two values.");
         ctx.Set("add", add);
-        ctx.Set("+", new Op(add.Action));
+        ctx.Set("+", new Op(add.Action).WithTitle("Returns the sum of two values."));
 
         var sub = new Native((args, refinements, _, _, _) =>
         {
@@ -25,9 +25,9 @@ public static class MathFunctions
             double d1 = GetDoubleValue(args[0]);
             double d2 = GetDoubleValue(args[1]);
             return new Decimal(d1 - d2);
-        }, 2);
+        }, 2).WithTitle("Returns the difference between two values.");
         ctx.Set("sub", sub);
-        ctx.Set("-", new Op(sub.Action));
+        ctx.Set("-", new Op(sub.Action).WithTitle("Returns the difference between two values."));
 
         var multiply = new Native((args, refs, context, interpreter, _) =>
         {
@@ -37,10 +37,10 @@ public static class MathFunctions
             double val1 = GetDoubleValue(args[0]);
             double val2 = GetDoubleValue(args[1]);
             return new Decimal(val1 * val2);
-        }, 2);
+        }, 2).WithTitle("Returns the product of two values.");
         ctx.Set("multiply", multiply);
         ctx.Set("mul", multiply);
-        ctx.Set("*", new Op(multiply.Action));
+        ctx.Set("*", new Op(multiply.Action).WithTitle("Returns the product of two values."));
 
         var divide = new Native((args, refs, context, interpreter, _) =>
         {
@@ -51,9 +51,9 @@ public static class MathFunctions
             double result = val1 / val2;
             if (result == Math.Floor(result)) return new Integer((long)result);
             return new Decimal(result);
-        }, 2);
+        }, 2).WithTitle("Returns the quotient of two values.");
         ctx.Set("divide", divide);
-        ctx.Set("/", new Op(divide.Action));
+        ctx.Set("/", new Op(divide.Action).WithTitle("Returns the quotient of two values."));
 
         var remainder = new Native((args, refs, context, interpreter, _) =>
         {
@@ -67,9 +67,9 @@ public static class MathFunctions
             double val2 = GetDoubleValue(args[1]);
             if (val2 == 0) throw new Exception("Remainder by zero.");
             return new Decimal(val1 % val2);
-        }, 2);
+        }, 2).WithTitle("Returns the remainder of division.");
         ctx.Set("remainder", remainder);
-        ctx.Set("//", new Op(remainder.Action));
+        ctx.Set("//", new Op(remainder.Action).WithTitle("Returns the remainder of division."));
 
         var random = new Native((args, refs, context, interpreter, _) =>
         {
@@ -95,7 +95,7 @@ public static class MathFunctions
             }
 
             throw new Exception("random expects an integer or decimal.");
-        }, 1);
+        }, 1).WithTitle("Returns a random value.");
         ctx.Set("random", random);
     }
 

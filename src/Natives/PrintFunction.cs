@@ -27,6 +27,6 @@ public static class PrintFunction
             // Standard non-block printing
             context.Output.WriteLine(val.ToUserString());
             return val;
-        }, 1));
+        }, 1).WithTitle("Prints a value to the output."));
     }
 }

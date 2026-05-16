@@ -41,6 +41,6 @@ public static class WhileFunction
                 return lastResult;
             }
             throw new Exception("while usage: while [condition-block] [body-block]");
-        }, 2));
+        }, 2).WithTitle("Repeatedly executes a block while a condition is true."));
     }
 }

@@ -15,20 +15,20 @@ public static class LogicalFunctions
         ctx.Set("not", new Native((args, refs, _, _, _) =>
         {
             return new Logic(!IsTruthy(args[0]));
-        }, 1));
+        }, 1).WithTitle("Returns the logical complement of a value."));
 
         // and [val1] [val2]
         ctx.Set("and", new Native((args, refs, _, _, _) =>
         {
             return new Logic(IsTruthy(args[0]) && IsTruthy(args[1]));
-        }, 2));
+        }, 2).WithTitle("Returns true if both values are true."));
         ctx.Set("and?", new Word("and"));
 
         // or [val1] [val2]
         ctx.Set("or", new Native((args, refs, _, _, _) =>
         {
             return new Logic(IsTruthy(args[0]) || IsTruthy(args[1]));
-        }, 2));
+        }, 2).WithTitle("Returns true if either value is true."));
         ctx.Set("or?", new Word("or"));
     }
 }

@@ -19,6 +19,6 @@ public static class BlockFunctions
             }
 
             return new Block(results);
-        }, 1));
+        }, 1).WithTitle("Evaluates expressions within a block and returns a new block with the results."));
     }
 }

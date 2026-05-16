@@ -19,7 +19,7 @@ public static class ConditionalFunctions
                 return interpreter.Evaluate(b, context, isTail);
             }
             return new Word("none");
-        }, 2));
+        }, 2).WithTitle("Evaluates a block if a condition is true."));
 
         // either [condition] [true-block] [false-block]
         ctx.Set("either", new Native((args, refinements, context, interpreter, isTail) =>
@@ -28,7 +28,7 @@ public static class ConditionalFunctions
                 ?? throw new Exception("either requires blocks for its branches.");
             
             return interpreter.Evaluate(branch, context, isTail);
-        }, 3));
+        }, 3).WithTitle("Evaluates one of two blocks based on a condition."));
 
         // all [block]
         ctx.Set("all", new Native((args, refinements, context, interpreter, isTail) =>
@@ -43,7 +43,7 @@ public static class ConditionalFunctions
                 if (!IsTruthy(lastResult)) return new Word("none");
             }
             return lastResult;
-        }, 1));
+        }, 1).WithTitle("Returns the last value if all expressions in a block are true."));
 
         // any [block]
         ctx.Set("any", new Native((args, refinements, context, interpreter, isTail) =>
@@ -57,7 +57,7 @@ public static class ConditionalFunctions
                 if (IsTruthy(result)) return result;
             }
             return new Word("none");
-        }, 1));
+        }, 1).WithTitle("Returns the first true value in a block."));
 
         // case [block]
         ctx.Set("case", new Native((args, refinements, context, interpreter, isTail) =>
@@ -105,6 +105,6 @@ public static class ConditionalFunctions
             }
 
             return lastResult;
-        }, 1));
+        }, 1).WithTitle("Evaluates blocks for matching conditions."));
     }
 }

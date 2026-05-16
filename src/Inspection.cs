@@ -15,20 +15,19 @@ public class Inspection
 
             ctx.Output.WriteLine("\n--- Defined Functions ---");
             
-            // Basic columns for readability
-            int count = 0;
             foreach (var func in functions)
             {
-                string typeTag = func.Value is Native ? "[native]" : "[func]";
-                ctx.Output.Write($"{func.Key,-15} {typeTag,-10}");
-                
-                count++;
-                if (count % 2 == 0) ctx.Output.WriteLine(); // Print 2 per line
+                string title = func.Value switch {
+                    Native n => n.Title,
+                    Function f => f.Title,
+                    _ => ""
+                };
+                ctx.Output.WriteLine($"{func.Key,-15} {title}");
             }
             
-            ctx.Output.WriteLine("\n");
+            ctx.Output.WriteLine();
             return new Word("none");
-        }, 0));
+        }, 0).WithTitle("Prints a list of known functions."));
 
         // help 'print
         ctx.Set("help", new Native((args, refinements, context, interpreter, isTail) => {
@@ -47,11 +46,15 @@ public class Inspection
                 if (val is Native native)
                 {
                     ctx.Output.WriteLine("TYPE:  Native Function");
+                    if (!string.IsNullOrEmpty(native.Title))
+                        ctx.Output.WriteLine($"TITLE: {native.Title}");
                     ctx.Output.WriteLine($"ARITY: {native.Arity} arguments");
                 }
                 else if (val is Function func)
                 {
                     ctx.Output.WriteLine("TYPE:  User-Defined Function");
+                    if (!string.IsNullOrEmpty(func.Title))
+                        ctx.Output.WriteLine($"TITLE: {func.Title}");
                     ctx.Output.WriteLine($"ARGS:  [ {string.Join(" ", func.Parameters)} ]");
                     ctx.Output.WriteLine($"BODY:  {func.Body}");
                 }
@@ -76,7 +79,7 @@ public class Inspection
             }
 
             return new Word("none");
-        }, 1));
+        }, 1).WithTitle("Displays information about a word."));
 
         // probe [value]
         ctx.Set("probe", new Native((args, refinements, _, _, isTail) => {
@@ -85,7 +88,7 @@ public class Inspection
             
             // Return the value as-is so it can be used in expressions
             return args[0];
-        }, 1));
+        }, 1).WithTitle("Prints a value in its literal form and returns it."));
 
         // type? [value]
         ctx.Set("type?", new Native((args, refinements, _, _, isTail) => {
@@ -105,6 +108,6 @@ public class Inspection
                 _        => "value!"
             };
             return new Word(typeName);
-        }, 1));
+        }, 1).WithTitle("Returns the type of a value."));
     }
 }

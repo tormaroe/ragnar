@@ -25,12 +25,12 @@ public static class LoopFunction
                 return lastResult;
             }
             throw new Exception("loop usage: loop [integer] [block]");
-        }, 2));
+        }, 2).WithTitle("Evaluates a block a specified number of times."));
 
         // break
-        ctx.Set("break", new Native((args, refs, _, _, _) => throw new BreakException(), 0));
+        ctx.Set("break", new Native((args, refs, _, _, _) => throw new BreakException(), 0).WithTitle("Breaks out of a loop."));
 
         // continue
-        ctx.Set("continue", new Native((args, refs, _, _, _) => throw new ContinueException(), 0));
+        ctx.Set("continue", new Native((args, refs, _, _, _) => throw new ContinueException(), 0).WithTitle("Skips to the next iteration of a loop."));
     }
 }

@@ -108,7 +108,7 @@ public class Interop
             if (type == null) throw new Exception($"Could not find .NET type: {typeName}");
 
             return new DotNetValue(type);
-        }, 1));
+        }, 1).WithTitle("Returns the .NET Type for a given name."));
 
         ctx.Set("new", new Native((args, refinements, context, interpreter, isTail) =>
         {
@@ -159,7 +159,7 @@ public class Interop
                     var msg = ex.InnerException?.Message ?? ex.Message;
                     throw new Exception($"Failed to instantiate {targetType.Name}: {msg}");
                 }
-        }, 2));
+        }, 2).WithTitle("Creates a new .NET object instance."));
 
         ctx.Set("call-method", new Native((args, refinements, context, interpreter, isTail) =>
         {
@@ -190,7 +190,7 @@ public class Interop
                 return ToRagnarValue(result);
             }
             throw new Exception("call-method usage: obj \"name\" [args]");
-        }, 3));
+        }, 3).WithTitle("Calls a method on a .NET object."));
 
         // get-prop obj "Length"
         ctx.Set("get-prop", new Native((args, refinements, _, _, isTail) =>
@@ -204,7 +204,7 @@ public class Interop
                 return ToRagnarValue(val);
             }
             throw new Exception("get-prop requires an object and a property name.");
-        }, 2));
+        }, 2).WithTitle("Returns the value of a .NET property."));
 
         // set-prop obj "PropertyName" value
         ctx.Set("set-prop", new Native((args, refinements, context, interpreter, isTail) =>
@@ -241,7 +241,7 @@ public class Interop
                 }
             }
             throw new Exception("set-prop usage: obj \"name\" value");
-        }, 3));
+        }, 3).WithTitle("Sets the value of a .NET property."));
 
         // get-static "System.DateTime" "Now"
         ctx.Set("get-static", new Native((args, refs, context, interpreter, isTail) =>
@@ -259,7 +259,7 @@ public class Interop
             if (field != null) return ToRagnarValue(field.GetValue(null));
 
             throw new Exception($"Static member {memberName} not found on {typeName}");
-        }, 2));
+        }, 2).WithTitle("Returns the value of a static .NET member."));
 
         // call-static "System.Math" "Sqrt" [25.0]
         ctx.Set("call-static", new Native((args, refs, context, interpreter, isTail) =>
@@ -284,6 +284,6 @@ public class Interop
 
             // 3. Execute and convert the result back to Ragnar
             return ToRagnarValue(method.Invoke(null, invokeArgs));
-        }, 3));
+        }, 3).WithTitle("Calls a static .NET method."));
     }
 }
