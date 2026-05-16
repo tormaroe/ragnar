@@ -76,7 +76,40 @@ class Program
 
         while (true)
         {
-            string prompt = buffer.Length == 0 ? ">> " : ".. ";
+            // 1. Get system/console objects
+            var systemObj = (ObjectValue)context.Get("system");
+            var consoleObj = (ObjectValue)systemObj.Context.Get("console");
+
+            // 2. Sync system/console/history -> repl._history
+            var histVal = consoleObj.Context.Get("history");
+            if (histVal is Block hb)
+            {
+                repl._history.Clear();
+                foreach (var item in hb.Children.Skip(hb.Index))
+                {
+                    repl._history.Add(item.ToUserString());
+                }
+            }
+
+            // 3. Determine prompt
+            string prompt = ".. ";
+            if (buffer.Length == 0)
+            {
+                var promptVal = consoleObj.Context.Get("prompt");
+                if (promptVal is Block pb)
+                {
+                    try
+                    {
+                        prompt = interpreter.Evaluate(pb, context).ToUserString();
+                    }
+                    catch { prompt = ">> "; }
+                }
+                else
+                {
+                    prompt = promptVal.ToUserString();
+                }
+            }
+
             string input = repl.ReadLine(prompt);
 
             if (string.IsNullOrWhiteSpace(input) && buffer.Length == 0)
@@ -91,14 +124,37 @@ class Program
                 var root = new Loader().Load(tokens);
                 var result = interpreter.Evaluate(root, context);
 
-                // Print the result of the last expression
+                // 4. Print the result of the last expression using system/console/result
                 if (result != null)
                 {
-                    Repl.WriteResult($"== {result}");
+                    string resPrefix = consoleObj.Context.Get("result").ToUserString();
+                    Repl.WriteResult($"{resPrefix}{result}");
                 }
 
-                // Add the successfully evaluated block to history
+                // 5. Re-sync from system/console/history (user might have changed it during evaluation)
+                var histValAfter = consoleObj.Context.Get("history");
+                if (histValAfter is Block hbAfter)
+                {
+                    repl._history.Clear();
+                    foreach (var item in hbAfter.Children.Skip(hbAfter.Index))
+                    {
+                        repl._history.Add(item.ToUserString());
+                    }
+                }
+
+                // 6. Add the current command to history and sync back
                 repl.AddHistory(code.TrimEnd('\r', '\n'));
+                
+                if (histValAfter is Block chb)
+                {
+                    chb.Children.Clear();
+                    chb.Index = 0;
+                    foreach (var h in repl._history)
+                    {
+                        chb.Children.Add(new Text(h));
+                    }
+                }
+
                 buffer.Clear();
             }
             catch (IncompleteInputException)

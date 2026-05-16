@@ -37,6 +37,17 @@ public static class Runtime
         IO.AddIoFunctions(ctx);
         IoFunctions.Add(ctx);
 
+        // System object
+        var systemCtx = new Context();
+        var consoleCtx = new Context();
+
+        consoleCtx.Set("prompt", new Text(">> "));
+        consoleCtx.Set("result", new Text("== "));
+        consoleCtx.Set("history", new Block());
+
+        systemCtx.Set("console", new ObjectValue(consoleCtx));
+        ctx.Set("system", new ObjectValue(systemCtx));
+
         return ctx;
     }
 }

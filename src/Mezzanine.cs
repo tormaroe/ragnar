@@ -60,7 +60,29 @@ public static class Mezzanine
         negate: func ["Returns the negative of a number." n] [ n * -1 ]
         none?: func ["Returns true if the value is none." x] [ equal? x none ]
         not-equal?: func ["Returns true if two values are not equal." a b] [ not equal? a b ]
+        now: func ["Returns the current System.DateTime or specific parts." /time /date /year /month /day] [
+            dt: get-static "System.DateTime" "Now"
+            if time [ return call-method dt "ToLongTimeString" [] ]
+            if date [ return call-method dt "ToShortDateString" [] ]
+            if year [ return get-prop dt "Year" ]
+            if month [ return get-prop dt "Month" ]
+            if day [ return get-prop dt "Day" ]
+            dt
+        ]
         pwd: func ["Returns the current working directory."] [what-dir]
+        reform: func ["Evaluates a block and forms a string with spaces between values." block] [
+            result: ""
+            first: true
+            foreach val reduce block [
+                either first [
+                    result: to-string val
+                    first: false
+                ] [
+                    result: rejoin [result " " val]
+                ]
+            ]
+            result
+        ]
         rejoin: func ["Reduces and joins a block of values into a string." block] [
             join "" reduce block
         ]
