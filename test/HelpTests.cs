@@ -73,4 +73,12 @@ public class HelpTests : TestBase
         Assert.Contains("WORD: f", output);
         Assert.Contains("ARGS:  [ a /with b ]", output);
     }
+
+    [Fact]
+    public void Question_Mark_Is_Synonym_For_Help()
+    {
+        var (_, output) = RunWithOutput("? add");
+        Assert.Contains("WORD: add", output);
+        Assert.Contains("TYPE:  Native Function", output);
+    }
 }

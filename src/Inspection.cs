@@ -30,7 +30,7 @@ public class Inspection
         }, 0).WithTitle("Prints a list of known functions."));
 
         // help print or help 'print
-        ctx.Set("help", new Native((args, refinements, context, interpreter, isTail) => {
+        var helpNative = new Native((args, refinements, context, interpreter, isTail) => {
             string? wordName = args[0] switch
             {
                 Word w => w.Name,
@@ -97,7 +97,10 @@ public class Inspection
             }
 
             return new Word("none");
-        }, 1, [false]).WithTitle("Displays information about a word."));
+        }, 1, [false]).WithTitle("Displays information about a word.");
+
+        ctx.Set("help", helpNative);
+        ctx.Set("?", helpNative);
 
         // probe [value]
         ctx.Set("probe", new Native((args, refinements, _, _, isTail) => {
