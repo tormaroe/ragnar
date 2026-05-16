@@ -29,10 +29,16 @@ public class Inspection
             return new Word("none");
         }, 0).WithTitle("Prints a list of known functions."));
 
-        // help 'print
+        // help print or help 'print
         ctx.Set("help", new Native((args, refinements, context, interpreter, isTail) => {
-            // We expect a Word (e.g., help print)
-            if (args[0] is not Word w)
+            string? wordName = args[0] switch
+            {
+                Word w => w.Name,
+                LitWord lw => lw.Name,
+                _ => null
+            };
+
+            if (wordName == null)
             {
                 ctx.Output.WriteLine("Usage: help word (e.g., help add)");
                 return new Word("none");
@@ -40,8 +46,8 @@ public class Inspection
 
             try
             {
-                Value val = context.Get(w.Name);
-                ctx.Output.WriteLine($"\nWORD: {w.Name}");
+                Value val = context.Get(wordName);
+                ctx.Output.WriteLine($"\nWORD: {wordName}");
                 
                 if (val is Native native)
                 {
@@ -75,11 +81,11 @@ public class Inspection
             }
             catch (Exception)
             {
-                ctx.Output.WriteLine($"Word '{w.Name}' is not defined in this context.");
+                ctx.Output.WriteLine($"Word '{wordName}' is not defined in this context.");
             }
 
             return new Word("none");
-        }, 1).WithTitle("Displays information about a word."));
+        }, 1, [false]).WithTitle("Displays information about a word."));
 
         // probe [value]
         ctx.Set("probe", new Native((args, refinements, _, _, isTail) => {

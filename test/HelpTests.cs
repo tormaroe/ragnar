@@ -5,12 +5,17 @@ public class HelpTests : TestBase
     [Fact]
     public void Help_Displays_Native_Info()
     {
-        var (_, output) = RunWithOutput("help 'add");
+        // Test with direct word (unquoted)
+        var (_, output) = RunWithOutput("help add");
         
         Assert.Contains("WORD: add", output);
         Assert.Contains("TYPE:  Native Function", output);
         Assert.Contains("TITLE: Returns the sum of two values.", output);
         Assert.Contains("ARITY: 2", output);
+
+        // Test with quoted word (lit-word)
+        var (_, output2) = RunWithOutput("help 'add");
+        Assert.Contains("WORD: add", output2);
     }
 
     [Fact]
@@ -18,7 +23,7 @@ public class HelpTests : TestBase
     {
         var code = @"
             square: func [""Returns the square of a number."" n] [n * n]
-            help 'square
+            help square
         ";
         var (_, output) = RunWithOutput(code);
         
