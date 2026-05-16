@@ -50,4 +50,52 @@ public class LexerTests
         Assert.Equal("call", ((Word)pathToken.Parts[0]).Name);
         Assert.Equal("wait", ((Word)pathToken.Parts[1]).Name);
     }
+
+    [Fact]
+    public void Lexer_Identifies_BraceStrings()
+    {
+        var input = "{simple} {nested {brace} string} {multi\nline}";
+        var lexer = new Lexer(input);
+        var tokens = lexer.Tokenize();
+
+        Assert.Equal(3, tokens.Count);
+        
+        Assert.Equal("simple", ((Text)tokens[0].Value).Content);
+        Assert.Equal("nested {brace} string", ((Text)tokens[1].Value).Content);
+        Assert.Equal("multi\nline", ((Text)tokens[2].Value).Content);
+    }
+
+    [Fact]
+    public void Lexer_Identifies_Deeply_Nested_BraceStrings()
+    {
+        var input = "{ a { b { c } d } e }";
+        var lexer = new Lexer(input);
+        var tokens = lexer.Tokenize();
+
+        Assert.Single(tokens);
+        Assert.Equal(" a { b { c } d } e ", ((Text)tokens[0].Value).Content);
+    }
+
+    [Fact]
+    public void Lexer_Identifies_BraceStrings_With_Quotes()
+    {
+        var input = "{He said, \"Hello!\"}";
+        var lexer = new Lexer(input);
+        var tokens = lexer.Tokenize();
+
+        Assert.Single(tokens);
+        Assert.Equal("He said, \"Hello!\"", ((Text)tokens[0].Value).Content);
+    }
+
+    [Fact]
+    public void Lexer_Identifies_Multiline_BraceStrings()
+    {
+        var input = "{\n    Line 1\n    Line 2\n}";
+        var lexer = new Lexer(input);
+        var tokens = lexer.Tokenize();
+
+        Assert.Single(tokens);
+        // The content should include the newlines and leading spaces
+        Assert.Equal("\n    Line 1\n    Line 2\n", ((Text)tokens[0].Value).Content);
+    }
 }

@@ -57,6 +57,10 @@ public class Lexer(string input)
             {
                 tokens.Add(new Token(TokenType.Value, ParseString()));
             }
+            else if (c == '{')
+            {
+                tokens.Add(new Token(TokenType.Value, ParseBraceString()));
+            }
             else
             {
                 tokens.Add(new Token(TokenType.Value, ParseAtom()));
@@ -64,6 +68,34 @@ public class Lexer(string input)
         }
 
         return tokens;
+    }
+
+    private Text ParseBraceString()
+    {
+        Consume(); // Skip opening {
+        var sb = new StringBuilder();
+        int depth = 1;
+        while (_pos < _input.Length)
+        {
+            char c = Peek();
+            if (c == '{')
+            {
+                depth++;
+            }
+            else if (c == '}')
+            {
+                depth--;
+                if (depth == 0) break;
+            }
+            
+            sb.Append(Consume());
+        }
+
+        if (depth > 0)
+            throw new IncompleteInputException("Unclosed brace string");
+
+        Consume(); // Skip closing }
+        return new Text(sb.ToString());
     }
 
     private Text ParseString()
