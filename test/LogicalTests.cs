@@ -25,27 +25,49 @@ public class LogicalTests : TestBase
     [Fact]
     public void And_Works()
     {
-        var (res1, _) = Run("and true true");
+        var (res1, _) = Run("true and true");
         Assert.True(((Logic)res1).Condition);
 
-        var (res2, _) = Run("and true false");
+        var (res2, _) = Run("true and false");
         Assert.False(((Logic)res2).Condition);
 
-        var (res3, _) = Run("and 10 20");
+        var (res3, _) = Run("10 and 20");
         Assert.True(((Logic)res3).Condition);
+
+        var (res4, _) = Run("and? true false");
+        Assert.False(((Logic)res4).Condition);
     }
 
     [Fact]
     public void Or_Works()
     {
-        var (res1, _) = Run("or true false");
+        var (res1, _) = Run("true or false");
         Assert.True(((Logic)res1).Condition);
 
-        var (res2, _) = Run("or false none");
+        var (res2, _) = Run("false or none");
         Assert.False(((Logic)res2).Condition);
 
-        var (res3, _) = Run("or none 10");
+        var (res3, _) = Run("none or 10");
         Assert.True(((Logic)res3).Condition);
+
+        var (res4, _) = Run("or? false true");
+        Assert.True(((Logic)res4).Condition);
+    }
+
+    [Fact]
+    public void Xor_Works()
+    {
+        var (res1, _) = Run("true xor false");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("true xor true");
+        Assert.False(((Logic)res2).Condition);
+
+        var (res3, _) = Run("false xor false");
+        Assert.False(((Logic)res3).Condition);
+
+        var (res4, _) = Run("xor? true false");
+        Assert.True(((Logic)res4).Condition);
     }
 
     [Fact]

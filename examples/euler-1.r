@@ -9,10 +9,10 @@ f: func [limit] [
      sum: 0
      i:   1
      while [ i < limit ] [
-       if or (i // 3 = 0) (i // 5 = 0) [
-         sum: add sum i
+       if (i // 3 = 0) or (i // 5 = 0) [
+         sum: sum + i
        ]
-       i: add i 1
+       i: i + 1
      ]
      sum
    ]
@@ -24,15 +24,13 @@ print ["Solution 1: The answer is" answer]
 
 ; Solution 2: Recursive list eater
 
-zero?:    func [x] [ equal? 0 x ]
-include?: func [x] [ or zero? x // 3
-	                zero? x // 5 ]
+include?: func [x] [ (x // 3 = 0) or (x // 5 = 0) ]
 
 f: func [limit] [
      inner: func [acc n] [
 	      either n > 0 [
 	        if include? n [
-	          acc: add acc n
+	          acc: acc + n
           ]
 	        inner acc (n - 1)
 	      ] [
