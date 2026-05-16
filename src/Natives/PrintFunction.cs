@@ -28,5 +28,27 @@ public static class PrintFunction
             context.Output.WriteLine(val.ToUserString());
             return val;
         }, 1).WithTitle("Prints a value to the output."));
+
+        ctx.Set("prin", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            var val = args[0];
+
+            if (val is Block b)
+            {
+                var reduced = new List<Value>();
+                int index = 0;
+                while (index < b.Children.Count)
+                {
+                    reduced.Add(interpreter.Next(b, ref index, context, false));
+                }
+
+                var output = string.Join(" ", reduced.Select(r => r.ToUserString()));
+                context.Output.Write(output);
+                return b;
+            }
+
+            context.Output.Write(val.ToUserString());
+            return val;
+        }, 1).WithTitle("Prints a value to the output without a newline."));
     }
 }

@@ -226,32 +226,21 @@ public static class SeriesFunctions
         // join [base] [value]
         ctx.Set("join", new Native((args, refs, context, interpreter, _) =>
         {
-            // For now, we'll focus on string concatenation
-            // but in a full Rebol clone, join [1 2] 3 would return [1 2 3]
             string baseStr = args[0].ToUserString();
-            string appendStr = args[1].ToUserString();
-
-            return new Text(baseStr + appendStr);
-        }, 2).WithTitle("Concatenates two values into a string."));
-
-        // rejoin [block]
-        ctx.Set("rejoin", new Native((args, refs, context, interpreter, _) =>
-        {
-            if (args[0] is not Block b)
-                throw new Exception("rejoin expects a block.");
-
-            var sb = new System.Text.StringBuilder();
-            int index = b.Index;
-
-            // Evaluate each expression in the block and append to string
-            while (index < b.Children.Count)
+            
+            if (args[1] is Block b)
             {
-                var evaluated = interpreter.Next(b, ref index, context);
-                sb.Append(evaluated.ToUserString());
+                var sb = new System.Text.StringBuilder(baseStr);
+                foreach (var child in b.Children.Skip(b.Index))
+                {
+                    sb.Append(child.ToUserString());
+                }
+                return new Text(sb.ToString());
             }
 
-            return new Text(sb.ToString());
-        }, 1).WithTitle("Reduces and joins a block of values into a string."));
+            string appendStr = args[1].ToUserString();
+            return new Text(baseStr + appendStr);
+        }, 2).WithTitle("Concatenates two values into a string."));
 
         // pick [series] [index]
         ctx.Set("pick", new Native((args, refs, _, _, _) =>
