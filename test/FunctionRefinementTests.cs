@@ -15,9 +15,9 @@ public class FunctionRefinementTests : TestBase
             ]
             reduce [f 10 f/b 10]
         ";
-        var result = Run(code).Result as Block;
-        Assert.Equal(10, (result.Children[0] as Integer).Number);
-        Assert.Equal(11, (result.Children[1] as Integer).Number);
+        var result = (Block)Run(code).Result;
+        Assert.Equal(10, ((Integer)result.Children[0]).Number);
+        Assert.Equal(11, ((Integer)result.Children[1]).Number);
     }
 
     [Fact]
@@ -29,9 +29,9 @@ public class FunctionRefinementTests : TestBase
             ]
             reduce [f 10 f/with 10 5]
         ";
-        var result = Run(code).Result as Block;
-        Assert.Equal(10, (result.Children[0] as Integer).Number);
-        Assert.Equal(15, (result.Children[1] as Integer).Number);
+        var result = (Block)Run(code).Result;
+        Assert.Equal(10, ((Integer)result.Children[0]).Number);
+        Assert.Equal(15, ((Integer)result.Children[1]).Number);
     }
 
     [Fact]
@@ -46,11 +46,11 @@ public class FunctionRefinementTests : TestBase
             ]
             reduce [f f/add 5 f/sub 3 f/add/sub 5 3]
         ";
-        var result = Run(code).Result as Block;
-        Assert.Equal(10, (result.Children[0] as Integer).Number);
-        Assert.Equal(15, (result.Children[1] as Integer).Number);
-        Assert.Equal(7, (result.Children[2] as Integer).Number);
-        Assert.Equal(12, (result.Children[3] as Integer).Number);
+        var result = (Block)Run(code).Result;
+        Assert.Equal(10, ((Integer)result.Children[0]).Number);
+        Assert.Equal(15, ((Integer)result.Children[1]).Number);
+        Assert.Equal(7, ((Integer)result.Children[2]).Number);
+        Assert.Equal(12, ((Integer)result.Children[3]).Number);
     }
 
     [Fact]
@@ -63,9 +63,9 @@ public class FunctionRefinementTests : TestBase
             ]
             reduce [f 5 f 15]
         ";
-        var result = Run(code).Result as Block;
-        Assert.Equal("small", (result.Children[0] as Text).Content);
-        Assert.Equal("big", (result.Children[1] as Text).Content);
+        var result = (Block)Run(code).Result;
+        Assert.Equal("small", ((Text)result.Children[0]).Content);
+        Assert.Equal("big", ((Text)result.Children[1]).Content);
     }
 
     [Fact]
@@ -78,9 +78,9 @@ public class FunctionRefinementTests : TestBase
             ]
             reduce [f 5 f 15]
         ";
-        var result = Run(code).Result as Block;
-        Assert.Equal("small", (result.Children[0] as Text).Content);
-        Assert.Equal("none", (result.Children[1] as Word).Name);
+        var result = (Block)Run(code).Result;
+        Assert.Equal("small", ((Text)result.Children[0]).Content);
+        Assert.Equal("none", ((Word)result.Children[1]).Name);
     }
 
     [Fact]
@@ -92,16 +92,16 @@ public class FunctionRefinementTests : TestBase
             ]
             reduce [f/a/b 1 2 f/b/a 1 2]
         ";
-        var result = Run(code).Result as Block;
+        var result = (Block)Run(code).Result;
         
         // f/a/b 1 2 -> a is true, x is 1, b is true, y is 2
-        var res1 = result.Children[0] as Block;
-        Assert.Equal(1, (res1.Children[0] as Integer).Number);
-        Assert.Equal(2, (res1.Children[1] as Integer).Number);
+        var res1 = (Block)result.Children[0];
+        Assert.Equal(1, ((Integer)res1.Children[0]).Number);
+        Assert.Equal(2, ((Integer)res1.Children[1]).Number);
 
         // f/b/a 1 2 -> b is true, y is 1, a is true, x is 2
-        var res2 = result.Children[1] as Block;
-        Assert.Equal(2, (res2.Children[0] as Integer).Number);
-        Assert.Equal(1, (res2.Children[1] as Integer).Number);
+        var res2 = (Block)result.Children[1];
+        Assert.Equal(2, ((Integer)res2.Children[0]).Number);
+        Assert.Equal(1, ((Integer)res2.Children[1]).Number);
     }
 }

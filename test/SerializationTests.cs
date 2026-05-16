@@ -9,9 +9,9 @@ public class SerializationTests : TestBase
     public void Load_From_String()
     {
         var code = @"load ""[1 2 3]""";
-        var result = Run(code).Result as Block;
+        var result = (Block)Run(code).Result;
         Assert.Equal(3, result.Children.Count);
-        Assert.Equal(1, (result.Children[0] as Integer).Number);
+        Assert.Equal(1, ((Integer)result.Children[0]).Number);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class SerializationTests : TestBase
             save s [1 2 3]
             s
         ";
-        var result = Run(code).Result as Text;
+        var result = (Text)Run(code).Result;
         Assert.Equal("[ 1 2 3 ]", result.Content);
     }
 
@@ -37,10 +37,10 @@ public class SerializationTests : TestBase
                 save %{tempFile} val
                 load %{tempFile}
             ";
-            var result = Run(code).Result as Block;
+            var result = (Block)Run(code).Result;
             Assert.Equal(4, result.Children.Count);
-            Assert.Equal("a", (result.Children[0] as SetWord).Name);
-            Assert.Equal(10, (result.Children[1] as Integer).Number);
+            Assert.Equal("a", ((SetWord)result.Children[0]).Name);
+            Assert.Equal(10, ((Integer)result.Children[1]).Number);
         }
         finally
         {
@@ -57,15 +57,15 @@ public class SerializationTests : TestBase
             save s val
             load s
         ";
-        var result = Run(code).Result as Block;
+        var result = (Block)Run(code).Result;
         Assert.Equal(7, result.Children.Count);
-        Assert.Equal(10, (result.Children[0] as Integer).Number);
-        Assert.Equal(20.5, (result.Children[1] as Decimal).Number);
-        Assert.Equal("hello", (result.Children[2] as Text).Content);
-        Assert.Equal("lit", (result.Children[3] as LitWord).Name);
-        Assert.Equal("ref", (result.Children[4] as Refinement).Name);
-        Assert.Equal("get", (result.Children[5] as GetWord).Name);
-        Assert.Equal("word", (result.Children[6] as SetWord).Name);
+        Assert.Equal(10, ((Integer)result.Children[0]).Number);
+        Assert.Equal(20.5, ((Decimal)result.Children[1]).Number);
+        Assert.Equal("hello", ((Text)result.Children[2]).Content);
+        Assert.Equal("lit", ((LitWord)result.Children[3]).Name);
+        Assert.Equal("ref", ((Refinement)result.Children[4]).Name);
+        Assert.Equal("get", ((GetWord)result.Children[5]).Name);
+        Assert.Equal("word", ((SetWord)result.Children[6]).Name);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class SerializationTests : TestBase
             loaded: do load s
             loaded/a
         ";
-        var result = Run(code).Result as Integer;
+        var result = (Integer)Run(code).Result;
         Assert.Equal(10, result.Number);
     }
 
@@ -94,9 +94,9 @@ public class SerializationTests : TestBase
                 loaded: do load %{tempFile}
                 reduce [loaded 10 loaded/with 10 5]
             ";
-            var result = Run(code).Result as Block;
-            Assert.Equal(10, (result.Children[0] as Integer).Number);
-            Assert.Equal(15, (result.Children[1] as Integer).Number);
+            var result = (Block)Run(code).Result;
+            Assert.Equal(10, ((Integer)result.Children[0]).Number);
+            Assert.Equal(15, ((Integer)result.Children[1]).Number);
         }
         finally
         {

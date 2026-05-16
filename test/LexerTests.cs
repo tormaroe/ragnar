@@ -60,9 +60,9 @@ public class LexerTests
 
         Assert.Equal(3, tokens.Count);
         
-        Assert.Equal("simple", ((Text)tokens[0].Value).Content);
-        Assert.Equal("nested {brace} string", ((Text)tokens[1].Value).Content);
-        Assert.Equal("multi\nline", ((Text)tokens[2].Value).Content);
+        Assert.Equal("simple", ((Text)tokens[0].Value!).Content);
+        Assert.Equal("nested {brace} string", ((Text)tokens[1].Value!).Content);
+        Assert.Equal("multi\nline", ((Text)tokens[2].Value!).Content);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class LexerTests
         var tokens = lexer.Tokenize();
 
         Assert.Single(tokens);
-        Assert.Equal(" a { b { c } d } e ", ((Text)tokens[0].Value).Content);
+        Assert.Equal(" a { b { c } d } e ", ((Text)tokens[0].Value!).Content);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class LexerTests
         var tokens = lexer.Tokenize();
 
         Assert.Single(tokens);
-        Assert.Equal("He said, \"Hello!\"", ((Text)tokens[0].Value).Content);
+        Assert.Equal("He said, \"Hello!\"", ((Text)tokens[0].Value!).Content);
     }
 
     [Fact]
@@ -96,6 +96,6 @@ public class LexerTests
 
         Assert.Single(tokens);
         // The content should include the newlines and leading spaces
-        Assert.Equal("\n    Line 1\n    Line 2\n", ((Text)tokens[0].Value).Content);
+        Assert.Equal("\n    Line 1\n    Line 2\n", ((Text)tokens[0].Value!).Content);
     }
 }
