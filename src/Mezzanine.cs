@@ -10,8 +10,8 @@ public static class Mezzanine
         negate: func ["Returns the negative of a number." n] [ n * -1 ]
         none?: func ["Returns true if the value is none." x] [ equal? x none ]
         not-equal?: func ["Returns true if two values are not equal." a b] [ not equal? a b ]
-        pwd: func ["Returns the current working directory."][] [what-dir]
-        what-dir: func ["Returns the current working directory."][] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
+        pwd: func ["Returns the current working directory."] [what-dir]
+        what-dir: func ["Returns the current working directory."] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
         zero?: func ["Returns true if the value is zero." x] [ x = 0 ]
     """;
 
