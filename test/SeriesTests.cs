@@ -176,4 +176,45 @@ public class SeriesTests : TestBase
         var (res2, _) = Run("find/any \"abcdef\" \"a*e\"");
         Assert.Equal("abcdef", ((Text)res2).ToUserString());
     }
+
+    [Fact]
+    public void File_Join_Works()
+    {
+        var code = @"
+            dir: %/c/my-folder/
+            file: %data.txt
+            full-path: join dir file
+        ";
+        var (_, ctx) = Run(code);
+        var res = ctx.Get("full-path");
+        Assert.IsType<File>(res);
+        Assert.Equal("%/c/my-folder/data.txt", res.ToString());
+    }
+
+    [Fact]
+    public void File_Rejoin_Works()
+    {
+        var code = @"
+            dir: %/c/my-folder/
+            file: %data.txt
+            full-path: rejoin [dir ""subfolder/"" file]
+        ";
+        var (_, ctx) = Run(code);
+        var res = ctx.Get("full-path");
+        Assert.IsType<File>(res);
+        Assert.Equal("%/c/my-folder/subfolder/data.txt", res.ToString());
+    }
+
+    [Fact]
+    public void File_Join_Adds_Separator()
+    {
+        var code = @"
+            dir: %/c/my-folder
+            file: %data.txt
+            full-path: join dir file
+        ";
+        var (_, ctx) = Run(code);
+        var res = ctx.Get("full-path");
+        Assert.Equal("%/c/my-folder/data.txt", res.ToString());
+    }
 }

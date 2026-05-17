@@ -35,4 +35,17 @@ public class ConversionTests : TestBase
         var (res2, _) = Run("to-string true");
         Assert.Equal("true", ((Text)res2).ToUserString());
     }
+
+    [Fact]
+    public void Mold_Works()
+    {
+        var (res1, _) = Run("mold 123");
+        Assert.Equal("123", ((Text)res1).ToUserString());
+
+        var (res2, _) = Run("mold [x: 1]");
+        Assert.Equal("[ x: 1 ]", ((Text)res2).ToUserString());
+
+        var (res3, _) = Run("mold/only [x: 1]");
+        Assert.Equal("x: 1", ((Text)res3).ToUserString());
+    }
 }

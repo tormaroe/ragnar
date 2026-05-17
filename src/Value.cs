@@ -211,6 +211,7 @@ public class File(string path) : Value
 {
     public string Path { get; } = path.TrimStart('%');
     public override string ToString() => "%" + Path;
+    public override string ToUserString() => Path;
 }
 
 public class Refinement(string name) : Value

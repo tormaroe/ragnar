@@ -25,6 +25,21 @@ class Program
 
         RunCode(interpreter, globalContext, Mezzanine.SOURCE);
 
+        // --- NEW: Load user startup script ---
+        string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string startupScript = System.IO.Path.Combine(homeDir, ".ragnar.r");
+        if (System.IO.File.Exists(startupScript))
+        {
+            try
+            {
+                RunFile(startupScript, interpreter, globalContext);
+            }
+            catch (Exception ex)
+            {
+                Repl.WriteError($"Error in startup script {startupScript}: {ex.Message}");
+            }
+        }
+
         // 1. Process files if provided
         if (args.Length > 0)
         {

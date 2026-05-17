@@ -4,7 +4,8 @@ public class OS
 {
     public static void AddOsFunctions(Context ctx)
     {
-        ctx.Set("call", new Native((args, refinements, context, interpreter, isTail) => {
+        ctx.Set("call", new Native((args, refinements, context, interpreter, isTail) =>
+        {
             if (args[0] is Text cmd)
             {
                 var processInfo = new System.Diagnostics.ProcessStartInfo
@@ -17,7 +18,7 @@ public class OS
                 };
 
                 var process = System.Diagnostics.Process.Start(processInfo);
-                
+
                 // Handle the /wait refinement
                 if (refinements.Contains("wait"))
                 {
@@ -29,5 +30,11 @@ public class OS
             }
             throw new Exception("call requires a string command.");
         }, 1).WithTitle("Executes an external shell command."));
+
+        ctx.Set("home", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return new File(homeDir);
+        }, 0).WithTitle("Returns the current user's home directory."));
     }
 }

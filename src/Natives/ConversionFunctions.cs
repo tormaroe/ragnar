@@ -33,5 +33,19 @@ public static class ConversionFunctions
         {
             return new Text(args[0].ToUserString());
         }, 1).WithTitle("Converts a value to a string."));
+
+        // mold [value] /only
+        ctx.Set("mold", new Native((args, refinements, _, _, _) =>
+        {
+            Value val = args[0];
+            bool only = refinements.Contains("only");
+
+            if (only && val is Block b)
+            {
+                return new Text(string.Join(" ", b.Children.Skip(b.Index).Select(c => c.ToString())));
+            }
+
+            return new Text(val.ToString());
+        }, 1).WithTitle("Converts a value to its Ragnar source representation."));
     }
 }

@@ -70,6 +70,7 @@ public static class Mezzanine
             dt
         ]
         pwd: func ["Returns the current working directory."] [what-dir]
+        rc-file-name: %.ragnar.r
         reform: func ["Evaluates a block and forms a string with spaces between values." block] [
             result: ""
             first: true
@@ -84,7 +85,10 @@ public static class Mezzanine
             result
         ]
         rejoin: func ["Reduces and joins a block of values into a string." block] [
-            join "" reduce block
+            block: reduce block
+            either empty? block [block] [
+                join first block next block
+            ]
         ]
         what-dir: func ["Returns the current working directory."] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
         wait: func ["Wait for a number of milliseconds." ms] [call-static "System.Threading.Thread" "Sleep" reduce [ms]]

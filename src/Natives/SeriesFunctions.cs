@@ -63,6 +63,13 @@ public static class SeriesFunctions
             throw new Exception("length? requires a series.");
         }, 1).WithTitle("Returns the length of a series."));
 
+        // empty? [1 2 3] -> false
+        ctx.Set("empty?", new Native((args, refinements, _, _, _) =>
+        {
+            if (args[0] is Series s) return new Logic(s.Length == 0);
+            throw new Exception("empty? requires a series.");
+        }, 1).WithTitle("Returns true if the series is empty."));
+
         // find [series] [value]
         ctx.Set("find", new Native((args, refinements, _, _, _) =>
         {
@@ -227,7 +234,21 @@ public static class SeriesFunctions
         ctx.Set("join", new Native((args, refs, context, interpreter, _) =>
         {
             string baseStr = args[0].ToUserString();
-            
+            bool isFile = args[0] is File;
+
+            if (isFile && !string.IsNullOrEmpty(baseStr) && !baseStr.EndsWith("/") && !baseStr.EndsWith("\\"))
+            {
+                string firstPartToAppend = (args[1] is Block b2 && b2.Children.Count > b2.Index)
+                    ? b2.Children[b2.Index].ToUserString()
+                    : args[1].ToUserString();
+
+                if (!string.IsNullOrEmpty(firstPartToAppend) && !firstPartToAppend.StartsWith("/") && !firstPartToAppend.StartsWith("\\"))
+                {
+                    baseStr += "/";
+                }
+            }
+
+            string resultStr;
             if (args[1] is Block b)
             {
                 var sb = new System.Text.StringBuilder(baseStr);
@@ -235,13 +256,16 @@ public static class SeriesFunctions
                 {
                     sb.Append(child.ToUserString());
                 }
-                return new Text(sb.ToString());
+                resultStr = sb.ToString();
+            }
+            else
+            {
+                string appendStr = args[1].ToUserString();
+                resultStr = baseStr + appendStr;
             }
 
-            string appendStr = args[1].ToUserString();
-            return new Text(baseStr + appendStr);
+            return isFile ? new File(resultStr) : new Text(resultStr);
         }, 2).WithTitle("Concatenates two values into a string."));
-
         // pick [series] [index]
         ctx.Set("pick", new Native((args, refs, _, _, _) =>
         {

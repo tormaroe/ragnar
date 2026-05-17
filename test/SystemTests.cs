@@ -32,4 +32,12 @@ public class SystemTests : TestBase
         var result = Run("now/year").Result;
         Assert.Equal(DateTime.Now.Year.ToString(), result.ToUserString());
     }
+
+    [Fact]
+    public void Home_Native_Works()
+    {
+        var result = Run("home").Result;
+        Assert.IsType<File>(result);
+        Assert.Equal(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ((File)result).Path);
+    }
 }

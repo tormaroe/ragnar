@@ -91,4 +91,22 @@ public class IOTests : TestBase
         var (result, _) = Run("pwd");
         Assert.Equal(System.IO.Directory.GetCurrentDirectory(), ((Text)result).Content);
     }
-}
+
+    [Fact]
+    public void Script_Serialization_Works()
+    {
+        string tempFile = System.IO.Path.GetTempFileName();
+        var code = $@"
+            file: %{tempFile.Replace("\\", "/")}
+            script: [ x: 99 ]
+            write :file mold/only script
+        ";
+        Run(code);
+
+        // Now evaluate the file as a script
+        var (_, ctx) = Run($@"do %{tempFile.Replace("\\", "/")} ");
+        Assert.Equal(99, ((Integer)ctx.Get("x")).Number);
+
+        if (System.IO.File.Exists(tempFile)) System.IO.File.Delete(tempFile);
+    }
+    }

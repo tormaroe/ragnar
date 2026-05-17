@@ -19,7 +19,34 @@ TODO
 
 ### Configuration
 
-TODO
+Ragnar will look for a .ragnar.r file in your HOME directory. Here is how that can be used to configure your REPL:
+
+```rebol 
+>> config-path: join home rc-file-name
+== %C:\Users\bob/.ragnar.r
+>> write config-path mold/only [
+..   me: "Bob"
+..   print ["Hello" me "it is now" now/time]
+..   system/console/prompt: "?? "
+.. ]
+```
+
+Now when you restart your REPL is will say hello, and the prompt is modified:
+
+```rebol 
+Hello Bob it is now 10:53:01 AM
+REPL Mode (type 'quit' to exit)
+?? me
+== "Bob"
+??
+``` 
+
+You can also reload your configuration file by executing:
+
+```rebol 
+do join home rc-file-name
+```
+
 
 ### Core Erlang features 
 
