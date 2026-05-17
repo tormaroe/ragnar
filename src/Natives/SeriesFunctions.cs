@@ -252,20 +252,20 @@ public static class SeriesFunctions
             if (args[1] is Block b)
             {
                 var sb = new System.Text.StringBuilder(baseStr);
-                foreach (var child in b.Children.Skip(b.Index))
+                for (int i = b.Index; i < b.Children.Count; i++)
                 {
-                    sb.Append(child.ToUserString());
+                    sb.Append(b.Children[i].ToUserString());
                 }
                 resultStr = sb.ToString();
             }
             else
             {
-                string appendStr = args[1].ToUserString();
-                resultStr = baseStr + appendStr;
+                resultStr = baseStr + args[1].ToUserString();
             }
 
             return isFile ? new File(resultStr) : new Text(resultStr);
         }, 2).WithTitle("Concatenates two values into a string."));
+
         // pick [series] [index]
         ctx.Set("pick", new Native((args, refs, _, _, _) =>
         {

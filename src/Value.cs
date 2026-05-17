@@ -106,8 +106,15 @@ public class Block : Series
     public override string ToString() => "[ " + string.Join(" ", Children.Skip(Index)) + " ]";
 
     // Flatten the block: no brackets, and use the user-friendly version of children
-    public override string ToUserString() => 
-        string.Join(" ", Children.Skip(Index).Select(c => c.ToUserString()));
+    public override string ToUserString()
+    {
+        var sb = new StringBuilder();
+        foreach (var child in Children.Skip(Index))
+        {
+            sb.Append(child.ToUserString());
+        }
+        return sb.ToString();
+    }
 
     public override Series At(int newIndex) => new Block(Children, newIndex);
 }

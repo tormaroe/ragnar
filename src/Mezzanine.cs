@@ -74,11 +74,11 @@ public static class Mezzanine
         rc-file-name: %.ragnar.r
         reform: func ["Evaluates a block and forms a string with spaces between values." block] [
             result: ""
-            first: true
+            is-first: true
             foreach val reduce block [
-                either first [
+                either is-first [
                     result: to-string val
-                    first: false
+                    is-first: false
                 ] [
                     result: rejoin [result " " val]
                 ]

@@ -15,7 +15,9 @@ public class Interpreter
         {
             lastValue = Next(block, ref index, context, isTail);
 
-            if (lastValue is not TailCall)
+            // Update LastResult only if it's NOT a TailCall AND NOT 'none'
+            // AND ONLY if we are NOT in a tail position ourselves (to avoid polluting it in recursion)
+            if (!isTail && lastValue is not TailCall && (lastValue is not Word w || w.Name != "none"))
             {
                 context.LastResult = lastValue;
             }
@@ -27,7 +29,10 @@ public class Interpreter
                     // This was NOT the last expression in the block, so we cannot return a TailCall.
                     // We must trampoline it here and continue with the next expression.
                     lastValue = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Refinements, tc.Context);
-                    context.LastResult = lastValue;
+                    if (!isTail && (lastValue is not Word w2 || w2.Name != "none"))
+                    {
+                        context.LastResult = lastValue;
+                    }
                 }
                 else
                 {

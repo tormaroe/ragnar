@@ -50,12 +50,6 @@ public class Context
 
     public bool TryGet(string name, out Value? value)
     {
-        if (name == "it")
-        {
-            value = GetLastResult();
-            return value != null;
-        }
-
         Context? current = this;
         while (current != null)
         {
@@ -66,6 +60,12 @@ public class Context
             current = current._parent;
         }
 
+        if (name == "it")
+        {
+            value = GetLastResult();
+            return value != null;
+        }
+
         value = null;
         return false;
     }
@@ -73,9 +73,10 @@ public class Context
     // Check if a word exists in this context or parents
     public bool Exists(string name)
     {
-        if (name == "it") return true;
         if (_bindings.ContainsKey(name)) return true;
-        return _parent?.Exists(name) ?? false;
+        if (_parent?.Exists(name) ?? false) return true;
+        if (name == "it") return true;
+        return false;
     }
 
     public Dictionary<string, Value> GetAllBindings()

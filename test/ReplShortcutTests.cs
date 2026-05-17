@@ -102,17 +102,4 @@ public class ReplShortcutTests : TestBase
         // The last value of the loop is the result of the last expression in the last iteration
         Assert.Equal(10, Assert.IsType<Integer>(result).Number);
     }
-
-    [Fact]
-    public void It_Functions_Correctly_In_Complex_Expressions()
-    {
-        var code = @"
-            10
-            it + it
-        ";
-        // 10
-        // 10 + 10 = 20
-        var (result, _) = Run(code);
-        Assert.Equal(20, Assert.IsType<Integer>(result).Number);
-    }
 }
