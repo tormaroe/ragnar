@@ -43,4 +43,25 @@ public class ActorTests : TestBase
         Assert.Contains("Got: world", output);
         Assert.DoesNotContain("Got: quit", output);
     }
+
+    [Fact]
+    public void TestKillActor()
+    {
+        var script = @"
+            a: spawn [
+                print ""Actor starting""
+                receive
+                print ""Actor received msg""
+            ]
+            wait 100
+            kill a
+            tell a ""msg""
+            wait 100
+        ";
+        
+        var (result, output) = RunWithOutput(script);
+        Assert.Contains("Actor starting", output);
+        Assert.Contains("Actor error: Actor was killed.", output);
+        Assert.DoesNotContain("Actor received msg", output);
+    }
 }

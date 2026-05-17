@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Ragnar.Natives;
@@ -7,6 +8,7 @@ namespace Ragnar;
 public class ActorInstance
 {
     private readonly Channel<Value> _mailbox;
+    private readonly CancellationTokenSource _cts = new();
 
     public ActorInstance()
     {
@@ -20,9 +22,20 @@ public class ActorInstance
 
     public Value Receive()
     {
-        // Block until a message is available
-        // In a real async system we'd await this, but Ragnar is sync.
-        return _mailbox.Reader.ReadAsync().AsTask().GetAwaiter().GetResult();
+        try
+        {
+            // Block until a message is available, respecting cancellation
+            return _mailbox.Reader.ReadAsync(_cts.Token).AsTask().GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException)
+        {
+            throw new Exception("Actor was killed.");
+        }
+    }
+
+    public void Kill()
+    {
+        _cts.Cancel();
     }
 }
 
@@ -94,6 +107,17 @@ public static class Actor
             actor.Tell(args[1]);
             return args[1]; // Return message for chaining
         }, 2).WithTitle("Send a message to an actor."));
+
+        ctx.Set("kill", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            if (args.Count != 1 || args[0] is not DotNetValue actorValue || actorValue.Instance is not ActorInstance actor)
+            {
+                throw new ArgumentException("kill expects an actor.");
+            }
+
+            actor.Kill();
+            return new Word("none");
+        }, 1).WithTitle("Terminates an actor process."));
 
         ctx.Set("receive", new Native((args, refinements, context, interpreter, isTail) =>
         {
