@@ -46,6 +46,7 @@ public static class Mezzanine
                 do block
             ]
         ]
+        ignore: func ["Consume one argument and return none." x] [ none ]
         list-env: func ["Lists all environment variables as a block of name-value pairs."] [
             vars: call-static "System.Environment" "GetEnvironmentVariables" []
             result: []
