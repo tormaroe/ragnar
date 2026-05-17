@@ -9,15 +9,16 @@ start-area-server: does [
             msg: receive
             client: first msg
             shape: second msg
+            reply: :reform >> (partial :tell client)
             switch/default first shape [
                 rectangle [
-                    tell client reform [ "Area of rectangle is" (shape/2 * shape/3) ]
+                    reply [ "Area of rectangle is" (shape/2 * shape/3) ]
                 ]
                 circle [
-                    tell client reform [ "Area of circle is" (* 3.14159 (shape/2 * shape/2)) ]
+                    reply [ "Area of circle is" (* 3.14159 (shape/2 * shape/2)) ]
                 ]
             ] [
-                tell client reform [ "I don't know what the area of a" shape/1 "is." ] 
+                reply [ "I don't know what the area of a" shape/1 "is." ] 
             ]
         ]
     ]

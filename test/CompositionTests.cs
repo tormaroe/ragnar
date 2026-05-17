@@ -55,4 +55,38 @@ public class CompositionTests : TestBase
         var (result, _) = Run(script);
         Assert.Equal(123, ((Integer)result).Number);
     }
+
+    [Fact]
+    public void TestPartialNative()
+    {
+        var script = @"
+            f: partial :add 2
+            f 3
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal(5, ((Integer)result).Number);
+    }
+
+    [Fact]
+    public void TestPartialFunction()
+    {
+        var script = @"
+            h: func [a b c] [a + (b * c)]
+            f: partial :h 10
+            f 2 3 ; 10 + (2 * 3) = 16
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal(16, ((Integer)result).Number);
+    }
+
+    [Fact]
+    public void TestPartialAndCompose()
+    {
+        var script = @"
+            f: (partial :add 2) >> :abs
+            f -5 ; abs (add 2 -5) = abs -3 = 3
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal(3, ((Integer)result).Number);
+    }
 }
