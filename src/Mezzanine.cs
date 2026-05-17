@@ -87,6 +87,7 @@ public static class Mezzanine
             join "" reduce block
         ]
         what-dir: func ["Returns the current working directory."] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
+        wait: func ["Wait for a number of milliseconds." ms] [call-static "System.Threading.Thread" "Sleep" reduce [ms]]
         zero?: func ["Returns true if the value is zero." x] [ x = 0 ]
 
     """;

@@ -36,6 +36,7 @@ public static class Runtime
         OS.AddOsFunctions(ctx);
         IO.AddIoFunctions(ctx);
         IoFunctions.Add(ctx);
+        Actor.AddActorFunctions(ctx);
 
         // System object
         var systemCtx = new Context();
