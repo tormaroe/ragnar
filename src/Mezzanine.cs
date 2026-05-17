@@ -94,6 +94,14 @@ public static class Mezzanine
         what-dir: func ["Returns the current working directory."] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
         wait: func ["Wait for a number of milliseconds." ms] [call-static "System.Threading.Thread" "Sleep" reduce [ms]]
         zero?: func ["Returns true if the value is zero." x] [ x = 0 ]
+        switch: func ["Selects a choice and evaluates the first block that follows it." value cases /default case-default] [
+            result: select cases value
+            either block? :result [
+                do result
+            ] [
+                either default [ do case-default ] [ none ]
+            ]
+        ]
 
     """;
 

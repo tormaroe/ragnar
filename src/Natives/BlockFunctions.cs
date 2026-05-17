@@ -20,5 +20,11 @@ public static class BlockFunctions
 
             return new Block(results);
         }, 1).WithTitle("Evaluates expressions within a block and returns a new block with the results."));
+
+        // block? [value]
+        ctx.Set("block?", new Native((args, refs, _, _, _) =>
+        {
+            return new Logic(args[0] is Block);
+        }, 1).WithTitle("Returns true if the value is a block."));
     }
 }

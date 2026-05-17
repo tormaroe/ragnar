@@ -275,6 +275,68 @@ public static class SeriesFunctions
             return GetAt(s, (int)i.Number - 1);
         }, 2).WithTitle("Returns a value at a specified index in a series."));
 
+        // select [series/object] [value]
+        ctx.Set("select", new Native((args, refs, context, interpreter, _) =>
+        {
+            Value target = args[1];
+
+            if (args[0] is ObjectValue obj)
+            {
+                string key = target is Word w ? w.Name : target.ToUserString();
+                return obj.Context.GetOwnBindings().TryGetValue(key, out var val) ? val : new Word("none");
+            }
+
+            if (args[0] is Series s)
+            {
+                // We can reuse find logic or just call it if we had a way.
+                // Since find is a lambda, we can't easily call it directly here without refactoring.
+                // Let's implement the search.
+
+                if (s is Text t)
+                {
+                    string input = t.Content;
+                    string search = target is Text targetText ? targetText.Content : target.ToUserString();
+                    int foundPos = input.IndexOf(search, t.Index, StringComparison.OrdinalIgnoreCase);
+                    if (foundPos >= 0)
+                    {
+                        // In Rebol, select on string returns the next CHAR? 
+                        // Actually select "abcdef" "c" -> "d"
+                        if (foundPos + search.Length < input.Length)
+                        {
+                            return new Text(input[foundPos + search.Length].ToString());
+                        }
+                    }
+                    return new Word("none");
+                }
+
+                if (s is Block b)
+                {
+                    for (int i = s.Index; i < b.Children.Count; i++)
+                    {
+                        // Comparison helper (simplified, should match find)
+                        bool isMatch;
+                        Value v1 = b.Children[i];
+                        if (v1 is Text t1 && target is Text t2)
+                        {
+                            isMatch = string.Equals(t1.Content, t2.Content, StringComparison.OrdinalIgnoreCase);
+                        }
+                        else
+                        {
+                            isMatch = v1.ToString() == target.ToString();
+                        }
+
+                        if (isMatch)
+                        {
+                            if (i + 1 < b.Children.Count) return b.Children[i + 1];
+                            return new Word("none");
+                        }
+                    }
+                }
+            }
+
+            return new Word("none");
+        }, 2).WithTitle("Finds a value in a series and returns the next value."));
+
         // poke [series] [index] [value]
         ctx.Set("poke", new Native((args, refs, _, _, _) =>
         {
