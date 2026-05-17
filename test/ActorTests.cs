@@ -85,4 +85,25 @@ public class ActorTests : TestBase
         Assert.Equal(2, ((Integer)resBlock.Children[0]).Number);
         Assert.Equal(1, ((Integer)resBlock.Children[1]).Number);
     }
+
+    [Fact]
+    public void TestRpc()
+    {
+        var script = @"
+            server: spawn [
+                while [true] [
+                    request: receive
+                    client: first request
+                    msg: second request
+                    tell client join ""echo:"" msg
+                ]
+            ]
+            response: rpc server ""hello""
+            kill server
+            response
+        ";
+        
+        var (result, ctx) = Run(script);
+        Assert.Equal("\"echo:hello\"", result.ToString());
+    }
 }

@@ -154,5 +154,24 @@ public static class Actor
             }
             throw new Exception("receive can only be called from within an actor.");
         }, 0).WithTitle("Wait for and return a message from the actor's mailbox."));
+
+        ctx.Set("rpc", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            if (args.Count != 2 || args[0] is not DotNetValue serverActorValue || serverActorValue.Instance is not ActorInstance serverActor)
+            {
+                throw new ArgumentException("rpc expects a server-actor and a message.");
+            }
+
+            var clientActor = new ActorInstance();
+            var message = args[1];
+
+            var messageBlock = new Block();
+            messageBlock.Children.Add(new DotNetValue(clientActor));
+            messageBlock.Children.Add(message);
+
+            serverActor.Tell(messageBlock);
+
+            return clientActor.Receive();
+        }, 2).WithTitle("Send a message to an actor and wait for a response."));
     }
 }

@@ -27,6 +27,26 @@ public static class LoopFunction
             throw new Exception("loop usage: loop [integer] [block]");
         }, 2).WithTitle("Evaluates a block a specified number of times."));
 
+        // forever [ block ]
+        ctx.Set("forever", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            if (args[0] is not Block body) throw new Exception("forever requires a block.");
+            Value lastResult = new Word("none");
+            try
+            {
+                while (true)
+                {
+                    try
+                    {
+                        lastResult = interpreter.Evaluate(body, context);
+                    }
+                    catch (ContinueException) { continue; }
+                }
+            }
+            catch (BreakException) { }
+            return lastResult;
+        }, 1).WithTitle("Evaluates a block endlessly."));
+
         // break
         ctx.Set("break", new Native((args, refs, _, _, _) => throw new BreakException(), 0).WithTitle("Breaks out of a loop."));
 

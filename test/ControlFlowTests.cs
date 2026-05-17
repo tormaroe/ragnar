@@ -98,4 +98,19 @@ public class ControlFlowTests : TestBase
         // Solution to Euler 1 for 1000 is 233168
         Assert.Equal(233168, ((Integer)result).Number);
     }
+
+    [Fact]
+    public void Forever_Works()
+    {
+        var code = @"
+            a: 0
+            forever [
+                a: a + 1
+                if (a = 10) [break]
+            ]
+            a
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal(10, ((Integer)result).Number);
+    }
 }
