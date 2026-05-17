@@ -64,4 +64,25 @@ public class ActorTests : TestBase
         Assert.Contains("Actor error: Actor was killed.", output);
         Assert.DoesNotContain("Actor received msg", output);
     }
+
+    [Fact]
+    public void TestSystemActors()
+    {
+        var script = @"
+            a: spawn [ receive ]
+            b: spawn [ receive ]
+            wait 100
+            count1: length? system/actors
+            kill a
+            wait 100
+            count2: length? system/actors
+            kill b ; cleanup
+            reduce [count1 count2]
+        ";
+        
+        var (result, ctx) = Run(script);
+        var resBlock = (Block)result;
+        Assert.Equal(2, ((Integer)resBlock.Children[0]).Number);
+        Assert.Equal(1, ((Integer)resBlock.Children[1]).Number);
+    }
 }

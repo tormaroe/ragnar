@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -41,6 +44,7 @@ public class ActorInstance
 
 public static class Actor
 {
+    private static readonly ConcurrentDictionary<ActorInstance, byte> _activeActors = new();
     private static Block? _mezzanineBlock;
     private static readonly object _mezzanineLock = new();
 
@@ -60,6 +64,22 @@ public static class Actor
         return _mezzanineBlock;
     }
 
+    private static void SyncActors()
+    {
+        var systemVal = Runtime.SystemObject;
+        if (systemVal != null && systemVal.Context.TryGet("actors", out var actorsVal) && actorsVal is Block actorsBlock)
+        {
+            lock (actorsBlock)
+            {
+                actorsBlock.Children.Clear();
+                foreach (var actor in _activeActors.Keys)
+                {
+                    actorsBlock.Children.Add(new DotNetValue(actor));
+                }
+            }
+        }
+    }
+
     public static void AddActorFunctions(Context ctx)
     {
         ctx.Set("spawn", new Native((args, refinements, context, interpreter, isTail) =>
@@ -70,6 +90,8 @@ public static class Actor
             }
 
             var actor = new ActorInstance();
+            _activeActors.TryAdd(actor, 0);
+            SyncActors();
             
             // Create a fresh context for the actor, isolated from the current one
             // but still having access to the global natives.
@@ -82,7 +104,7 @@ public static class Actor
             actorContext.Set("self", new DotNetValue(actor));
 
             // Run the actor body in a background task
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
                 try
                 {
@@ -91,6 +113,11 @@ public static class Actor
                 catch (Exception ex)
                 {
                     actorContext.Output.WriteLine($"Actor error: {ex.Message}");
+                }
+                finally
+                {
+                    _activeActors.TryRemove(actor, out _);
+                    SyncActors();
                 }
             });
 

@@ -5,6 +5,37 @@ namespace Ragnar;
 
 public static class Runtime
 {
+    private static ObjectValue? _systemObject;
+    private static readonly object _systemLock = new();
+
+    public static ObjectValue SystemObject
+    {
+        get
+        {
+            if (_systemObject == null)
+            {
+                lock (_systemLock)
+                {
+                    if (_systemObject == null)
+                    {
+                        var systemCtx = new Context();
+                        var consoleCtx = new Context();
+
+                        consoleCtx.Set("prompt", new Text(">> "));
+                        consoleCtx.Set("result", new Text("== "));
+                        consoleCtx.Set("history", new Block());
+
+                        systemCtx.Set("console", new ObjectValue(consoleCtx));
+                        systemCtx.Set("actors", new Block());
+
+                        _systemObject = new ObjectValue(systemCtx);
+                    }
+                }
+            }
+            return _systemObject;
+        }
+    }
+
     public static Context CreateGlobalContext()
     {
         var ctx = new Context();
@@ -39,15 +70,7 @@ public static class Runtime
         Actor.AddActorFunctions(ctx);
 
         // System object
-        var systemCtx = new Context();
-        var consoleCtx = new Context();
-
-        consoleCtx.Set("prompt", new Text(">> "));
-        consoleCtx.Set("result", new Text("== "));
-        consoleCtx.Set("history", new Block());
-
-        systemCtx.Set("console", new ObjectValue(consoleCtx));
-        ctx.Set("system", new ObjectValue(systemCtx));
+        ctx.Set("system", SystemObject);
 
         return ctx;
     }
