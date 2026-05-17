@@ -60,6 +60,7 @@ public static class Runtime
         LogicalFunctions.Add(ctx);
         ConversionFunctions.Add(ctx);
         ObjectFunctions.Add(ctx);
+        FunctionalFunctions.Add(ctx);
         ExitFunction.Add(ctx);
 
         Interop.AddInteropFunctions(ctx);

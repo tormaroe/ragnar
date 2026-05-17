@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Ragnar.Natives;
 
 public static class MathFunctions
@@ -97,6 +101,13 @@ public static class MathFunctions
             throw new Exception("random expects an integer or decimal.");
         }, 1).WithTitle("Returns a random value.");
         ctx.Set("random", random);
+
+        ctx.Set("abs", new Native((args, refs, context, interpreter, _) =>
+        {
+            if (args[0] is Integer i) return new Integer(Math.Abs(i.Number));
+            if (args[0] is Decimal d) return new Decimal(Math.Abs(d.Number));
+            throw new Exception("abs expects an integer or decimal.");
+        }, 1).WithTitle("Returns the absolute value."));
     }
 
     private static Random _rng = new Random();
