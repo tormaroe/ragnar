@@ -15,6 +15,11 @@ public class Interpreter
         {
             lastValue = Next(block, ref index, context, isTail);
 
+            if (lastValue is not TailCall)
+            {
+                context.LastResult = lastValue;
+            }
+
             if (lastValue is TailCall tc)
             {
                 if (index < block.Children.Count)
@@ -22,6 +27,7 @@ public class Interpreter
                     // This was NOT the last expression in the block, so we cannot return a TailCall.
                     // We must trampoline it here and continue with the next expression.
                     lastValue = ExecuteWithTrampoline(tc.Function, tc.Args, tc.Refinements, tc.Context);
+                    context.LastResult = lastValue;
                 }
                 else
                 {

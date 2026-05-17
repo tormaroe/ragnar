@@ -4,6 +4,18 @@ namespace Ragnar;
 public class Context
 {
     public TextWriter Output { get; set; } = Console.Out;
+    public Value? LastResult { get; set; }
+
+    public Value? GetLastResult()
+    {
+        Context? current = this;
+        while (current != null)
+        {
+            if (current.LastResult != null) return current.LastResult;
+            current = current._parent;
+        }
+        return null;
+    }
     private readonly Dictionary<string, Value> _bindings = [];
     private readonly Context? _parent;
 
@@ -17,6 +29,11 @@ public class Context
     // Set a value in the CURRENT context
     public void Set(string name, Value value)
     {
+        if (name == "it")
+        {
+            LastResult = value;
+            return;
+        }
         _bindings[name] = value;
     }
 
@@ -33,6 +50,12 @@ public class Context
 
     public bool TryGet(string name, out Value? value)
     {
+        if (name == "it")
+        {
+            value = GetLastResult();
+            return value != null;
+        }
+
         Context? current = this;
         while (current != null)
         {
@@ -50,6 +73,7 @@ public class Context
     // Check if a word exists in this context or parents
     public bool Exists(string name)
     {
+        if (name == "it") return true;
         if (_bindings.ContainsKey(name)) return true;
         return _parent?.Exists(name) ?? false;
     }

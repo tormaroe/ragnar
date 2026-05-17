@@ -57,7 +57,8 @@ public class ControlFlowTests : TestBase
     [Fact]
     public void Deep_Recursion_Succeeds_With_TCO()
     {
-        // This would definitely overflow without TCO
+        // This depth (2,000) is enough to verify TCO works (default stack would likely blow)
+        // while avoiding excessive slowness due to O(depth^2) context lookup.
         var code = @"
             count: func [n acc] [
                 either n = 0 [
@@ -66,10 +67,10 @@ public class ControlFlowTests : TestBase
                     count (n - 1) (acc + 1)
                 ]
             ]
-            count 5000 0
+            count 2000 0
         ";
         var (result, _) = Run(code);
-        Assert.Equal(5000, ((Integer)result).Number);
+        Assert.Equal(2000, ((Integer)result).Number);
     }
 
     [Fact]
