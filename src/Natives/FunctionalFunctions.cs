@@ -68,8 +68,8 @@ public static class FunctionalFunctions
         closure.Set("x", x);
 
         int originalArity;
-        List<(string Name, bool Evaluate)> originalParams = null;
-        bool[] evalArgs = null;
+        List<(string Name, bool Evaluate)>? originalParams = null;
+        bool[]? evalArgs = null;
 
         if (f is Native n)
         {
