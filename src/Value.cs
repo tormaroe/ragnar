@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace Ragnar;
@@ -18,7 +19,7 @@ public class Integer(long value) : Value
 public class Decimal(double value) : Value
 {
     public double Number { get; } = value;
-    public override string ToString() => Number.ToString();
+    public override string ToString() => Number.ToString(CultureInfo.InvariantCulture);
 }
 
 public abstract class Series : Value

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Ragnar.Natives;
 
 public static class ConversionFunctions
@@ -23,7 +25,7 @@ public static class ConversionFunctions
             if (args[0] is Integer i) return new Decimal((double)i.Number);
             if (args[0] is Text t)
             {
-                if (double.TryParse(t.Content.Trim(), out double val)) return new Decimal(val);
+                if (double.TryParse(t.Content.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double val)) return new Decimal(val);
             }
             throw new Exception($"Cannot convert '{args[0].ToUserString()}' to decimal.");
         }, 1).WithTitle("Converts a value to a decimal."));
