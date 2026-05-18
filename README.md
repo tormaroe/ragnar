@@ -6,7 +6,7 @@
 - is *lexically scoped*, all functions are closures (unlike Rebol). 
 - is hosted in .NET with decent interop. 
 - is made to be useful from the command line, and have a REPL. 
-- has tail call optimized recursion (TCO).
+- has tail-call optimized recursion (TCO).
 - has functional composition inspired by **F#**.
 - has partial application inspired by **Clojure**.
 - has a simple actor model implementation inspired by **Erlang**.
@@ -62,9 +62,40 @@ TODO
 
 TODO
 
-### Tail call optimization
+### Tail-Call Optimization (TOC)
 
-TODO
+As functional programming often produce elegant solutions Ragnar needs tail-call optimization.
+
+```rebol 
+factorial: func [n] [
+    loop: func [i accum] [
+        either i > n [
+            accum
+        ] [
+            loop (i + 1) (accum * i)
+        ]
+    ]
+    loop 1 1  ; Recursion in tail position 
+]
+
+factorial 10  ; 3628800
+```
+
+Tail-Call Optimization for Mutual Recursion (trampolining) is also supported. 
+Here is an example of a trampoline algorithm to determine if a number is even or odd (don't do this at home, folks):
+
+```rebol 
+is-even?: func [n] [
+    either n == 1 [ false ] [ is-odd? (n - 1) ]
+]
+is-odd?: func [n] [
+    either n == 1 [ true ] [ is-even? (n - 1) ]
+]
+
+is-even? 10001  ; false
+is-even? 10002  ; true
+```
+
 
 ### Actor model
 
