@@ -165,4 +165,4 @@ while [j <= h] [
     j: j + 1
 ]
 
-exit 
+quit 
