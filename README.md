@@ -1,7 +1,9 @@
 
 ![Ragnar logo](assets/ragnar-logo-1200.png)
 
-***Ragnar*** is a programming language made for fun, and carefully vibecoded using Gemini CLI. It:
+***Ragnar*** is a programming language made for fun, and carefully vibecoded using Gemini CLI. 
+
+It:
 - is inspired by **Rebol**. Many core features from Rebol are implemented, including the object system.
 - is *lexically scoped*, all functions are closures (unlike Rebol). 
 - is hosted in .NET with decent interop. 
