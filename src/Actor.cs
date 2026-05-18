@@ -12,6 +12,7 @@ public class ActorInstance
 {
     private readonly Channel<Value> _mailbox;
     private readonly CancellationTokenSource _cts = new();
+    private volatile bool _killed = false;
 
     public ActorInstance()
     {
@@ -20,15 +21,21 @@ public class ActorInstance
 
     public void Tell(Value message)
     {
-        _mailbox.Writer.TryWrite(message);
+        // Silently drop messages sent to a killed actor.
+        if (!_killed)
+            _mailbox.Writer.TryWrite(message);
     }
 
     public Value Receive()
     {
         try
         {
-            // Block until a message is available, respecting cancellation
-            return _mailbox.Reader.ReadAsync(_cts.Token).AsTask().GetAwaiter().GetResult();
+            // Block until a message is available, respecting cancellation.
+            var value = _mailbox.Reader.ReadAsync(_cts.Token).AsTask().GetAwaiter().GetResult();
+            // Even if a message arrived just as Kill() fired, honour the kill.
+            if (_killed)
+                throw new OperationCanceledException(_cts.Token);
+            return value;
         }
         catch (OperationCanceledException)
         {
@@ -38,6 +45,7 @@ public class ActorInstance
 
     public void Kill()
     {
+        _killed = true;
         _cts.Cancel();
     }
 }

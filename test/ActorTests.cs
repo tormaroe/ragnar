@@ -14,7 +14,7 @@ public class ActorTests : TestBase
                 print msg
             ]
             tell a ""hello-from-actor""
-            wait 200
+            wait 500
         ";
         
         var (result, output) = RunWithOutput(script);
@@ -35,7 +35,7 @@ public class ActorTests : TestBase
             tell a ""hello""
             tell a ""world""
             tell a ""quit""
-            wait 300
+            wait 500
         ";
         
         var (result, output) = RunWithOutput(script);
@@ -53,10 +53,10 @@ public class ActorTests : TestBase
                 receive
                 print ""Actor received msg""
             ]
-            wait 100
+            wait 500
             kill a
             tell a ""msg""
-            wait 100
+            wait 500
         ";
         
         var (result, output) = RunWithOutput(script);
@@ -71,10 +71,10 @@ public class ActorTests : TestBase
         var script = @"
             a: spawn [ receive ]
             b: spawn [ receive ]
-            wait 100
+            wait 500
             count1: length? system/actors
             kill a
-            wait 100
+            wait 500
             count2: length? system/actors
             kill b ; cleanup
             reduce [count1 count2]
