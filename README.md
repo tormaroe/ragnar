@@ -3,13 +3,12 @@
 
 ***Ragnar*** is a programming language made for fun, and carefully vibecoded using Gemini CLI. 
 
-It:
-- is inspired by **Rebol**. Many core features from Rebol are implemented, including the [object system](#object-support).
-- is hosted in .NET with [decent interop](#net-interop). 
-- is made to be useful from the command line, and have a [REPL](#repl-and-reflection). 
+- inspired by **Rebol**. Many core features from Rebol are implemented, including the [object system](#object-support).
+- hosted in .NET with [decent interop](#net-interop). 
+- made to be useful from the command line, and have a [REPL](#repl-and-reflection). 
 - has a simple [actor model](#actor-model) implementation inspired by **Erlang**.
 - is [functional](#functional-programming)
-    - is *lexically scoped* and all functions are closures (unlike Rebol). 
+    - *lexically scoped*, and all functions are closures (unlike Rebol). 
     - has [tail-call optimized](#tail-call-optimization-toc) recursion (TCO).
     - has functional composition inspired by **F#**.
     - has partial application inspired by **Clojure**.
