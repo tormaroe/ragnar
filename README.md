@@ -3,7 +3,7 @@
 
 ***Ragnar*** is a programming language made for fun, and carefully vibecoded using Gemini CLI. It:
 - is inspired by **Rebol**. Many core features from Rebol are implemented, including the object system.
-- is *lexically scoped* (unlike Rebol). 
+- is *lexically scoped*, all functions are closures (unlike Rebol). 
 - is hosted in .NET with decent interop. 
 - is made to be useful from the command line, and have a REPL. 
 - has tail call optimized recursion (TCO).
@@ -68,8 +68,38 @@ TODO
 
 ### Actor model
 
-TODO
+An actor example inspired by Joe Armstrong of Erlang fame:
 
-### 
+```rebol 
+start-area-server: does [
+    spawn [  ; Starts a new actor process (.NET task)
+        forever [
+            msg: receive  ; Blocks and waits to receive on a channel
+            client: first msg  ; The sender, needs a reply
+            shape: second msg
+            switch/default first shape [
+                rectangle [
+                    tell client reform [ "area of rectangle is" (shape/2 * shape/3) ]
+                ]
+                circle [
+                    tell client reform [ "area of circle is" (* 3.14159 (shape/2 * shape/2)) ]
+                ]
+            ] [
+                tell client reform [ "i don't know what the area of a" shape/1 "is." ] 
+            ]
+        ]
+    ]
+]
 
-TODO
+server: start-area-server
+print ["Response:" rpc server [rectangle 5 10]]
+print ["Response:" rpc server [circle 5]]
+print ["Response:" rpc server [triangle 5 10]]
+kill server
+```
+
+Functions: `kill`, `receive`, `rpc`, `tell`
+
+### Functional programming
+
+TODO: Example using partial application, composition, and closure
