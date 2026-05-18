@@ -72,10 +72,10 @@ factorial: func [n] [
         either i > n [
             accum
         ] [
-            loop (i + 1) (accum * i)
+            loop (i + 1) (accum * i)  ; Recursion in tail position
         ]
     ]
-    loop 1 1  ; Recursion in tail position 
+    loop 1 1 
 ]
 
 factorial 10  ; 3628800
