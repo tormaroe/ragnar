@@ -82,7 +82,7 @@ start-area-server: does [
                     tell client reform [ "area of rectangle is" (shape/2 * shape/3) ]
                 ]
                 circle [
-                    tell client reform [ "area of circle is" (* 3.14159 (shape/2 * shape/2)) ]
+                    tell client reform [ "area of circle is" (3.14159 * (shape/2 * shape/2)) ]
                 ]
             ] [
                 tell client reform [ "i don't know what the area of a" shape/1 "is." ] 

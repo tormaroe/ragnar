@@ -3,7 +3,7 @@
     "Programming Erlang" by Joe Armstrong, Chapter 8, "Concurrent Programming".
 }
 start-area-server: does [
-    print "Starting area server..."
+    print "starting area server..."
     spawn [
         forever [
             msg: receive
@@ -12,13 +12,13 @@ start-area-server: does [
             reply: :reform >> (partial :tell client)
             switch/default first shape [
                 rectangle [
-                    reply [ "Area of rectangle is" (shape/2 * shape/3) ]
+                    reply [ "area of rectangle is" (shape/2 * shape/3) ]
                 ]
                 circle [
-                    reply [ "Area of circle is" (* 3.14159 (shape/2 * shape/2)) ]
+                    reply [ "area of circle is" (3.14159 * (shape/2 * shape/2)) ]
                 ]
             ] [
-                reply [ "I don't know what the area of a" shape/1 "is." ] 
+                reply [ "i don't know what the area of a" shape/1 "is." ] 
             ]
         ]
     ]
