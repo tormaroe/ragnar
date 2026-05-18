@@ -35,7 +35,7 @@ public class ActorTests : TestBase
             tell a ""hello""
             tell a ""world""
             tell a ""quit""
-            wait 500
+            wait 1000
         ";
         
         var (result, output) = RunWithOutput(script);
