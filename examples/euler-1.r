@@ -42,3 +42,4 @@ f: func [limit] [
 
 print ["Solution 2: The answer is" f 1000]
 
+none

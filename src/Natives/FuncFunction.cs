@@ -58,7 +58,7 @@ public static class FuncFunction
                 }
             }
 
-            return new Function(mainParams, userRefinements, body, title);
+            return new Function(mainParams, userRefinements, body, title, context);
         }, 2).WithTitle("Defines a function."));
 
         // return [value]

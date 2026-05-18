@@ -6,27 +6,21 @@ public class Context
     public TextWriter Output { get; set; } = Console.Out;
     public Value? LastResult { get; set; }
 
-    public Value? GetLastResult()
-    {
-        Context? current = this;
-        while (current != null)
-        {
-            if (current.LastResult != null) return current.LastResult;
-            current = current._parent;
-        }
-        return null;
-    }
     private readonly Dictionary<string, Value> _bindings = [];
     private readonly Context? _parent;
+    private readonly Context? _secondaryParent;
 
-    public Context(Context? parent = null)
+    public Context(Context? parent = null, Context? secondaryParent = null)
     {
         _parent = parent;
+        _secondaryParent = secondaryParent;
         // Inherit the output stream from the parent if it exists
         if (parent != null) Output = parent.Output;
+        else if (secondaryParent != null) Output = secondaryParent.Output;
     }
 
-    // Set a value in the CURRENT context
+    // Set a value, searching up the parent chain to update an existing binding
+    // if one exists. Otherwise, set it in the current context.
     public void Set(string name, Value value)
     {
         if (name == "it")
@@ -34,7 +28,32 @@ public class Context
             LastResult = value;
             return;
         }
+
+        if (TryUpdate(name, value)) return;
+
+        // Not found in any context, so set it in the current one.
         _bindings[name] = value;
+    }
+
+    private bool TryUpdate(string name, Value value)
+    {
+        Context? current = this;
+        while (current != null)
+        {
+            if (current._bindings.ContainsKey(name))
+            {
+                current._bindings[name] = value;
+                return true;
+            }
+            current = current._parent;
+        }
+
+        if (_secondaryParent != null && _secondaryParent.TryUpdate(name, value))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     // Look up a value, searching up the parent chain if necessary
@@ -60,6 +79,11 @@ public class Context
             current = current._parent;
         }
 
+        if (_secondaryParent != null && _secondaryParent.TryGet(name, out value))
+        {
+            return true;
+        }
+
         if (name == "it")
         {
             value = GetLastResult();
@@ -70,11 +94,26 @@ public class Context
         return false;
     }
 
+    public Value? GetLastResult()
+    {
+        Context? current = this;
+        while (current != null)
+        {
+            if (current.LastResult != null) return current.LastResult;
+            current = current._parent;
+        }
+
+        if (_secondaryParent != null) return _secondaryParent.GetLastResult();
+
+        return null;
+    }
+
     // Check if a word exists in this context or parents
     public bool Exists(string name)
     {
         if (_bindings.ContainsKey(name)) return true;
         if (_parent?.Exists(name) ?? false) return true;
+        if (_secondaryParent?.Exists(name) ?? false) return true;
         if (name == "it") return true;
         return false;
     }

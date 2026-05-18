@@ -11,15 +11,15 @@ WORK IN PROGRESS
 
 }
 
-make-adder: func [x] [
-    y: x
-    func [z] [
-        y: y + z
+make-counter: func [start] [
+    acc: start
+    func [] [
+        acc: acc + 1
     ]
 ]
 
-print {
-    add2: make-adder 2
-    print [ "add2(4) = " (add2 4) ]
-    print [ "add2(5) = " (add2 5) ]
+_ print {
+    counter: make-counter 0
+    print [ "counter => " (counter) ]
+    print [ "counter => " (counter) ]
 }

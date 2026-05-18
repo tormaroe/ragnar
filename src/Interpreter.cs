@@ -388,7 +388,9 @@ public class Interpreter
 
     private Value ExecuteFunction(Function func, List<Value> args, IEnumerable<string> refinements, Context context)
     {
-        var localContext = new Context(context);
+        // Hybrid scoping: Primary parent is the DefiningContext (Lexical).
+        // Secondary parent is the caller context (Dynamic).
+        var localContext = new Context(func.DefiningContext, context);
         int argIdx = 0;
 
         // Bind main parameters

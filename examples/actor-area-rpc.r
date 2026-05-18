@@ -24,16 +24,12 @@ start-area-server: does [
     ]
 ]
 
-get-area: func [server shape] [
-    rpc server shape
-]
-
 print {
     ;;; To run this example:
     server: start-area-server
-    print ["Response from server:" rpc server [rectangle 5 10]]
-    print ["Response from server:" rpc server [circle 5]]
-    print ["Response from server:" rpc server [triangle 5 10]]
+    _ print ["Response from server:" rpc server [rectangle 5 10]]
+    _ print ["Response from server:" rpc server [circle 5]]
+    _ print ["Response from server:" rpc server [triangle 5 10]]
     kill server
 }
 

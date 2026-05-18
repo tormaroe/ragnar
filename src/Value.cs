@@ -181,13 +181,15 @@ public class Function : Value
     public List<(string Name, List<string> Args)> Refinements { get; }
     public Block Body { get; }
     public string Title { get; set; } = "";
+    public Context? DefiningContext { get; }
 
-    public Function(List<(string Name, bool Evaluate)> mainParameters, List<(string Name, List<string> Args)> refinements, Block body, string title = "")
+    public Function(List<(string Name, bool Evaluate)> mainParameters, List<(string Name, List<string> Args)> refinements, Block body, string title = "", Context? definingContext = null)
     {
         MainParameters = mainParameters;
         Refinements = refinements;
         Body = body;
         Title = title;
+        DefiningContext = definingContext;
     }
 
     public override string ToString()
