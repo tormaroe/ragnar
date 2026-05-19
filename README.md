@@ -62,7 +62,24 @@ TODO
 
 ### Object support
 
-TODO
+TODO: teat more
+
+```rebol 
+square: make object! [
+    side: 0
+    area: does [ self/side * self/side ]
+    perimeter: does [ 4 * self/side ]
+    multiply: func [x] [
+        self/side: x * self/side
+    ]
+]
+
+square/side: 3   ; set side length
+square/area      ; returns 9
+square/perimeter ; returns 12
+```
+
+Functions: `context?`, `bind`, `in`, `make`, `get`, `set`
 
 ### Tail-Call Optimization (TOC)
 
