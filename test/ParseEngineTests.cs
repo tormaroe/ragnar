@@ -100,7 +100,6 @@ public class ParseEngineTests : TestBase
     [Fact]
     public void Parse_SubRules_Works()
     {
-        // Register digit in context first
         var (res, _) = Run("digit: [#\"0\" | #\"1\" | #\"2\"] parse \"021\" [digit digit digit]");
         Assert.True(((Logic)res).Condition);
 
@@ -111,7 +110,6 @@ public class ParseEngineTests : TestBase
     [Fact]
     public void Parse_Backtracking_Repetition_Works()
     {
-        // any #"a" will match "aa" but backtracking must drop one "a" to let the second rule match
         var (res, _) = Run("parse \"aa\" [any #\"a\" #\"a\"]");
         Assert.True(((Logic)res).Condition);
     }
@@ -127,5 +125,87 @@ public class ParseEngineTests : TestBase
 
         var (res3, _) = Run("parse/case \"AbC\" [#\"A\" \"bC\"]");
         Assert.True(((Logic)res3).Condition);
+    }
+
+    [Fact]
+    public void Parse_Skip_Works()
+    {
+        var (res1, _) = Run("parse \"abc\" [skip \"bc\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse \"abc\" [skip skip skip]");
+        Assert.True(((Logic)res2).Condition);
+
+        var (res3, _) = Run("parse \"abc\" [skip skip skip skip]");
+        Assert.False(((Logic)res3).Condition);
+    }
+
+    [Fact]
+    public void Parse_End_Works()
+    {
+        var (res1, _) = Run("parse \"abc\" [\"abc\" end]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse \"abc\" [\"ab\" end]");
+        Assert.False(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Parse_To_And_Thru_Works()
+    {
+        var (res1, _) = Run("parse \"a b c\" [to \"c\" \"c\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse \"a b c\" [thru \"b\" \" c\"]");
+        Assert.True(((Logic)res2).Condition);
+
+        var (res3, _) = Run("parse \"a b a c\" [to \"a\" \"a c\"]");
+        Assert.True(((Logic)res3).Condition);
+
+        var (res4, _) = Run("parse \"a b c\" [to end]");
+        Assert.True(((Logic)res4).Condition);
+    }
+
+    [Fact]
+    public void Parse_ParenExecution_Works()
+    {
+        var (res, ctx) = Run("x: 0 parse \"a\" [(x: 1) #\"a\"]");
+        Assert.True(((Logic)res).Condition);
+        Assert.Equal(1, ((Integer)ctx.Get("x")).Number);
+    }
+
+    [Fact]
+    public void Parse_PositionMarkers_Works()
+    {
+        var (res, _) = Run("parse \"a b c\" [to \"b\" p: \"b\" to \"c\" :p \"b c\"]");
+        Assert.True(((Logic)res).Condition);
+    }
+
+    [Fact]
+    public void Parse_Copy_Works()
+    {
+        var (res, ctx) = Run("parse \"abc\" [copy val \"ab\" \"c\"]");
+        Assert.True(((Logic)res).Condition);
+        var val = ctx.Get("val");
+        Assert.Equal("ab", ((Text)val).Content);
+    }
+
+    [Fact]
+    public void Parse_Set_Works()
+    {
+        var (res, ctx) = Run("parse \"abc\" [set val #\"a\" \"bc\"]");
+        Assert.True(((Logic)res).Condition);
+        var val = ctx.Get("val");
+        var c = Assert.IsType<Character>(val);
+        Assert.Equal('a', c.CharValue);
+    }
+
+    [Fact]
+    public void Parse_Copy_Repetition_Works()
+    {
+        var (res, ctx) = Run("parse \"aaa\" [copy val some #\"a\"]");
+        Assert.True(((Logic)res).Condition);
+        var val = ctx.Get("val");
+        Assert.Equal("aaa", ((Text)val).Content);
     }
 }
