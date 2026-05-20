@@ -8,7 +8,7 @@ public static class ParseFunctions
 {
     public static void Add(Context ctx)
     {
-        ctx.Set("parse", new Native((args, refinements, _, _, _) =>
+        ctx.Set("parse", new Native((args, refinements, context, _, _) =>
         {
             if (args.Count < 2)
                 throw new Exception("parse requires two arguments: series and rules.");
@@ -19,9 +19,18 @@ public static class ParseFunctions
             if (series is not Text t)
                 throw new Exception("parse first argument must be a string (Text) in this iteration.");
                 
+            bool isCase = refinements.Contains("case");
+            
+            if (rules is Block rulesBlock)
+            {
+                var engine = new ParseEngine(t.Content, isCase, context);
+                int index = t.Index;
+                bool success = engine.Match(rulesBlock, ref index);
+                return new Logic(success && index == t.Content.Length);
+            }
+            
             string input = t.Content;
             bool isAll = refinements.Contains("all");
-            bool isCase = refinements.Contains("case");
             
             if (input.Length == 0)
             {
