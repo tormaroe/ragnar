@@ -15,21 +15,24 @@ public static class ParseFunctions
                 
             var series = args[0];
             var rules = args[1];
-            
-            if (series is not Text t)
-                throw new Exception("parse first argument must be a string (Text) in this iteration.");
+            if (series is not Series s)
+                throw new Exception("parse first argument must be a series (string or block).");
                 
             bool isCase = refinements.Contains("case");
             
             if (rules is Block rulesBlock)
             {
-                var engine = new ParseEngine(t.Content, isCase, context);
-                int index = t.Index;
+                var engine = new ParseEngine(s, isCase, context);
+                int index = s.Index;
                 bool success = engine.Match(rulesBlock, ref index);
-                return new Logic(success && index == t.Content.Length);
+                int totalLength = s is Text t ? t.Content.Length : ((Block)s).Children.Count;
+                return new Logic(success && index == totalLength);
             }
             
-            string input = t.Content;
+            if (series is not Text textSeries)
+                throw new Exception("parse first argument must be a string (Text) for simple splitting.");
+            
+            string input = textSeries.Content;
             bool isAll = refinements.Contains("all");
             
             if (input.Length == 0)

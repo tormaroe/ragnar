@@ -208,4 +208,76 @@ public class ParseEngineTests : TestBase
         var val = ctx.Get("val");
         Assert.Equal("aaa", ((Text)val).Content);
     }
+
+    [Fact]
+    public void Parse_Block_Literals_Works()
+    {
+        var (res1, _) = Run("parse [1 2 3] [1 2 3]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse [1 2 3] [1 2]");
+        Assert.False(((Logic)res2).Condition);
+
+        var (res3, _) = Run("parse [\"hello\" #\"a\"] [\"hello\" #\"a\"]");
+        Assert.True(((Logic)res3).Condition);
+    }
+
+    [Fact]
+    public void Parse_Block_LitWords_Works()
+    {
+        var (res, _) = Run("parse [hello world] ['hello 'world]");
+        Assert.True(((Logic)res).Condition);
+    }
+
+    [Fact]
+    public void Parse_Block_Datatypes_Works()
+    {
+        var (res1, _) = Run("parse [123 \"hello\" #\"x\"] [integer! string! char!]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse [123 [a b] hello] [integer! block! word!]");
+        Assert.True(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Parse_Block_Repetition_Works()
+    {
+        var (res, _) = Run("parse [1 2 3] [some integer!]");
+        Assert.True(((Logic)res).Condition);
+
+        var (res2, _) = Run("parse [1 \"two\" 3] [some [integer! | string!]]");
+        Assert.True(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Parse_Block_To_Thru_Works()
+    {
+        var (res, _) = Run("parse [1 2 hello 3] [to 'hello 'hello 3]");
+        Assert.True(((Logic)res).Condition);
+    }
+
+    [Fact]
+    public void Parse_Block_CopySet_Works()
+    {
+        var (res1, ctx1) = Run("parse [1 2 3] [copy val some integer!]");
+        Assert.True(((Logic)res1).Condition);
+        var val1 = ctx1.Get("val");
+        var b = Assert.IsType<Block>(val1);
+        Assert.Equal(3, b.Children.Count);
+        Assert.Equal(1, ((Integer)b.Children[0]).Number);
+        Assert.Equal(2, ((Integer)b.Children[1]).Number);
+        Assert.Equal(3, ((Integer)b.Children[2]).Number);
+
+        var (res2, ctx2) = Run("parse [1 2 3] [set val integer! to end]");
+        Assert.True(((Logic)res2).Condition);
+        var val2 = ctx2.Get("val");
+        Assert.Equal(1, ((Integer)val2).Number);
+    }
+
+    [Fact]
+    public void Parse_Block_PositionMarkers_Works()
+    {
+        var (res, _) = Run("parse [1 2 3] [integer! p: integer! :p integer! integer!]");
+        Assert.True(((Logic)res).Condition);
+    }
 }
