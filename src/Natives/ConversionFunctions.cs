@@ -36,6 +36,32 @@ public static class ConversionFunctions
             return new Text(args[0].ToUserString());
         }, 1).WithTitle("Converts a value to a string."));
 
+        // to-char [value]
+        ctx.Set("to-char", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is Character c) return c;
+            if (args[0] is Integer i)
+            {
+                try
+                {
+                    return new Character(Convert.ToChar(i.Number));
+                }
+                catch
+                {
+                    throw new Exception($"Integer value {i.Number} is not a valid character code point.");
+                }
+            }
+            if (args[0] is Text t)
+            {
+                if (t.Content.Length > 0 && t.Index >= 0 && t.Index < t.Content.Length)
+                {
+                    return new Character(t.Content[t.Index]);
+                }
+                throw new Exception("Cannot convert empty string to character.");
+            }
+            throw new Exception($"Cannot convert '{args[0].ToUserString()}' to character.");
+        }, 1).WithTitle("Converts a value to a character."));
+
         // mold [value] /only
         ctx.Set("mold", new Native((args, refinements, _, _, _) =>
         {

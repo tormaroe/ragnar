@@ -116,6 +116,7 @@ public class Inspection
             string typeName = args[0] switch {
                 Integer  => "integer!",
                 Decimal  => "decimal!",
+                Character => "char!",
                 Text     => "text!",
                 Word     => "word!",
                 SetWord  => "set-word!",

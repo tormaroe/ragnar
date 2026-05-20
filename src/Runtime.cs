@@ -57,6 +57,7 @@ public static class Runtime
         BlockFunctions.Add(ctx);
         StringFunctions.Add(ctx);
         ParseFunctions.Add(ctx);
+        CharFunctions.Add(ctx);
         ComparisonFunctions.Add(ctx);
         LogicalFunctions.Add(ctx);
         ConversionFunctions.Add(ctx);

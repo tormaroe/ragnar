@@ -265,3 +265,17 @@ public class TailCall : Value
 
     public override string ToString() => "<tail-call>";
 }
+
+public class Character(char value) : Value
+{
+    public char CharValue { get; } = value;
+    public override string ToString()
+    {
+        if (CharValue == '\n') return "#\"^/\"";
+        if (CharValue == '\t') return "#\"^-\"";
+        if (CharValue == '^') return "#\"^^\"";
+        if (CharValue == '"') return "#\"^\"\"";
+        return $"#\"{CharValue}\"";
+    }
+    public override string ToUserString() => CharValue.ToString();
+}

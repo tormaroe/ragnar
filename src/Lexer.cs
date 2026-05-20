@@ -9,6 +9,7 @@ public class Lexer(string input)
     private int _pos = 0;
 
     private char Peek() => _pos < _input.Length ? _input[_pos] : '\0';
+    private char PeekNext() => _pos + 1 < _input.Length ? _input[_pos + 1] : '\0';
     private char Consume() => _pos < _input.Length ? _input[_pos++] : '\0';
 
     public List<Token> Tokenize()
@@ -52,6 +53,10 @@ public class Lexer(string input)
             {
                 Consume();
                 tokens.Add(new Token(TokenType.CloseParen));
+            }
+            else if (c == '#' && PeekNext() == '"')
+            {
+                tokens.Add(new Token(TokenType.Value, ParseCharacter()));
             }
             else if (c == '"')
             {
@@ -127,6 +132,45 @@ public class Lexer(string input)
 
         Consume(); // Skip closing "
         return new Text(sb.ToString());
+    }
+
+    private Character ParseCharacter()
+    {
+        Consume(); // Skip #
+        Consume(); // Skip "
+        
+        char val = '\0';
+        if (_pos < _input.Length)
+        {
+            char c = Consume();
+            if (c == '^')
+            {
+                if (_pos < _input.Length)
+                {
+                    char escaped = Consume();
+                    if (escaped == '/') val = '\n';
+                    else if (escaped == '-') val = '\t';
+                    else if (escaped == '^') val = '^';
+                    else if (escaped == '"') val = '"';
+                    else val = escaped;
+                }
+            }
+            else
+            {
+                val = c;
+            }
+        }
+        
+        if (Peek() == '"')
+        {
+            Consume(); // Skip closing "
+        }
+        else
+        {
+            throw new IncompleteInputException("Expected closing quote for character literal");
+        }
+        
+        return new Character(val);
     }
 
     private Value ParseAtom()
