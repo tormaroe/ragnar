@@ -227,7 +227,7 @@ public class ParseEngine
 
     private bool IsARuleElement(Value val)
     {
-        if (val is Block || val is Character || val is Text)
+        if (val is Block || val is Character || val is Text || val is Bitset)
             return true;
 
         if (val is Word w)
@@ -243,7 +243,7 @@ public class ParseEngine
             try
             {
                 var resolved = _context.Get(name);
-                return resolved is Block || resolved is Character || resolved is Text;
+                return resolved is Block || resolved is Character || resolved is Text || resolved is Bitset;
             }
             catch
             {
@@ -436,6 +436,22 @@ public class ParseEngine
                 }
             }
 
+            if (element is Bitset bitsetRule)
+            {
+                if (inputValue is Character ch)
+                {
+                    bool match = _isCase
+                        ? bitsetRule.Contains(ch.CharValue)
+                        : bitsetRule.Contains(char.ToLowerInvariant(ch.CharValue)) || bitsetRule.Contains(char.ToUpperInvariant(ch.CharValue));
+                    if (match)
+                    {
+                        inputIndex++;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             if (element is SetWord sw)
             {
                 _context.Set(sw.Name, _inputSeries.At(inputIndex));
@@ -477,6 +493,20 @@ public class ParseEngine
                     ? (inputChar == targetChar.CharValue)
                     : (char.ToLowerInvariant(inputChar) == char.ToLowerInvariant(targetChar.CharValue));
 
+                if (match)
+                {
+                    inputIndex++;
+                    return true;
+                }
+                return false;
+            }
+            else if (element is Bitset bitset)
+            {
+                if (inputIndex >= InputLength) return false;
+                char inputChar = InputText[inputIndex];
+                bool match = _isCase
+                    ? bitset.Contains(inputChar)
+                    : bitset.Contains(char.ToLowerInvariant(inputChar)) || bitset.Contains(char.ToUpperInvariant(inputChar));
                 if (match)
                 {
                     inputIndex++;

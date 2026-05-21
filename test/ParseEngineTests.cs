@@ -280,4 +280,51 @@ public class ParseEngineTests : TestBase
         var (res, _) = Run("parse [1 2 3] [integer! p: integer! :p integer! integer!]");
         Assert.True(((Logic)res).Condition);
     }
+
+    [Fact]
+    public void Parse_Charset_Basic_Works()
+    {
+        // A charset of digits should match one digit character
+        var (res1, _) = Run("digits: charset \"0123456789\" parse \"5\" [digits]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("digits: charset \"0123456789\" parse \"a\" [digits]");
+        Assert.False(((Logic)res2).Condition);
+
+        // Three digits
+        var (res3, _) = Run("digits: charset \"0123456789\" parse \"123\" [3 digits]");
+        Assert.True(((Logic)res3).Condition);
+    }
+
+    [Fact]
+    public void Parse_PhoneNumber_RebolExample_Works()
+    {
+        // Rebol documentation example:
+        // digits: charset "0123456789"
+        // area-code: ["(" 3 digits ")"]
+        // phone-num: [3 digits "-" 4 digits]
+        // parse "(707)467-8000" [[area-code | none] phone-num]  => true
+        var code = """
+            digits: charset "0123456789"
+            area-code: ["(" 3 digits ")"]
+            phone-num: [3 digits "-" 4 digits]
+            parse "(707)467-8000" [[area-code | none] phone-num]
+            """;
+        var (res, _) = Run(code);
+        Assert.True(((Logic)res).Condition);
+    }
+
+    [Fact]
+    public void Parse_PhoneNumber_WithoutAreaCode_Works()
+    {
+        // The "none" alternative should allow matching just the phone-num part
+        var code = """
+            digits: charset "0123456789"
+            area-code: ["(" 3 digits ")"]
+            phone-num: [3 digits "-" 4 digits]
+            parse "467-8000" [[area-code | none] phone-num]
+            """;
+        var (res, _) = Run(code);
+        Assert.True(((Logic)res).Condition);
+    }
 }

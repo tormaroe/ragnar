@@ -279,3 +279,16 @@ public class Character(char value) : Value
     }
     public override string ToUserString() => CharValue.ToString();
 }
+
+/// <summary>
+/// A set of characters, produced by <c>charset</c>. Used in parse rules to match
+/// any single character that is a member of the set.
+/// </summary>
+public class Bitset(HashSet<char> chars) : Value
+{
+    public HashSet<char> Chars { get; } = chars;
+
+    public bool Contains(char c) => Chars.Contains(c);
+
+    public override string ToString() => $"make bitset! [{string.Join(" ", Chars.Select(c => $"#{c}"))}]";
+}
