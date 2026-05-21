@@ -374,5 +374,64 @@ public static class SeriesFunctions
             // For non-series, copy is identity
             return args[0];
         }, 1).WithTitle("Returns a copy of a value."));
+        // sort [series]
+        ctx.Set("sort", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is Block b)
+            {
+                // In-place sort from Index onwards.
+                // Rebol's sort uses string representation if it's mixed types, or natural ordering.
+                // We'll just sort the sub-list and copy back.
+                int count = b.Children.Count - b.Index;
+                if (count > 1)
+                {
+                    var subList = b.Children.GetRange(b.Index, count);
+                    subList.Sort((v1, v2) => string.Compare(v1.ToUserString(), v2.ToUserString(), StringComparison.OrdinalIgnoreCase));
+                    for (int i = 0; i < count; i++)
+                    {
+                        b.Children[b.Index + i] = subList[i];
+                    }
+                }
+                return b;
+            }
+            if (args[0] is Text t)
+            {
+                if (t.Content.Length - t.Index > 1)
+                {
+                    string prefix = t.Content[..t.Index];
+                    char[] chars = t.Content[t.Index..].ToCharArray();
+                    Array.Sort(chars);
+                    t.Content = prefix + new string(chars);
+                }
+                return t;
+            }
+            throw new Exception("sort requires a series.");
+        }, 1).WithTitle("Sorts a series."));
+
+        // reverse [series]
+        ctx.Set("reverse", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is Block b)
+            {
+                int count = b.Children.Count - b.Index;
+                if (count > 1)
+                {
+                    b.Children.Reverse(b.Index, count);
+                }
+                return b;
+            }
+            if (args[0] is Text t)
+            {
+                if (t.Content.Length - t.Index > 1)
+                {
+                    string prefix = t.Content[..t.Index];
+                    char[] chars = t.Content[t.Index..].ToCharArray();
+                    Array.Reverse(chars);
+                    t.Content = prefix + new string(chars);
+                }
+                return t;
+            }
+            throw new Exception("reverse requires a series.");
+        }, 1).WithTitle("Reverses a series."));
     }
 }

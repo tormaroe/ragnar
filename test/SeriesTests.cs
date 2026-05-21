@@ -217,4 +217,24 @@ public class SeriesTests : TestBase
         var res = ctx.Get("full-path");
         Assert.Equal("%/c/my-folder/data.txt", res.ToString());
     }
+
+    [Fact]
+    public void Sort_Works()
+    {
+        var (resText, _) = Run("sort \"cba\"");
+        Assert.Equal("abc", ((Text)resText).ToUserString());
+
+        var (resBlock, _) = Run("sort [3 1 2]");
+        Assert.Equal("[ 1 2 3 ]", resBlock.ToString());
+    }
+
+    [Fact]
+    public void Reverse_Works()
+    {
+        var (resText, _) = Run("reverse \"abc\"");
+        Assert.Equal("cba", ((Text)resText).ToUserString());
+
+        var (resBlock, _) = Run("reverse [1 2 3]");
+        Assert.Equal("[ 3 2 1 ]", resBlock.ToString());
+    }
 }
