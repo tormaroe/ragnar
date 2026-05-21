@@ -55,6 +55,7 @@ public static class Runtime
         FuncFunction.Add(ctx);
         SeriesFunctions.Add(ctx);
         BlockFunctions.Add(ctx);
+        ErrorFunctions.Add(ctx);
         StringFunctions.Add(ctx);
         ParseFunctions.Add(ctx);
         CharFunctions.Add(ctx);

@@ -292,3 +292,11 @@ public class Bitset(HashSet<char> chars) : Value
 
     public override string ToString() => $"make bitset! [{string.Join(" ", Chars.Select(c => $"#{c}"))}]";
 }
+
+public class ErrorValue(string message, Exception? innerException = null) : Value
+{
+    public string Message { get; } = message;
+    public Exception? InnerException { get; } = innerException;
+
+    public override string ToString() => $"** Script Error: {Message}";
+}

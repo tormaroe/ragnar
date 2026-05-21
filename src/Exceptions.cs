@@ -8,3 +8,8 @@ public class ReturnException(Value value) : Exception
 }
 
 public class IncompleteInputException(string message) : Exception(message) { }
+
+public class ThrowException(Value thrownValue) : Exception
+{
+    public Value ThrownValue { get; } = thrownValue;
+}
