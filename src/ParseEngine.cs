@@ -11,10 +11,20 @@ public class ParseEngine
     private readonly bool _isCase;
     private readonly Context _context;
 
+    // --- Private value used to inject copy/set callbacks into the rule sequence ---
     private class ParseAction(Action<int> action) : Value
     {
         public Action<int> Action { get; } = action;
         public override string ToString() => "<parse-action>";
+    }
+
+    // --- Non-local exit exceptions for loop control ---
+    private class ParseBreakException : Exception { }
+    private class ParseRejectException : Exception { }
+    private class ParseThenException(bool matchResult, int inputIndex) : Exception
+    {
+        public bool MatchResult { get; } = matchResult;
+        public int InputIndex { get; } = inputIndex;
     }
 
     public ParseEngine(Series inputSeries, bool isCase, Context context)
@@ -34,6 +44,10 @@ public class ParseEngine
         return MatchBlock(rules, ref index);
     }
 
+    // -----------------------------------------------------------------------
+    // MatchBlock: split on | and try each alternative in order.
+    // Handles the ParseThenException that commits to the current branch.
+    // -----------------------------------------------------------------------
     private bool MatchBlock(Block ruleBlock, ref int inputIndex)
     {
         var alternatives = SplitAlternatives(ruleBlock);
@@ -41,10 +55,19 @@ public class ParseEngine
         foreach (var sequence in alternatives)
         {
             int tempIndex = inputIndex;
-            if (MatchSequence(sequence, 0, ref tempIndex))
+            try
             {
-                inputIndex = tempIndex;
-                return true;
+                if (MatchSequence(sequence, 0, ref tempIndex))
+                {
+                    inputIndex = tempIndex;
+                    return true;
+                }
+            }
+            catch (ParseThenException pte)
+            {
+                // "then" commits to this branch — stop trying further alternatives
+                if (pte.MatchResult) inputIndex = pte.InputIndex;
+                return pte.MatchResult;
             }
         }
 
@@ -71,16 +94,17 @@ public class ParseEngine
         return list;
     }
 
+    // -----------------------------------------------------------------------
+    // MatchSequence: dispatch on the current rule element type/keyword.
+    // -----------------------------------------------------------------------
     private bool MatchSequence(List<Value> sequence, int seqIndex, ref int inputIndex)
     {
         if (seqIndex == sequence.Count)
-        {
             return true;
-        }
 
         var current = sequence[seqIndex];
 
-        // 1. Check for to/thru search commands
+        // ── 1. to / thru ──────────────────────────────────────────────────
         if (current is Word searchWord && (searchWord.Name == "to" || searchWord.Name == "thru"))
         {
             if (seqIndex + 1 >= sequence.Count)
@@ -90,8 +114,9 @@ public class ParseEngine
             bool isThru = searchWord.Name == "thru";
             return MatchToOrThruBacktracking(pattern, isThru, inputIndex, ref inputIndex, sequence, seqIndex + 2);
         }
-        // 2. Check for copy/set assignment commands
-        else if (current is Word extractWord && (extractWord.Name == "copy" || extractWord.Name == "set"))
+
+        // ── 2. copy / set ─────────────────────────────────────────────────
+        if (current is Word extractWord && (extractWord.Name == "copy" || extractWord.Name == "set"))
         {
             if (seqIndex + 1 >= sequence.Count || sequence[seqIndex + 1] is not Word varWord)
                 throw new Exception($"Parse command '{extractWord.Name}' must be followed by a word variable name.");
@@ -104,20 +129,13 @@ public class ParseEngine
 
             int consumedCount = 1;
             var ruleElement = sequence[seqIndex + 2];
-            if (ruleElement is Word rw && (rw.Name == "any" || rw.Name == "some" || rw.Name == "opt"))
+            if (ruleElement is Word rw && (rw.Name == "any" || rw.Name == "some" || rw.Name == "opt" || rw.Name == "while"))
             {
                 consumedCount = 2;
             }
             else if (ruleElement is Integer)
             {
-                if (seqIndex + 3 < sequence.Count && sequence[seqIndex + 3] is Integer)
-                {
-                    consumedCount = 3;
-                }
-                else
-                {
-                    consumedCount = 2;
-                }
+                consumedCount = seqIndex + 3 < sequence.Count && sequence[seqIndex + 3] is Integer ? 3 : 2;
             }
 
             var ruleSequence = sequence.GetRange(seqIndex + 2, consumedCount);
@@ -129,67 +147,252 @@ public class ParseEngine
                 if (mode == "copy")
                 {
                     if (_isBlockMode)
-                    {
-                        var subChildren = InputBlock.Children.GetRange(start, endIndex - start);
-                        _context.Set(varName, new Block(subChildren));
-                    }
+                        _context.Set(varName, new Block(InputBlock.Children.GetRange(start, endIndex - start)));
                     else
-                    {
-                        string val = InputText.Substring(start, endIndex - start);
-                        _context.Set(varName, new Text(val));
-                    }
+                        _context.Set(varName, new Text(InputText.Substring(start, endIndex - start)));
                 }
                 else if (mode == "set")
                 {
                     if (endIndex > start)
-                    {
-                        if (_isBlockMode)
-                        {
-                            _context.Set(varName, InputBlock.Children[start]);
-                        }
-                        else
-                        {
-                            _context.Set(varName, new Character(InputText[start]));
-                        }
-                    }
+                        _context.Set(varName, _isBlockMode ? InputBlock.Children[start] : (Value)new Character(InputText[start]));
                     else
-                    {
                         _context.Set(varName, new Word("none"));
-                    }
                 }
             });
 
             var combined = ruleSequence.Concat([action]).Concat(restOfSequence).ToList();
             return MatchSequence(combined, 0, ref inputIndex);
         }
-        // 3. Check for modifiers (any, some, opt)
-        else if (current is Word w && (w.Name == "any" || w.Name == "some" || w.Name == "opt"))
+
+        // ── 3. not / ahead (lookaheads) ───────────────────────────────────
+        if (current is Word lookaheadWord && (lookaheadWord.Name == "not" || lookaheadWord.Name == "ahead"))
         {
             if (seqIndex + 1 >= sequence.Count)
-                throw new Exception($"Parse rule modifier '{w.Name}' must be followed by a rule.");
+                throw new Exception($"Parse keyword '{lookaheadWord.Name}' must be followed by a rule.");
 
-            int min = w.Name switch
+            bool isNot = lookaheadWord.Name == "not";
+            var lookaheadRule = sequence[seqIndex + 1];
+            int tempIndex = inputIndex;
+            bool matched;
+            try { matched = MatchElement(lookaheadRule, ref tempIndex); }
+            catch { matched = false; }
+
+            bool result = isNot ? !matched : matched;
+            // Lookahead never advances input
+            if (result)
+                return MatchSequence(sequence, seqIndex + 2, ref inputIndex);
+            return false;
+        }
+
+        // ── 4. if (paren conditional) ─────────────────────────────────────
+        if (current is Word ifWord && ifWord.Name == "if")
+        {
+            if (seqIndex + 1 >= sequence.Count || sequence[seqIndex + 1] is not Paren condParen)
+                throw new Exception("Parse keyword 'if' must be followed by a paren expression.");
+
+            var interpreter = new Interpreter();
+            var condResult = interpreter.Evaluate(condParen, _context);
+            if (!IsTruthy(condResult)) return false;
+            return MatchSequence(sequence, seqIndex + 2, ref inputIndex);
+        }
+
+        // ── 5. then (commit: skip remaining alternatives on failure) ───────
+        if (current is Word thenWord && thenWord.Name == "then")
+        {
+            int tempIndex = inputIndex;
+            bool rest = MatchSequence(sequence, seqIndex + 1, ref tempIndex);
+            if (rest)
             {
-                "any" => 0,
-                "some" => 1,
-                "opt" => 0,
-                _ => 0
-            };
-            int max = w.Name switch
+                inputIndex = tempIndex;
+                return true;
+            }
+            throw new ParseThenException(false, inputIndex);
+        }
+
+        // ── 6. into (sub-parse a nested series) ───────────────────────────
+        if (current is Word intoWord && intoWord.Name == "into")
+        {
+            if (seqIndex + 1 >= sequence.Count || sequence[seqIndex + 1] is not Block subRuleBlock)
+                throw new Exception("Parse keyword 'into' must be followed by a block rule.");
+
+            if (inputIndex >= InputLength) return false;
+
+            Series? subSeries = null;
+            if (_isBlockMode)
             {
-                "any" => int.MaxValue,
-                "some" => int.MaxValue,
-                "opt" => 1,
-                _ => 1
-            };
+                var inputVal = InputBlock.Children[inputIndex];
+                if (inputVal is Series s) subSeries = s;
+                else return false;
+            }
+            else
+            {
+                // In string mode, 'into' is unusual but treat current position substring as a Text
+                return false; // not commonly supported in string mode
+            }
+
+            var subEngine = new ParseEngine(subSeries, _isCase, _context);
+            int subIndex = subSeries.Index;
+            int subLen = subSeries is Block sb ? sb.Children.Count : ((Text)subSeries).Content.Length;
+            if (subEngine.Match(subRuleBlock, ref subIndex) && subIndex == subLen)
+            {
+                inputIndex++;
+                return MatchSequence(sequence, seqIndex + 2, ref inputIndex);
+            }
+            return false;
+        }
+
+        // ── 7. quote (literal match, bypasses word evaluation) ────────────
+        if (current is Word quoteWord && quoteWord.Name == "quote")
+        {
+            if (seqIndex + 1 >= sequence.Count)
+                throw new Exception("Parse keyword 'quote' must be followed by a value.");
+
+            var literal = sequence[seqIndex + 1];
+            int tempIndex = inputIndex;
+            // Match literal value directly (as if it were a constant, not a variable)
+            bool matched = MatchLiteral(literal, ref tempIndex);
+            if (matched)
+            {
+                if (MatchSequence(sequence, seqIndex + 2, ref tempIndex))
+                {
+                    inputIndex = tempIndex;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ── 8. insert (mutate: insert value at current position) ──────────
+        if (current is Word insertWord && insertWord.Name == "insert")
+        {
+            if (seqIndex + 1 >= sequence.Count)
+                throw new Exception("Parse keyword 'insert' must be followed by a value.");
+
+            var insertVal = sequence[seqIndex + 1];
+            // Resolve word references for the value to insert
+            Value resolved = insertVal is Word iw ? _context.Get(iw.Name) : insertVal;
+
+            if (_isBlockMode)
+            {
+                InputBlock.Children.Insert(inputIndex, resolved);
+                inputIndex++; // advance past the newly inserted element
+            }
+            else
+            {
+                string toInsert = resolved is Text it ? it.Content
+                    : resolved is Character ic ? ic.CharValue.ToString()
+                    : resolved.ToString();
+                var text = (Text)_inputSeries;
+                text.Content = text.Content.Substring(0, inputIndex) + toInsert + text.Content.Substring(inputIndex);
+                inputIndex += toInsert.Length;
+            }
+            return MatchSequence(sequence, seqIndex + 2, ref inputIndex);
+        }
+
+        // ── 9. remove (mutate: match rule then delete matched portion) ─────
+        if (current is Word removeWord && removeWord.Name == "remove")
+        {
+            if (seqIndex + 1 >= sequence.Count)
+                throw new Exception("Parse keyword 'remove' must be followed by a rule.");
+
+            var removeRule = sequence[seqIndex + 1];
+            int start = inputIndex;
+            int tempIndex = inputIndex;
+            bool matched;
+            try { matched = MatchElement(removeRule, ref tempIndex); }
+            catch { matched = false; }
+
+            if (!matched) return false;
+
+            int end = tempIndex;
+            if (_isBlockMode)
+            {
+                InputBlock.Children.RemoveRange(start, end - start);
+                // inputIndex stays at start (now pointing at what was after the removed range)
+                inputIndex = start;
+            }
+            else
+            {
+                var text = (Text)_inputSeries;
+                text.Content = text.Content.Substring(0, start) + text.Content.Substring(end);
+                inputIndex = start;
+            }
+            return MatchSequence(sequence, seqIndex + 2, ref inputIndex);
+        }
+
+        // ── 10. change (mutate: match rule then replace matched portion) ───
+        if (current is Word changeWord && changeWord.Name == "change")
+        {
+            if (seqIndex + 2 >= sequence.Count)
+                throw new Exception("Parse keyword 'change' must be followed by a rule and a replacement value.");
+
+            var changeRule = sequence[seqIndex + 1];
+            var changeVal = sequence[seqIndex + 2];
+            Value resolvedVal = changeVal is Word cw ? _context.Get(cw.Name) : changeVal;
+
+            int start = inputIndex;
+            int tempIndex = inputIndex;
+            bool matched;
+            try { matched = MatchElement(changeRule, ref tempIndex); }
+            catch { matched = false; }
+
+            if (!matched) return false;
+
+            int end = tempIndex;
+            if (_isBlockMode)
+            {
+                InputBlock.Children.RemoveRange(start, end - start);
+                InputBlock.Children.Insert(start, resolvedVal);
+                inputIndex = start + 1;
+            }
+            else
+            {
+                string replacement = resolvedVal is Text rt ? rt.Content
+                    : resolvedVal is Character rc ? rc.CharValue.ToString()
+                    : resolvedVal.ToString();
+                var text = (Text)_inputSeries;
+                text.Content = text.Content.Substring(0, start) + replacement + text.Content.Substring(end);
+                inputIndex = start + replacement.Length;
+            }
+            return MatchSequence(sequence, seqIndex + 3, ref inputIndex);
+        }
+
+        // ── 11. fail ──────────────────────────────────────────────────────
+        if (current is Word failWord && failWord.Name == "fail")
+        {
+            return false;
+        }
+
+        // ── 12. break ─────────────────────────────────────────────────────
+        if (current is Word breakWord && breakWord.Name == "break")
+        {
+            throw new ParseBreakException();
+        }
+
+        // ── 13. reject ────────────────────────────────────────────────────
+        if (current is Word rejectWord && rejectWord.Name == "reject")
+        {
+            throw new ParseRejectException();
+        }
+
+        // ── 14. any / some / opt / while ──────────────────────────────────
+        if (current is Word loopWord && (loopWord.Name == "any" || loopWord.Name == "some" || loopWord.Name == "opt" || loopWord.Name == "while"))
+        {
+            if (seqIndex + 1 >= sequence.Count)
+                throw new Exception($"Parse rule modifier '{loopWord.Name}' must be followed by a rule.");
+
+            int min = loopWord.Name == "some" ? 1 : 0;
+            int max = loopWord.Name == "opt" ? 1 : int.MaxValue;
+            bool noProgressGuard = loopWord.Name != "while"; // while has no no-progress guard
 
             var repeatedRule = sequence[seqIndex + 1];
-            return MatchRepetition(repeatedRule, 0, min, max, ref inputIndex, sequence, seqIndex + 2);
+            return MatchRepetition(repeatedRule, 0, min, max, noProgressGuard, ref inputIndex, sequence, seqIndex + 2);
         }
-        // 4. Check for numeric count or range repetition
-        else if (current is Integer countVal && 
-                 ((seqIndex + 1 < sequence.Count && IsARuleElement(sequence[seqIndex + 1])) ||
-                  (seqIndex + 1 < sequence.Count && sequence[seqIndex + 1] is Integer && seqIndex + 2 < sequence.Count && IsARuleElement(sequence[seqIndex + 2]))))
+
+        // ── 15. Numeric count or range repetition ─────────────────────────
+        if (current is Integer countVal &&
+            ((seqIndex + 1 < sequence.Count && IsARuleElement(sequence[seqIndex + 1])) ||
+             (seqIndex + 1 < sequence.Count && sequence[seqIndex + 1] is Integer && seqIndex + 2 < sequence.Count && IsARuleElement(sequence[seqIndex + 2]))))
         {
             int min = (int)countVal.Number;
             int max = min;
@@ -207,10 +410,10 @@ public class ParseEngine
                 repeatedRule = sequence[seqIndex + 1];
             }
 
-            return MatchRepetition(repeatedRule, 0, min, max, ref inputIndex, sequence, nextSeqIndex);
+            return MatchRepetition(repeatedRule, 0, min, max, true, ref inputIndex, sequence, nextSeqIndex);
         }
-        // 5. Regular rule element
-        else
+
+        // ── 16. Regular rule element ───────────────────────────────────────
         {
             int tempIndex = inputIndex;
             if (MatchElement(current, ref tempIndex))
@@ -225,6 +428,9 @@ public class ParseEngine
         }
     }
 
+    // -----------------------------------------------------------------------
+    // IsARuleElement: can this value serve as a rule in numeric repetition?
+    // -----------------------------------------------------------------------
     private bool IsARuleElement(Value val)
     {
         if (val is Block || val is Character || val is Text || val is Bitset)
@@ -233,9 +439,14 @@ public class ParseEngine
         if (val is Word w)
         {
             string name = w.Name;
-            if (name == "any" || name == "some" || name == "opt" || name == "skip" || name == "end" || name == "none" ||
+            if (name == "any" || name == "some" || name == "opt" || name == "while" ||
+                name == "skip" || name == "end" || name == "none" ||
                 name == "to" || name == "thru" || name == "copy" || name == "set" ||
-                name == "integer!" || name == "string!" || name == "text!" || name == "char!" || name == "word!" || name == "block!" || name == "logic!")
+                name == "not" || name == "ahead" || name == "into" || name == "quote" ||
+                name == "insert" || name == "remove" || name == "change" ||
+                name == "fail" || name == "break" || name == "reject" ||
+                name == "integer!" || name == "string!" || name == "text!" || name == "char!" ||
+                name == "word!" || name == "block!" || name == "logic!")
             {
                 return true;
             }
@@ -254,15 +465,44 @@ public class ParseEngine
         return false;
     }
 
-    private bool MatchRepetition(Value rule, int count, int min, int max, ref int inputIndex, List<Value> sequence, int nextSeqIndex)
+    // -----------------------------------------------------------------------
+    // MatchRepetition: greedy repetition with backtracking.
+    // noProgressGuard = true means stop if the rule consumed nothing (any/some).
+    // noProgressGuard = false means allow zero-progress (while).
+    // Handles ParseBreakException (exit with success) and
+    // ParseRejectException (exit with failure).
+    // -----------------------------------------------------------------------
+    private bool MatchRepetition(Value rule, int count, int min, int max, bool noProgressGuard, ref int inputIndex, List<Value> sequence, int nextSeqIndex)
     {
-        // Try greedily matching the rule
         if (count < max)
         {
             int tempIndex = inputIndex;
-            if (MatchElement(rule, ref tempIndex) && tempIndex > inputIndex)
+            bool elementMatched;
+            try
             {
-                if (MatchRepetition(rule, count + 1, min, max, ref tempIndex, sequence, nextSeqIndex))
+                elementMatched = MatchElement(rule, ref tempIndex);
+            }
+            catch (ParseBreakException)
+            {
+                // break: exit loop immediately with success (don't need to meet min)
+                int successIndex = inputIndex;
+                if (MatchSequence(sequence, nextSeqIndex, ref successIndex))
+                {
+                    inputIndex = successIndex;
+                    return true;
+                }
+                return false;
+            }
+            catch (ParseRejectException)
+            {
+                // reject: exit loop immediately with failure
+                return false;
+            }
+
+            bool madeProgress = tempIndex > inputIndex;
+            if (elementMatched && (!noProgressGuard || madeProgress))
+            {
+                if (MatchRepetition(rule, count + 1, min, max, noProgressGuard, ref tempIndex, sequence, nextSeqIndex))
                 {
                     inputIndex = tempIndex;
                     return true;
@@ -270,7 +510,7 @@ public class ParseEngine
             }
         }
 
-        // Check if we met the minimum requirements, then match the rest of the sequence
+        // Check minimum requirements, then match rest of sequence
         if (count >= min)
         {
             int tempIndex = inputIndex;
@@ -284,6 +524,9 @@ public class ParseEngine
         return false;
     }
 
+    // -----------------------------------------------------------------------
+    // MatchToOrThruBacktracking
+    // -----------------------------------------------------------------------
     private bool MatchToOrThruBacktracking(Value pattern, bool isThru, int scanStart, ref int inputIndex, List<Value> sequence, int nextSeqIndex)
     {
         int length = InputLength;
@@ -293,13 +536,9 @@ public class ParseEngine
             bool matched = false;
 
             if (pattern is Word w && w.Name == "end")
-            {
                 matched = (i == length);
-            }
             else
-            {
                 matched = MatchElement(pattern, ref tempIndex);
-            }
 
             if (matched)
             {
@@ -315,21 +554,20 @@ public class ParseEngine
         return false;
     }
 
+    // -----------------------------------------------------------------------
+    // ValuesEqual: structural equality for block-mode matching
+    // -----------------------------------------------------------------------
     private bool ValuesEqual(Value v1, Value v2)
     {
         if (v1 == null || v2 == null) return false;
         if (ReferenceEquals(v1, v2)) return true;
 
-        if (v1 is Integer i1 && v2 is Integer i2)
-            return i1.Number == i2.Number;
-
-        if (v1 is Decimal d1 && v2 is Decimal d2)
-            return d1.Number == d2.Number;
+        if (v1 is Integer i1 && v2 is Integer i2) return i1.Number == i2.Number;
+        if (v1 is Decimal d1 && v2 is Decimal d2) return d1.Number == d2.Number;
 
         if (v1 is Character c1 && v2 is Character c2)
-            return _isCase
-                ? (c1.CharValue == c2.CharValue)
-                : (char.ToLowerInvariant(c1.CharValue) == char.ToLowerInvariant(c2.CharValue));
+            return _isCase ? (c1.CharValue == c2.CharValue)
+                           : (char.ToLowerInvariant(c1.CharValue) == char.ToLowerInvariant(c2.CharValue));
 
         if (v1 is Text t1 && v2 is Text t2)
             return string.Equals(t1.Content, t2.Content, _isCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
@@ -340,14 +578,49 @@ public class ParseEngine
         if (v1 is LitWord lw1 && v2 is LitWord lw2)
             return string.Equals(lw1.Name, lw2.Name, StringComparison.OrdinalIgnoreCase);
 
-        if (v1 is LitWord lw && v2 is Word w)
-            return string.Equals(lw.Name, w.Name, StringComparison.OrdinalIgnoreCase);
-        if (v1 is Word w_ && v2 is LitWord lw_)
-            return string.Equals(w_.Name, lw_.Name, StringComparison.OrdinalIgnoreCase);
+        if (v1 is LitWord lw && v2 is Word w) return string.Equals(lw.Name, w.Name, StringComparison.OrdinalIgnoreCase);
+        if (v1 is Word w_ && v2 is LitWord lw_) return string.Equals(w_.Name, lw_.Name, StringComparison.OrdinalIgnoreCase);
 
         return string.Equals(v1.ToString(), v2.ToString(), _isCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
     }
 
+    // -----------------------------------------------------------------------
+    // IsTruthy: used by the 'if' keyword
+    // -----------------------------------------------------------------------
+    private static bool IsTruthy(Value v)
+    {
+        if (v is Logic lg) return lg.Condition;
+        if (v is Word w && w.Name == "none") return false;
+        return true; // any other value is truthy
+    }
+
+    // -----------------------------------------------------------------------
+    // MatchLiteral: used by 'quote' — matches value directly without resolving
+    // words as rule references.
+    // -----------------------------------------------------------------------
+    private bool MatchLiteral(Value literal, ref int inputIndex)
+    {
+        if (_isBlockMode)
+        {
+            if (inputIndex >= InputLength) return false;
+            var inputVal = InputBlock.Children[inputIndex];
+            if (ValuesEqual(literal, inputVal))
+            {
+                inputIndex++;
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            // In string mode, quote is equivalent to a character or string literal
+            return MatchElement(literal, ref inputIndex);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // MatchElement: match a single rule element against input.
+    // -----------------------------------------------------------------------
     private bool MatchElement(Value element, ref int inputIndex)
     {
         if (element is ParseAction parseAction)
@@ -373,41 +646,33 @@ public class ParseEngine
 
             if (element is Word wordRule)
             {
-                if (wordRule.Name == "none")
+                switch (wordRule.Name)
                 {
-                    return true;
-                }
-                if (wordRule.Name == "skip")
-                {
-                    inputIndex++;
-                    return true;
-                }
-                if (wordRule.Name == "end")
-                {
-                    return inputIndex == InputLength;
+                    case "none": return true;
+                    case "skip": inputIndex++; return true;
+                    case "end":  return inputIndex == InputLength;
+                    case "fail": return false;
+                    case "break": throw new ParseBreakException();
+                    case "reject": throw new ParseRejectException();
                 }
 
                 string name = wordRule.Name;
-                bool isDatatype = name == "integer!" || name == "string!" || name == "text!" || name == "char!" || name == "word!" || name == "block!" || name == "logic!";
+                bool isDatatype = name == "integer!" || name == "string!" || name == "text!" ||
+                                  name == "char!" || name == "word!" || name == "block!" || name == "logic!";
                 if (isDatatype)
                 {
                     bool typeMatched = name switch
                     {
                         "integer!" => inputValue is Integer,
-                        "string!" => inputValue is Text,
-                        "text!" => inputValue is Text,
-                        "char!" => inputValue is Character,
-                        "word!" => inputValue is Word || inputValue is LitWord || inputValue is SetWord || inputValue is GetWord,
-                        "block!" => inputValue is Block,
-                        "logic!" => inputValue is Logic,
-                        _ => false
+                        "string!"  => inputValue is Text,
+                        "text!"    => inputValue is Text,
+                        "char!"    => inputValue is Character,
+                        "word!"    => inputValue is Word || inputValue is LitWord || inputValue is SetWord || inputValue is GetWord,
+                        "block!"   => inputValue is Block,
+                        "logic!"   => inputValue is Logic,
+                        _          => false
                     };
-
-                    if (typeMatched)
-                    {
-                        inputIndex++;
-                        return true;
-                    }
+                    if (typeMatched) { inputIndex++; return true; }
                     return false;
                 }
 
@@ -416,6 +681,8 @@ public class ParseEngine
                     Value resolved = _context.Get(wordRule.Name);
                     return MatchElement(resolved, ref inputIndex);
                 }
+                catch (ParseBreakException) { throw; }
+                catch (ParseRejectException) { throw; }
                 catch
                 {
                     throw new Exception($"Undefined word '{wordRule.Name}' in parse rules.");
@@ -430,10 +697,7 @@ public class ParseEngine
                     interpreter.Evaluate(p, _context);
                     return true;
                 }
-                else
-                {
-                    return MatchBlock(blockRule, ref inputIndex);
-                }
+                return MatchBlock(blockRule, ref inputIndex);
             }
 
             if (element is Bitset bitsetRule)
@@ -443,11 +707,7 @@ public class ParseEngine
                     bool match = _isCase
                         ? bitsetRule.Contains(ch.CharValue)
                         : bitsetRule.Contains(char.ToLowerInvariant(ch.CharValue)) || bitsetRule.Contains(char.ToUpperInvariant(ch.CharValue));
-                    if (match)
-                    {
-                        inputIndex++;
-                        return true;
-                    }
+                    if (match) { inputIndex++; return true; }
                 }
                 return false;
             }
@@ -457,80 +717,60 @@ public class ParseEngine
                 _context.Set(sw.Name, _inputSeries.At(inputIndex));
                 return true;
             }
+
             if (element is GetWord gw)
             {
                 try
                 {
                     Value val = _context.Get(gw.Name);
-                    if (val is Series s)
-                    {
-                        inputIndex = s.Index;
-                        return true;
-                    }
+                    if (val is Series s) { inputIndex = s.Index; return true; }
                     throw new Exception($":{gw.Name} is not a series.");
                 }
-                catch
+                catch (Exception ex) when (ex.Message.Contains("no value"))
                 {
                     throw new Exception($"Undefined word ':{gw.Name}' in parse rules.");
                 }
             }
 
-            if (ValuesEqual(element, inputValue))
-            {
-                inputIndex++;
-                return true;
-            }
-
+            if (ValuesEqual(element, inputValue)) { inputIndex++; return true; }
             return false;
         }
         else
         {
+            // ── String / Text mode ──
+
             if (element is Character targetChar)
             {
                 if (inputIndex >= InputLength) return false;
                 char inputChar = InputText[inputIndex];
-                bool match = _isCase
-                    ? (inputChar == targetChar.CharValue)
-                    : (char.ToLowerInvariant(inputChar) == char.ToLowerInvariant(targetChar.CharValue));
-
-                if (match)
-                {
-                    inputIndex++;
-                    return true;
-                }
+                bool match = _isCase ? (inputChar == targetChar.CharValue)
+                                     : (char.ToLowerInvariant(inputChar) == char.ToLowerInvariant(targetChar.CharValue));
+                if (match) { inputIndex++; return true; }
                 return false;
             }
-            else if (element is Bitset bitset)
+
+            if (element is Bitset bitset)
             {
                 if (inputIndex >= InputLength) return false;
                 char inputChar = InputText[inputIndex];
-                bool match = _isCase
-                    ? bitset.Contains(inputChar)
-                    : bitset.Contains(char.ToLowerInvariant(inputChar)) || bitset.Contains(char.ToUpperInvariant(inputChar));
-                if (match)
-                {
-                    inputIndex++;
-                    return true;
-                }
+                bool match = _isCase ? bitset.Contains(inputChar)
+                                     : bitset.Contains(char.ToLowerInvariant(inputChar)) || bitset.Contains(char.ToUpperInvariant(inputChar));
+                if (match) { inputIndex++; return true; }
                 return false;
             }
-            else if (element is Text targetStr)
+
+            if (element is Text targetStr)
             {
                 string strVal = targetStr.Content;
                 if (inputIndex + strVal.Length > InputLength) return false;
                 string inputSub = InputText.Substring(inputIndex, strVal.Length);
-                bool match = _isCase
-                    ? (inputSub == strVal)
-                    : string.Equals(inputSub, strVal, StringComparison.OrdinalIgnoreCase);
-
-                if (match)
-                {
-                    inputIndex += strVal.Length;
-                    return true;
-                }
+                bool match = _isCase ? (inputSub == strVal)
+                                     : string.Equals(inputSub, strVal, StringComparison.OrdinalIgnoreCase);
+                if (match) { inputIndex += strVal.Length; return true; }
                 return false;
             }
-            else if (element is Block blockRule)
+
+            if (element is Block blockRule)
             {
                 if (blockRule is Paren p)
                 {
@@ -538,51 +778,39 @@ public class ParseEngine
                     interpreter.Evaluate(p, _context);
                     return true;
                 }
-                else
-                {
-                    return MatchBlock(blockRule, ref inputIndex);
-                }
+                return MatchBlock(blockRule, ref inputIndex);
             }
-            else if (element is SetWord sw)
+
+            if (element is SetWord sw)
             {
                 _context.Set(sw.Name, _inputSeries.At(inputIndex));
                 return true;
             }
-            else if (element is GetWord gw)
+
+            if (element is GetWord gw)
             {
                 try
                 {
                     Value val = _context.Get(gw.Name);
-                    if (val is Series s)
-                    {
-                        inputIndex = s.Index;
-                        return true;
-                    }
+                    if (val is Series s) { inputIndex = s.Index; return true; }
                     throw new Exception($":{gw.Name} is not a series.");
                 }
-                catch
+                catch (Exception ex) when (ex.Message.Contains("no value"))
                 {
                     throw new Exception($"Undefined word ':{gw.Name}' in parse rules.");
                 }
             }
-            else if (element is Word w)
+
+            if (element is Word w)
             {
-                if (w.Name == "none")
+                switch (w.Name)
                 {
-                    return true;
-                }
-                if (w.Name == "skip")
-                {
-                    if (inputIndex < InputLength)
-                    {
-                        inputIndex++;
-                        return true;
-                    }
-                    return false;
-                }
-                if (w.Name == "end")
-                {
-                    return inputIndex == InputLength;
+                    case "none":   return true;
+                    case "skip":   if (inputIndex < InputLength) { inputIndex++; return true; } return false;
+                    case "end":    return inputIndex == InputLength;
+                    case "fail":   return false;
+                    case "break":  throw new ParseBreakException();
+                    case "reject": throw new ParseRejectException();
                 }
 
                 try
@@ -590,13 +818,15 @@ public class ParseEngine
                     Value resolved = _context.Get(w.Name);
                     return MatchElement(resolved, ref inputIndex);
                 }
+                catch (ParseBreakException) { throw; }
+                catch (ParseRejectException) { throw; }
                 catch
                 {
                     throw new Exception($"Undefined word '{w.Name}' in parse rules.");
                 }
             }
 
-            throw new Exception($"Unsupported rule type '{element.GetType().Name}' in this iteration.");
+            throw new Exception($"Unsupported rule type '{element.GetType().Name}' in parse rules.");
         }
     }
 }

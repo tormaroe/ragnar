@@ -327,4 +327,212 @@ public class ParseEngineTests : TestBase
         var (res, _) = Run(code);
         Assert.True(((Logic)res).Condition);
     }
+
+    // ── not / ahead ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Not_Lookahead_Works()
+    {
+        // not fails if the pattern matches (negative lookahead)
+        var (res1, _) = Run("parse \"ab\" [not #\"x\" #\"a\" #\"b\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse \"ab\" [not #\"a\" #\"a\" #\"b\"]");
+        Assert.False(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Parse_Ahead_Lookahead_Works()
+    {
+        // ahead succeeds if pattern matches, but doesn't consume
+        var (res1, _) = Run("parse \"ab\" [ahead #\"a\" #\"a\" #\"b\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse \"ab\" [ahead #\"x\" #\"a\" #\"b\"]");
+        Assert.False(((Logic)res2).Condition);
+    }
+
+    // ── fail ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Fail_ForcesFailure()
+    {
+        // fail always fails the current alternative
+        var (res1, _) = Run("parse \"a\" [fail]");
+        Assert.False(((Logic)res1).Condition);
+
+        // fail triggers backtracking to next alternative
+        var (res2, _) = Run("parse \"a\" [fail | #\"a\"]");
+        Assert.True(((Logic)res2).Condition);
+    }
+
+    // ── break / reject ────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Break_ExitsLoopWithSuccess()
+    {
+        // break exits any/some loop with success immediately
+        var (res1, _) = Run("parse \"aaa\" [any [#\"a\" | break]]");
+        Assert.True(((Logic)res1).Condition);
+
+        // break inside some exits even before minimum met
+        var (res2, _) = Run("parse \"\" [some [break]]");
+        Assert.True(((Logic)res2).Condition);
+    }
+
+    [Fact]
+    public void Parse_Reject_ExitsLoopWithFailure()
+    {
+        // reject exits any/some loop with failure
+        var (res1, _) = Run("parse \"a\" [any [reject] | #\"a\"]");
+        Assert.True(((Logic)res1).Condition);
+    }
+
+    // ── if ────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_If_ConditionalRule_Works()
+    {
+        // if with true paren passes
+        var (res1, _) = Run("parse \"a\" [if (true) #\"a\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        // if with false paren fails
+        var (res2, _) = Run("parse \"a\" [if (false) #\"a\"]");
+        Assert.False(((Logic)res2).Condition);
+
+        // if can test a variable
+        var (res3, _) = Run("x: true  parse \"a\" [if (x) #\"a\"]");
+        Assert.True(((Logic)res3).Condition);
+    }
+
+    // ── while ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_While_Works()
+    {
+        // while matches zero or more times (like any, but no no-progress guard)
+        var (res1, _) = Run("parse \"aaa\" [while #\"a\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse \"\" [while #\"a\"]");
+        Assert.True(((Logic)res2).Condition);
+
+        var (res3, _) = Run("digits: charset \"0123456789\" parse \"123abc\" [while digits \"abc\"]");
+        Assert.True(((Logic)res3).Condition);
+    }
+
+    // ── then ──────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Then_CommitsToCurrentBranch()
+    {
+        // Without then, "b" alternative would be tried
+        // With then after "a", "b" alternative is skipped even when "a" branch fails overall
+        var (res1, _) = Run("parse \"a\" [#\"a\" then | #\"b\"]");
+        Assert.True(((Logic)res1).Condition);
+
+        // When then branch itself succeeds, parse should succeed
+        var (res2, _) = Run("parse \"ab\" [#\"a\" then #\"b\"]");
+        Assert.True(((Logic)res2).Condition);
+    }
+
+    // ── into ──────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Into_SubParseBlock_Works()
+    {
+        // into: parse a nested block within the outer block
+        var (res1, _) = Run("parse [[1 2 3]] [into [1 2 3]]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse [[1 2]] [into [1 2 3]]");
+        Assert.False(((Logic)res2).Condition);
+
+        // into with a string nested in a block
+        var (res3, _) = Run("parse [\"hello\"] [into [\"hello\"]]");
+        Assert.True(((Logic)res3).Condition);
+    }
+
+    // ── quote ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Quote_LiteralMatch_Works()
+    {
+        // quote matches a word literally without treating it as a variable reference
+        var (res1, _) = Run("parse [hello] [quote hello]");
+        Assert.True(((Logic)res1).Condition);
+
+        var (res2, _) = Run("parse [world] [quote hello]");
+        Assert.False(((Logic)res2).Condition);
+    }
+
+    // ── insert / remove / change ──────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_Insert_String_Works()
+    {
+        // insert adds text at current position
+        var (_, ctx) = Run("""
+            s: copy "hello"
+            parse s [insert "X"]
+            s
+            """);
+        Assert.Equal("Xhello", ((Text)ctx.Get("s")).Content);
+    }
+
+    [Fact]
+    public void Parse_Remove_String_Works()
+    {
+        // remove deletes the matched portion
+        var (_, ctx) = Run("""
+            s: copy "hello world"
+            parse s [thru " " remove "world"]
+            s
+            """);
+        Assert.Equal("hello ", ((Text)ctx.Get("s")).Content);
+    }
+
+    [Fact]
+    public void Parse_Remove_Block_Works()
+    {
+        // remove from a block
+        var (res, ctx) = Run("""
+            b: copy [1 2 3 4]
+            parse b [skip remove integer!]
+            b
+            """);
+        var block = Assert.IsType<Block>(ctx.Get("b"));
+        Assert.Equal(3, block.Children.Count);
+        Assert.Equal(1L, ((Integer)block.Children[0]).Number);
+        Assert.Equal(3L, ((Integer)block.Children[1]).Number);
+    }
+
+    [Fact]
+    public void Parse_Change_String_Works()
+    {
+        // change replaces matched content with new value
+        var (_, ctx) = Run("""
+            s: copy "hello world"
+            parse s [change "hello" "goodbye"]
+            s
+            """);
+        Assert.Equal("goodbye world", ((Text)ctx.Get("s")).Content);
+    }
+
+    [Fact]
+    public void Parse_Change_Block_Works()
+    {
+        // change replaces an element in a block
+        var (_, ctx) = Run("""
+            b: copy [1 2 3]
+            parse b [skip change integer! 99]
+            b
+            """);
+        var block = Assert.IsType<Block>(ctx.Get("b"));
+        Assert.Equal(3, block.Children.Count);
+        Assert.Equal(1L, ((Integer)block.Children[0]).Number);
+        Assert.Equal(99L, ((Integer)block.Children[1]).Number);
+        Assert.Equal(3L, ((Integer)block.Children[2]).Number);
+    }
 }
