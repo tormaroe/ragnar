@@ -74,7 +74,8 @@ public class Inspection
                     }
 
                     ctx.Output.WriteLine($"ARGS:  [ {string.Join(" ", spec)} ]");
-                    ctx.Output.WriteLine($"BODY:  {func.Body}");
+                    string formattedBody = Formatter.Format(func.Body, 0, context).TrimStart();
+                    ctx.Output.WriteLine($"BODY:  {formattedBody}");
                 }
                 else if (val is DotNetValue dnv)
                 {
@@ -131,5 +132,19 @@ public class Inspection
             };
             return new Word(typeName);
         }, 1).WithTitle("Returns the type of a value."));
+
+        // format [value]
+        ctx.Set("format", new Native((args, refinements, context, interpreter, isTail) => {
+            var val = args[0];
+            if (val is Text text)
+            {
+                var lexer = new Lexer(text.Content);
+                var tokens = lexer.Tokenize();
+                var loader = new Loader();
+                var block = loader.Load(tokens);
+                return new Text(Formatter.FormatBlockChildren(block, 0, context));
+            }
+            return new Text(Formatter.Format(val, 0, context));
+        }, 1).WithTitle("Pretty-prints and formats a value or Ragnar code string."));
     }
 }
