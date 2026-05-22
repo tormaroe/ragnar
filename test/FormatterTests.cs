@@ -126,4 +126,28 @@ public class FormatterTests : TestBase
         var expectedBodyPart = "BODY:  [\n    either a > b [\n        a\n    ] [\n        b\n    ]\n]";
         Assert.Contains(expectedBodyPart.Replace("\r\n", "\n"), output.Replace("\r\n", "\n"));
     }
+
+    [Fact]
+    public void FormatScript_WithBlock_FormatsChildrenWithoutBrackets()
+    {
+        var (result, ctx) = Run("format/script [a: 1 b: 2]");
+        var expected = "a: 1\nb: 2";
+        Assert.Equal(expected, ((Text)result).Content.Replace("\r\n", "\n"));
+    }
+
+    [Fact]
+    public void FormatScript_WithNestedBlock_FormatsChildrenWithoutBrackets()
+    {
+        var (result, ctx) = Run("format/script [if x > 10 [print \"yes\"]]");
+        var expected = "if x > 10 [\n    print \"yes\"\n]";
+        Assert.Equal(expected, ((Text)result).Content.Replace("\r\n", "\n"));
+    }
+
+    [Fact]
+    public void FormatBlock_WithoutScriptRefinement_FormatsWithBrackets()
+    {
+        var (result, ctx) = Run("format [a: 1 b: 2]");
+        var expected = "[ a: 1 b: 2 ]";
+        Assert.Equal(expected, ((Text)result).Content.Replace("\r\n", "\n"));
+    }
 }

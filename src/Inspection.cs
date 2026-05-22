@@ -136,6 +136,8 @@ public class Inspection
         // format [value]
         ctx.Set("format", new Native((args, refinements, context, interpreter, isTail) => {
             var val = args[0];
+            bool isScript = refinements.Contains("script");
+
             if (val is Text text)
             {
                 var lexer = new Lexer(text.Content);
@@ -144,7 +146,13 @@ public class Inspection
                 var block = loader.Load(tokens);
                 return new Text(Formatter.FormatBlockChildren(block, 0, context));
             }
+
+            if (val is Block blockVal && isScript)
+            {
+                return new Text(Formatter.FormatBlockChildren(blockVal, 0, context));
+            }
+
             return new Text(Formatter.Format(val, 0, context));
-        }, 1).WithTitle("Pretty-prints and formats a value or Ragnar code string."));
+        }, 1).WithTitle("Pretty-prints and formats a value or Ragnar code string. Supports /script for blocks."));
     }
 }
