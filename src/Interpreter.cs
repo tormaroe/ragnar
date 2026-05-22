@@ -221,6 +221,7 @@ public class Interpreter
 
         if (current is Path path)
         {
+            bool isGetPath = path.Parts[0] is GetWord;
             Value currentVal = ResolvePathHead(context, path);
             for (int i = 1; i < path.Parts.Count; i++)
             {
@@ -228,6 +229,11 @@ public class Interpreter
 
                 if (currentVal is Native or Function)
                 {
+                    if (isGetPath)
+                    {
+                        return currentVal;
+                    }
+
                     var refinements = new List<string>();
                     for (int j = i; j < path.Parts.Count; j++)
                     {
@@ -279,7 +285,7 @@ public class Interpreter
                     {
                         // Auto-execute if it's a zero-argument function?
                         // Rebol: any word lookup that results in a function EXECUTES it.
-                        if (f.MainParameters.Count == 0)
+                        if (!isGetPath && f.MainParameters.Count == 0)
                         {
                             currentVal = ExecuteWithTrampoline(f, [], [], obj.Context);
                         }
@@ -303,6 +309,35 @@ public class Interpreter
                 }
 
                 throw new Exception($"Cannot navigate into {currentVal.GetType().Name} with segment {segment}");
+            }
+
+            // At the end of the path evaluation, if the final value is a Native or Function,
+            // and it is NOT a get-path, execute it.
+            if (!isGetPath && currentVal is Native or Function)
+            {
+                if (currentVal is Native n)
+                {
+                    var args = new List<Value>();
+                    for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
+                    return n.Action(args, new HashSet<string>(), context, this, isTail);
+                }
+                else if (currentVal is Function f)
+                {
+                    var args = new List<Value>();
+                    // Main args
+                    foreach (var param in f.MainParameters)
+                    {
+                        if (param.Evaluate) args.Add(Next(block, ref index, context, false));
+                        else
+                        {
+                            if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                            args.Add(block.Children[index++]);
+                        }
+                    }
+
+                    if (isTail) return new TailCall(f, args, new HashSet<string>(), context);
+                    return ExecuteWithTrampoline(f, args, [], context);
+                }
             }
 
             return currentVal;
@@ -340,6 +375,10 @@ public class Interpreter
     private static Value ResolvePathHead(Context context, Path path)
     {
         var first = path.Parts[0];
+        if (first is GetWord gw)
+        {
+            return context.Get(gw.Name);
+        }
         if (first is Word w)
         {
             // Try to get from context, but if not found, 

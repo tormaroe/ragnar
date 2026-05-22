@@ -235,9 +235,20 @@ public class Lexer(string input)
         var segments = raw.Split('/');
         var parts = new List<Value>();
 
+        bool isFirst = true;
         foreach (var seg in segments)
         {
             if (string.IsNullOrEmpty(seg)) continue;
+
+            if (isFirst)
+            {
+                isFirst = false;
+                if (seg.StartsWith(':') && seg.Length > 1)
+                {
+                    parts.Add(new GetWord(seg));
+                    continue;
+                }
+            }
 
             // Recursively determine what each segment is.
             // Most are Words, but "data/1" has an Integer at the end.
