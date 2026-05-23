@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = document.querySelectorAll('.content-section');
     const sidebar = document.getElementById('sidebar');
     const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
 
     function showSection(hash) {
         // Default to 'welcome' if no hash or invalid hash is provided
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sidebar.classList.contains('open')) {
             sidebar.classList.remove('open');
             mobileNavToggle.classList.remove('open');
+            if (sidebarOverlay) sidebarOverlay.classList.remove('active');
         }
     }
 
@@ -62,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             sidebar.classList.toggle('open');
             mobileNavToggle.classList.toggle('open');
+            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
         });
 
         // Close sidebar when clicking outside of it on mobile
@@ -69,8 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== mobileNavToggle) {
                 sidebar.classList.remove('open');
                 mobileNavToggle.classList.remove('open');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
             }
         });
+
+        // Close sidebar when clicking the overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                mobileNavToggle.classList.remove('open');
+                sidebarOverlay.classList.remove('active');
+            });
+        }
     }
 
     // -------------------------------------------------------------
