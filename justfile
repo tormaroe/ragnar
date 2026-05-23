@@ -14,3 +14,6 @@ test:
 
 deploy:
     dotnet publish src/Ragnar.csproj -c Release -o dist -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:SelfContained=false
+
+site:
+    node www/server.js

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ragnar Programming Language</title>
+    <meta name="description" content="Ragnar - A Rebol-inspired functional programming language hosted on .NET featuring TCO, Actors, and seamless C# Interop.">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts: Outfit for headers, Inter for body text, JetBrains Mono for code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Main Container -->
+    <div class="site-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo-container">
+                <img src="assets/ragnar-logo-small.png" alt="Ragnar Logo" class="sidebar-logo">
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-group">
+                    <span class="nav-group-title">Ragnar</span>
+                    <ul class="nav-list">
+                        <li><a href="#welcome" class="menu-item active">Welcome</a></li>
+                        <li><a href="#getting-started" class="menu-item">Getting Started</a></li>
+                        <li><a href="#configuration" class="menu-item">Configuration</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <span class="nav-group-title">Language Features</span>
+                    <ul class="nav-list">
+                        <li><a href="#repl" class="menu-item">REPL & Reflection</a></li>
+                        <li><a href="#core" class="menu-item">Core Features</a></li>
+                        <li><a href="#objects" class="menu-item">Objects Support</a></li>
+                        <li><a href="#parse" class="menu-item">Parse Dialect</a></li>
+                        <li><a href="#tco" class="menu-item">Tail-Call Optimization</a></li>
+                        <li><a href="#actors" class="menu-item">Actor Model</a></li>
+                        <li><a href="#functional" class="menu-item">Functional Programming</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-group">
+                    <span class="nav-group-title">Libraries</span>
+                    <ul class="nav-list">
+                        <li><a href="#sqlserver" class="menu-item">SQL Server</a></li>
+                    </ul>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="https://github.com/tormaroe/ragnar" target="_blank" rel="noopener noreferrer" class="github-link">
+                    <svg viewBox="0 0 24 24" width="20" height="20" class="github-icon">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <span>View Repository</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            
+            <!-- Welcome Section -->
+            <section id="welcome" class="content-section active">
+                <div class="card">
+                    <h1>Welcome to Ragnar</h1>
+                    <p class="tagline">A Rebol-inspired programming language hosted on .NET.</p>
+                    
+                    <p><strong>Ragnar</strong> is a programming language designed to combine the unique, expressive dialecting capabilities of <strong>Rebol</strong> with the power, performance, and library ecosystem of the <strong>.NET Platform</strong>.</p>
+                    
+                    <h3>Key Philosophies</h3>
+                    <ul class="features-list">
+                        <li>
+                            <strong class="teal-text">Vibecoded & Lightweight:</strong> Designed for fun, expressiveness, and ease of scripting directly from your command line.
+                        </li>
+                        <li>
+                            <strong class="teal-text">Fully Lexically Scoped:</strong> Unlike traditional Rebol, Ragnar's variables are lexically scoped and functions behave as true closures.
+                        </li>
+                        <li>
+                            <strong class="teal-text">Tail-Call Optimized (TCO):</strong> Supports elegant recursive algorithms (including mutual recursion trampolining) without overflowing the stack.
+                        </li>
+                        <li>
+                            <strong class="teal-text">Erlang-inspired Actor Model:</strong> Built-in support for concurrent, isolated actor processes communicating via message-passing.
+                        </li>
+                    </ul>
+
+                    <div class="banner-box">
+                        <h3>Simple Overview Example</h3>
+                        <div class="code-wrapper">
+                            <button class="copy-btn" data-clipboard-target="#welcome-code">Copy</button>
+                            <pre><code id="welcome-code">; Define a value
+name: "Ragnar"
+age: 25
+
+; Conditional check (Rebol-style 'either')
+either age > 18 [
+    print ["Welcome to the crew," name]
+] [
+    print "Access denied."
+]
+; Output: Welcome to the crew, Ragnar</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Started Section -->
+            <section id="getting-started" class="content-section">
+                <div class="card">
+                    <h1>Getting Started</h1>
+                    <p>Ragnar runs on .NET 10.0 and can be built and executed easily on Windows, macOS, or Linux.</p>
+
+                    <h2>Prerequisites</h2>
+                    <p>Ensure you have the <strong>.NET 10.0 SDK</strong> installed on your machine. You can verify this by running:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#verify-dotnet">Copy</button>
+                        <pre><code id="verify-dotnet">dotnet --version</code></pre>
+                    </div>
+
+                    <h2>Clone and Build</h2>
+                    <p>Clone the repository and run the project using the <code>just</code> command-runner or dotnet CLI:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#clone-build">Copy</button>
+                        <pre><code id="clone-build"># Clone the repository
+git clone https://github.com/tormaroe/ragnar.git
+cd ragnar
+
+# Build the project
+just build   # Or: dotnet build</code></pre>
+                    </div>
+
+                    <h2>Running Ragnar</h2>
+                    <p>Ragnar features both an interactive REPL mode and the ability to execute script files directly.</p>
+
+                    <h3>Interactive REPL</h3>
+                    <p>Launch the REPL by running:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#run-repl">Copy</button>
+                        <pre><code id="run-repl">just run     # Or: dotnet run --project src/Ragnar.csproj</code></pre>
+                    </div>
+
+                    <h3>Executing Scripts</h3>
+                    <p>You can execute a `.r` source script file by passing its path to the compiler:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#run-file">Copy</button>
+                        <pre><code id="run-file">just eval examples/pingpong.r   # Or: dotnet run --project src/Ragnar.csproj examples/pingpong.r</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration Section -->
+            <section id="configuration" class="content-section">
+                <div class="card">
+                    <h1>Configuration</h1>
+                    <p>When starting up, Ragnar looks for a configuration file named <code>.ragnar.r</code> in your user home directory. You can use it to configure your REPL prompt, set up common shortcuts, or print messages on startup.</p>
+
+                    <h2>Configuring the REPL</h2>
+                    <p>Here is an example showing how you can write a configuration script directly from the REPL:</p>
+                    
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#config-example">Copy</button>
+                        <pre><code id="config-example">>> config-path: join home rc-file-name
+== %C:\Users\bob/.ragnar.r
+
+>> write config-path mold/only [
+..   me: "Bob"
+..   print ["Hello" me "it is now" now/time]
+..   system/console/prompt: "?? "
+.. ]</code></pre>
+                    </div>
+
+                    <p>The next time you restart your REPL, the message will print and your custom prompt will be displayed:</p>
+                    <div class="code-wrapper">
+                        <pre><code>Hello Bob it is now 10:53:01 AM
+REPL Mode (type 'quit' to exit)
+?? me
+== "Bob"
+?? </code></pre>
+                    </div>
+
+                    <h2>Reloading Configuration</h2>
+                    <p>You can force-reload your configuration file at any time by executing:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#reload-config">Copy</button>
+                        <pre><code id="reload-config">do join home rc-file-name</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REPL & Reflection Section -->
+            <section id="repl" class="content-section">
+                <div class="card">
+                    <h1>REPL & Reflection</h1>
+                    <p>Ragnar provides a robust interactive REPL for immediate evaluation, along with powerful reflection capabilities to inspect types, functions, and active word bindings.</p>
+
+                    <h2>Reflective Commands</h2>
+                    <p>Use reflective functions to discover the environment:</p>
+                    <ul class="features-list">
+                        <li><code>type?</code>: Returns the datatype of a given value.</li>
+                        <li><code>help</code> (or shortcut <code>?</code>): Inspects the definition, arguments, and details of a word.</li>
+                        <li><code>what</code>: Lists all available global functions and their brief descriptions.</li>
+                        <li><code>probe</code>: Prints a value to output and returns it (useful in chains).</li>
+                    </ul>
+
+                    <h2>REPL Interactive Session</h2>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#repl-session">Copy</button>
+                        <pre><code id="repl-session">>> type? 42
+== integer!
+
+>> type? "hello"
+== text!
+
+>> type? [1 2 3]
+== block!
+
+>> help add
+WORD: add
+TYPE:  Native Function
+TITLE: Returns the sum of two values.
+ARITY: 2
+ARGS:  [ a b ]
+
+>> what
+add             Returns the sum of two values.
+print           Prints a value to the output.
+...
+
+>> probe 10 + 20
+30
+== 30</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Core Features Section -->
+            <section id="core" class="content-section">
+                <div class="card">
+                    <h1>Core Language Features</h1>
+                    <p>Ragnar syntax is built around words, blocks, assignment, and conditional evaluation. Values inside blocks are not evaluated until explicitly requested, allowing you to use blocks as control structures or custom data formats.</p>
+
+                    <h2>Variable Assignment</h2>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#core-assign">Copy</button>
+                        <pre><code id="core-assign">name: "Ragnar"
+age: 25</code></pre>
+                    </div>
+
+                    <h2>Conditionals & Logic</h2>
+                    <p>Conditionals in Ragnar use Rebol-style words:</p>
+                    <ul class="features-list">
+                        <li><code>if [cond] [block]</code>: Evaluates block if condition is true.</li>
+                        <li><code>either [cond] [true-block] [false-block]</code>: If-else branching.</li>
+                        <li><code>all [blocks...]</code>: Returns true if all expressions are truthy.</li>
+                        <li><code>any [blocks...]</code>: Returns true if any expression is truthy.</li>
+                    </ul>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#core-logic">Copy</button>
+                        <pre><code id="core-logic">either age > 18 [
+    print "Adult"
+] [
+    print "Minor"
+]
+; Output: Adult
+
+all [age > 18 name == "Ragnar"] ; returns true
+any [age < 18 name == "Ragnar"] ; returns true</code></pre>
+                    </div>
+
+                    <h2>Loops and Collections</h2>
+                    <p>Iterate through blocks and manipulate values easily:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#core-loops">Copy</button>
+                        <pre><code id="core-loops">; Foreach loop
+data: [10 21 30 43 50]
+evens: []
+foreach n data [
+    if (n // 2) == 0 [ append evens n ]
+]
+; evens is now [10 30 50]
+
+; Path navigation & Series manipulation
+pick evens 1   ; returns 10 (1-indexed)
+evens/2        ; returns 30 (path access)
+select [a 1 b 2] 'b ; returns 2</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Objects Support Section -->
+            <section id="objects" class="content-section">
+                <div class="card">
+                    <h1>Objects Support</h1>
+                    <p>Objects in Ragnar are dynamic contexts containing key-value pairs (bindings). They allow you to bundle state and behavior. You can access and mutate fields using path notation, and perform dynamic scoping or lookup using <code>in</code> and <code>bind</code>.</p>
+
+                    <h2>Creating and Using Objects</h2>
+                    <p>Define objects using <code>make object!</code>:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#obj-create">Copy</button>
+                        <pre><code id="obj-create">square: make object! [
+    side: 0
+    area: does [ self/side * self/side ]
+    perimeter: does [ 4 * self/side ]
+    multiply: func [x] [
+        self/side: x * self/side
+    ]
+]
+
+; Set property
+square/side: 3
+
+; Retrieve property/method result
+square/area      ; returns 9
+square/perimeter ; returns 12</code></pre>
+                    </div>
+
+                    <h2>Dynamic Scoping</h2>
+                    <p>You can retrieve a word bound to an object context using the <code>in</code> keyword, which allows you to inspect or mutate that specific binding:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#obj-scope">Copy</button>
+                        <pre><code id="obj-scope">word: in square 'side
+get word ; returns 3</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Parse Dialect Section -->
+            <section id="parse" class="content-section">
+                <div class="card">
+                    <h1>Parse Dialect</h1>
+                    <p>One of Ragnar's most powerful features is its Rebol-style parsing engine. It supports both simple string splitting and complex dialect-based pattern matching with full backtracking.</p>
+
+                    <h2>1. Simple Splitting</h2>
+                    <p>Split a string by a simple delimiter:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#parse-split">Copy</button>
+                        <pre><code id="parse-split">parse "alice,30,engineer" ","
+; == [ "alice" "30" "engineer" ]</code></pre>
+                    </div>
+
+                    <h2>2. Dialect Pattern Matching</h2>
+                    <p>Build complex grammars using Ragnar's parse dialect. You can match character sets, check sequence orders, and enforce rules:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#parse-dialect">Copy</button>
+                        <pre><code id="parse-dialect">; Define a set of digits
+digits: charset "0123456789"
+
+; Define a phone number rule (3 digits, a dash, and 4 digits)
+phone-num: [3 digits "-" 4 digits]
+
+; Match the rule against a string
+parse "467-8000" phone-num
+; == true</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tail-Call Optimization Section -->
+            <section id="tco" class="content-section">
+                <div class="card">
+                    <h1>Tail-Call Optimization (TCO)</h1>
+                    <p>Functional programming constructs often rely heavily on recursion. To prevent stack overflows, Ragnar implements tail-call optimization, allowing functions in the tail position to reuse the current stack frame.</p>
+
+                    <h2>Tail Recursion</h2>
+                    <p>Here is an implementation of a tail-recursive factorial function using a nested loop closure:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#tco-fac">Copy</button>
+                        <pre><code id="tco-fac">factorial: func [n] [
+    loop: func [i accum] [
+        either i > n [
+            accum
+        ] [
+            loop (i + 1) (accum * i)  ; Recursion in tail position
+        ]
+    ]
+    loop 1 1 
+]
+
+factorial 10  ; returns 3628800</code></pre>
+                    </div>
+
+                    <h2>Trampolining for Mutual Recursion</h2>
+                    <p>Ragnar also supports mutual recursion trampolining. Two or more functions calling each other in tail positions can run indefinitely without expanding the stack:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#tco-mutual">Copy</button>
+                        <pre><code id="tco-mutual">is-even?: func [n] [
+    either n == 1 [ false ] [ is-odd? (n - 1) ]
+]
+is-odd?: func [n] [
+    either n == 1 [ true ] [ is-even? (n - 1) ]
+]
+
+is-even? 10001  ; returns false
+is-even? 10002  ; returns true</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actor Model Section -->
+            <section id="actors" class="content-section">
+                <div class="card">
+                    <h1>Actor Model Concurrency</h1>
+                    <p>Ragnar features a lightweight actor model implementation inspired by Erlang. Actors run on separate tasks and communicate strictly via asynchronous message-passing, removing the need for explicit threads and locks.</p>
+
+                    <h2>Actor Operations</h2>
+                    <ul class="features-list">
+                        <li><code>spawn [block]</code>: Starts a new actor process executing the block in the background.</li>
+                        <li><code>receive</code>: Blocks the calling actor until a message is sent to its mailbox.</li>
+                        <li><code>tell actor msg</code>: Sends a message asynchronously to another actor's mailbox.</li>
+                        <li><code>rpc actor msg</code>: Sends a message and blocks, waiting for a reply.</li>
+                        <li><code>kill actor</code>: Terminates the target actor's thread.</li>
+                    </ul>
+
+                    <h2>Area Server Example</h2>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#actor-example">Copy</button>
+                        <pre><code id="actor-example">start-area-server: does [
+    spawn [  ; Starts a new actor process
+        forever [
+            msg: receive  ; Wait for a message in mailbox
+            client: first msg  ; Sender actor reference
+            shape: second msg  ; Content of shape details
+            
+            switch/default first shape [
+                rectangle [
+                    tell client reform [
+                        "area of rectangle is" (shape/2 * shape/3) ]
+                ]
+                circle [
+                    tell client reform [ 
+                        "area of circle is" (3.14159 * (shape/2 * shape/2)) ]
+                ]
+            ] [
+                tell client reform [ 
+                    "i don't know what the area of a" shape/1 "is." ] 
+            ]
+        ]
+    ]
+]
+
+server: start-area-server
+print ["Response:" rpc server [rectangle 5 10]]
+; Response: area of rectangle is 50
+
+print ["Response:" rpc server [circle 5]]
+; Response: area of circle is 78.53975
+
+print ["Response:" rpc server [triangle 5 10]]
+; Response: i don't know what the area of a triangle is.
+
+kill server</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Functional Programming Section -->
+            <section id="functional" class="content-section">
+                <div class="card">
+                    <h1>Functional Programming</h1>
+                    <p>Ragnar treats functions as first-class citizens. It supports lexical closures, partial application, and function composition operations.</p>
+
+                    <h2>1. Lexical Closures</h2>
+                    <p>Functions capture the lexical environment of where they are defined, enabling state-carrying closures:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#func-closure">Copy</button>
+                        <pre><code id="func-closure">make-counter: func [start] [
+    func [] [
+        current: start
+        start: start + 1
+        current
+    ]
+]
+counter: make-counter 10
+counter ; returns 10
+counter ; returns 11</code></pre>
+                    </div>
+
+                    <h2>2. Partial Application</h2>
+                    <p>Partially apply arguments to functions to create specialized variations using the <code>partial</code> keyword:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#func-partial">Copy</button>
+                        <pre><code id="func-partial">add-five: partial :add 5
+add-five 10 ; returns 15</code></pre>
+                    </div>
+
+                    <h2>3. Function Composition</h2>
+                    <p>Combine multiple functions together using composition operators (forward <code>&gt;&gt;</code> and backward <code>&lt;&lt;</code>):</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#func-compose">Copy</button>
+                        <pre><code id="func-compose">inc: func [n] [n + 1]
+double: func [n] [n * 2]
+
+f-forward: :inc >> :double  ; (x + 1) * 2
+f-backward: :inc << :double ; (x * 2) + 1
+
+f-forward 5  ; returns 12
+f-backward 5 ; returns 11</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SQL Server Library Section -->
+            <section id="sqlserver" class="content-section">
+                <div class="card">
+                    <h1>SQL Server Library</h1>
+                    <p>Ragnar integrates seamlessly with <strong>.NET</strong>. By utilising standard .NET assemblies like <code>Microsoft.Data.SqlClient</code>, we can create libraries to communicate with SQL databases in just a few lines of code.</p>
+
+                    <h2>Library Source</h2>
+                    <p>The library (available in <a href="file:///c:/dev/ragnar/lib/sqlserver.r">lib/sqlserver.r</a>) wraps the ADO.NET SQL client connection and command processes:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#sql-lib-code">Copy</button>
+                        <pre><code id="sql-lib-code">make object! [
+    connect: func [connection-string] [
+        conn: new "Microsoft.Data.SqlClient.SqlConnection" [connection-string]
+        conn/open
+        conn
+    ]
+
+    query: func [connection query-text parameters] [
+        cmd: connection/CreateCommand
+        cmd/CommandText: query-text
+
+        if not none? parameters [
+            idx: 1
+            while [idx <= length? parameters] [
+                param-name: pick parameters idx
+                param-val: pick parameters (idx + 1)
+                clean-name: join "@" replace (to-string param-name) ":" ""
+                cmd/Parameters/AddWithValue clean-name param-val
+                idx: idx + 2
+            ]
+        ]
+
+        reader: cmd/ExecuteReader
+        result: copy []
+        while [reader/Read] [
+            row: copy []
+            col-idx: 0
+            while [col-idx < reader/FieldCount] [
+                append row reader/GetName col-idx
+                append row reader/GetValue col-idx
+                col-idx: col-idx + 1
+            ]
+            append result row
+        ]
+        reader/close
+        result
+    ]
+]</code></pre>
+                    </div>
+
+                    <h2>How to Use</h2>
+                    <p>Load the library into your script using <code>do</code>, open a connection, and execute parameterized queries:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#sql-usage">Copy</button>
+                        <pre><code id="sql-usage">; 1. Load the library
+sql: do %lib/sqlserver.r
+
+; 2. Open connection
+conn: sql/connect "Data Source=localhost;Initial Catalog=master;Integrated Security=True"
+
+; 3. Run query with parameters
+result: sql/query conn {
+    SELECT name, database_id
+    FROM sys.databases
+    WHERE state_desc = @state
+} [
+    state: "ONLINE"
+]
+
+; 4. Parse output
+print ["Row count:" length? result] 
+db1: first result ; Get first row
+print ["Database Name:" select db1 "name" "ID:" select db1 "database_id"]
+
+; 5. Close connection
+conn/close</code></pre>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

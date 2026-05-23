@@ -1,0 +1,493 @@
+/* -------------------------------------------------------------
+ * Ragnar CSS Design System (Light Mode)
+ * Colors derived from Ragnar Viking Logo:
+ * - Primary Teal: #117992
+ * - Accent Coral: #FB7653
+ * - Deep Slate: #06394F
+ * ------------------------------------------------------------- */
+
+:root {
+    --color-primary: #117992;
+    --color-primary-light: #e7f2f4;
+    --color-accent: #FB7653;
+    --color-accent-light: #fff1ed;
+    --color-dark-slate: #06394F;
+    --color-text: #2c4a57;
+    --color-text-light: #5a7684;
+    
+    --bg-main: #f3f7f8;
+    --bg-card: #ffffff;
+    --bg-code: #f8fafb;
+    --border-color: #e2ecf0;
+    
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    
+    --sidebar-width: 280px;
+    --border-radius: 12px;
+    --transition-speed: 0.2s;
+    --box-shadow: 0 4px 20px rgba(6, 57, 79, 0.05);
+    --box-shadow-hover: 0 8px 30px rgba(6, 57, 79, 0.1);
+}
+
+/* Reset & Base */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-main);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+    background: #cbdce2;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #a5c2cc;
+}
+
+/* Site Layout Container */
+.site-container {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Left Sidebar Navigation */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-card);
+    border-right: 2px solid var(--border-color);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-logo-container {
+    background-color: transparent;
+    padding: 0.5rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar-logo {
+    max-width: 190px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-group-title {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--color-dark-slate);
+    font-weight: 700;
+    padding-left: 0.75rem;
+    opacity: 0.85;
+}
+
+.nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.menu-item {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    color: var(--color-text-light);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all var(--transition-speed) ease;
+}
+
+.menu-item:hover {
+    background-color: var(--bg-main);
+    color: var(--color-primary);
+    padding-left: 1rem;
+}
+
+.menu-item.active {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    font-weight: 600;
+    padding-left: 1rem;
+    border-left: 4px solid var(--color-primary);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.sidebar-footer {
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+}
+
+.github-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color var(--transition-speed) ease;
+}
+
+.github-link:hover {
+    color: var(--color-dark-slate);
+}
+
+.github-icon {
+    fill: currentColor;
+    transition: transform var(--transition-speed) ease;
+}
+
+.github-link:hover .github-icon {
+    transform: rotate(5deg) scale(1.05);
+}
+
+/* Mobile Nav Toggle Button */
+.mobile-nav-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(17, 121, 146, 0.3);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
+.mobile-nav-toggle .bar {
+    width: 22px;
+    height: 2.5px;
+    background-color: #ffffff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.mobile-nav-toggle.open .bar:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+}
+
+.mobile-nav-toggle.open .bar:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-nav-toggle.open .bar:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+}
+
+/* Main Content Area */
+.content-area {
+    flex-grow: 1;
+    padding: 3rem 2.5rem;
+    max-width: calc(1400px - var(--sidebar-width));
+}
+
+.content-section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.content-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards & Layout Items */
+.card {
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 2.5rem;
+    box-shadow: var(--box-shadow);
+    transition: box-shadow var(--transition-speed) ease;
+}
+
+.card:hover {
+    box-shadow: var(--box-shadow-hover);
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    color: var(--color-dark-slate);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.25;
+}
+
+h1 {
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    margin-top: 0.5rem;
+    border-radius: 2px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.4rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+.tagline {
+    font-size: 1.15rem;
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-bottom: 2rem;
+}
+
+p {
+    margin-bottom: 1.25rem;
+    font-size: 1.05rem;
+    color: var(--color-text);
+}
+
+strong {
+    color: var(--color-dark-slate);
+}
+
+.teal-text {
+    color: var(--color-primary);
+}
+
+/* Lists */
+.features-list {
+    margin-left: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.features-list li {
+    font-size: 1.05rem;
+    position: relative;
+    list-style: none;
+    padding-left: 1.25rem;
+}
+
+.features-list li::before {
+    content: "•";
+    color: var(--color-accent);
+    font-weight: bold;
+    font-size: 1.2rem;
+    position: absolute;
+    left: 0;
+    top: -2px;
+}
+
+/* Custom Notification Banner Box */
+.banner-box {
+    background-color: var(--color-accent-light);
+    border-left: 4px solid var(--color-accent);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.banner-box h3 {
+    margin-top: 0;
+    color: var(--color-dark-slate);
+}
+
+/* Code block structures */
+.code-wrapper {
+    position: relative;
+    margin: 1.25rem 0;
+}
+
+pre {
+    background-color: var(--bg-code);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--color-dark-slate);
+}
+
+code {
+    font-family: var(--font-mono);
+    background-color: rgba(17, 121, 146, 0.06);
+    color: var(--color-primary);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+/* Code Copy Button */
+.copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-light);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(6, 57, 79, 0.05);
+    transition: all var(--transition-speed) ease;
+}
+
+.copy-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-light);
+}
+
+.copy-btn.copied {
+    color: #ffffff;
+    border-color: #2e7d32;
+    background-color: #2e7d32;
+}
+
+/* Custom styled sections in Code Blocks for Readability */
+/* Rebol comments */
+.code-wrapper code .comment,
+.code-wrapper code::after {
+    color: #8c9fa8;
+}
+
+
+/* Inline Code links */
+.card a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    transition: border-bottom var(--transition-speed) ease;
+}
+
+.card a:hover {
+    border-bottom-color: var(--color-primary);
+}
+
+/* Responsive Rules */
+@media (max-width: 900px) {
+    .site-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: fixed;
+        top: 0;
+        left: -100%;
+        bottom: 0;
+        z-index: 99;
+        transition: left 0.3s ease;
+        padding-top: 5rem;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    }
+    
+    .sidebar.open {
+        left: 0;
+    }
+    
+    .mobile-nav-toggle {
+        display: flex;
+    }
+    
+    .content-area {
+        width: 100%;
+        max-width: 100%;
+        padding: 2rem 1.25rem;
+    }
+    
+    .card {
+        padding: 1.75rem;
+    }
+}
