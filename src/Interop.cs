@@ -4,6 +4,15 @@ namespace Ragnar;
 
 public class Interop
 {
+    static Interop()
+    {
+        try
+        {
+            _ = typeof(Microsoft.Data.SqlClient.SqlConnection).FullName;
+        }
+        catch {}
+    }
+
     public static Type ResolveType(string name)
     {
         // 1. Try the standard way (only checks core/calling assembly)
@@ -51,14 +60,18 @@ public class Interop
 
     public static Value ToRagnarValue(object? obj)
     {
-        if (obj == null) return new Word("none");
+        if (obj == null || obj == DBNull.Value) return new Word("none");
 
         return obj switch
         {
+            byte b => new Integer(b),
+            short s => new Integer(s),
             int i => new Integer(i),
             long l => new Integer(l),
             double d => new Decimal(d),
             float f => new Decimal(f),
+            decimal dec => new Decimal((double)dec),
+            char c => new Character(c),
             string s => new Text(s),
             bool b => new Logic(b),
             Value v => v, // Already a Ragnar value
@@ -78,7 +91,7 @@ public class Interop
         object? rawValue = ToNetObject(ragnarValue);
 
         // Try Property first
-        var prop = type.GetProperty(memberName, flags);
+        var prop = GetPropertySafe(type, memberName, flags);
         if (prop != null && prop.CanWrite)
         {
             prop.SetValue(isStatic ? null : target, rawValue);
@@ -86,7 +99,7 @@ public class Interop
         }
 
         // Try Field
-        var field = type.GetField(memberName, flags);
+        var field = GetFieldSafe(type, memberName, flags);
         if (field != null)
         {
             field.SetValue(isStatic ? null : target, rawValue);
@@ -195,9 +208,10 @@ public class Interop
         // get-prop obj "Length"
         ctx.Set("get-prop", new Native((args, refinements, _, _, isTail) =>
         {
-            if (args[0] is DotNetValue dnv && args[1] is Text propName)
+            if (args[0] is DotNetValue dnv && args[1] is Text propName && dnv.Instance != null)
             {
-                var prop = dnv.Instance?.GetType().GetProperty(propName.Content);
+                var flags = BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Static;
+                var prop = GetPropertySafe(dnv.Instance.GetType(), propName.Content, flags);
                 if (prop == null) throw new Exception($"Property '{propName.Content}' not found.");
 
                 object? val = prop.GetValue(dnv.Instance);
@@ -214,7 +228,8 @@ public class Interop
                 var instance = dnv.Instance;
                 if (instance == null) throw new Exception("Target object is null.");
 
-                var prop = instance.GetType().GetProperty(propName.Content);
+                var flags = BindingFlags.Public | BindingFlags.IgnoreCase | BindingFlags.Instance;
+                var prop = GetPropertySafe(instance.GetType(), propName.Content, flags);
                 if (prop == null) throw new Exception($"Property '{propName.Content}' not found on {instance.GetType().Name}.");
 
                 // The third argument (args[2]) is already evaluated by the interpreter
@@ -285,5 +300,50 @@ public class Interop
             // 3. Execute and convert the result back to Ragnar
             return ToRagnarValue(method.Invoke(null, invokeArgs));
         }, 3).WithTitle("Calls a static .NET method."));
+    }
+
+    public static PropertyInfo? GetPropertySafe(Type type, string name, BindingFlags flags)
+    {
+        try
+        {
+            return type.GetProperty(name, flags);
+        }
+        catch (AmbiguousMatchException)
+        {
+            var props = type.GetProperties(flags)
+                .Where(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (props.Count == 0) return null;
+            return props.OrderBy(p => GetInheritanceDistance(type, p.DeclaringType)).First();
+        }
+    }
+
+    public static FieldInfo? GetFieldSafe(Type type, string name, BindingFlags flags)
+    {
+        try
+        {
+            return type.GetField(name, flags);
+        }
+        catch (AmbiguousMatchException)
+        {
+            var fields = type.GetFields(flags)
+                .Where(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (fields.Count == 0) return null;
+            return fields.OrderBy(f => GetInheritanceDistance(type, f.DeclaringType)).First();
+        }
+    }
+
+    private static int GetInheritanceDistance(Type derived, Type? declaring)
+    {
+        if (declaring == null) return int.MaxValue;
+        int distance = 0;
+        var current = derived;
+        while (current != null && current != declaring)
+        {
+            distance++;
+            current = current.BaseType;
+        }
+        return current == declaring ? distance : int.MaxValue;
     }
 }

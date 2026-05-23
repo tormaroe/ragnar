@@ -405,12 +405,116 @@ public class Interpreter
                     (isStatic ? BindingFlags.Static : BindingFlags.Instance);
 
         // Try Property
-        var prop = type.GetProperty(memberName, flags);
+        var prop = Interop.GetPropertySafe(type, memberName, flags);
         if (prop != null) return Interop.ToRagnarValue(prop.GetValue(isStatic ? null : target));
 
         // Try Field
-        var field = type.GetField(memberName, flags);
+        var field = Interop.GetFieldSafe(type, memberName, flags);
         if (field != null) return Interop.ToRagnarValue(field.GetValue(isStatic ? null : target));
+
+        // Try Method
+        var methods = type.GetMethods(flags)
+            .Where(m => string.Equals(m.Name, memberName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (methods.Count > 0)
+        {
+            var orderedMethods = methods.OrderBy(m => m.GetParameters().Length).ToList();
+            var targetMethod = orderedMethods[0];
+            int arity = targetMethod.GetParameters().Length;
+
+            return new Native((args, refs, context, interpreter, isTail) =>
+            {
+                object?[] methodArgs = args.Select(Interop.ToNetObject).ToArray();
+                Type[] argTypes = methodArgs.Select<object?, Type>(a => a?.GetType() ?? typeof(object)).ToArray();
+
+                MethodInfo? bestMethod = null;
+                bestMethod = type.GetMethod(memberName, flags, null, argTypes, null);
+                if (bestMethod == null)
+                {
+                    foreach (var m in methods)
+                    {
+                        var parameters = m.GetParameters();
+                        if (parameters.Length == args.Count)
+                        {
+                            bool compatible = true;
+                            for (int idx = 0; idx < parameters.Length; idx++)
+                            {
+                                var arg = methodArgs[idx];
+                                var paramType = parameters[idx].ParameterType;
+                                if (arg == null)
+                                {
+                                    if (paramType.IsValueType && Nullable.GetUnderlyingType(paramType) == null)
+                                    {
+                                        compatible = false;
+                                        break;
+                                    }
+                                }
+                                else if (!paramType.IsAssignableFrom(arg.GetType()))
+                                {
+                                    try
+                                    {
+                                        Convert.ChangeType(arg, paramType);
+                                    }
+                                    catch
+                                    {
+                                        compatible = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (compatible)
+                            {
+                                bestMethod = m;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (bestMethod == null)
+                {
+                    bestMethod = methods.FirstOrDefault(m => m.GetParameters().Length == args.Count) ?? targetMethod;
+                }
+
+                var finalParams = bestMethod.GetParameters();
+                object?[] finalArgs = new object?[methodArgs.Length];
+                for (int idx = 0; idx < methodArgs.Length; idx++)
+                {
+                    var arg = methodArgs[idx];
+                    var paramType = finalParams[idx].ParameterType;
+                    if (arg == null)
+                    {
+                        finalArgs[idx] = null;
+                    }
+                    else if (paramType.IsAssignableFrom(arg.GetType()))
+                    {
+                        finalArgs[idx] = arg;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            finalArgs[idx] = Convert.ChangeType(arg, paramType);
+                        }
+                        catch
+                        {
+                            finalArgs[idx] = arg;
+                        }
+                    }
+                }
+
+                try
+                {
+                    object? result = bestMethod.Invoke(isStatic ? null : target, finalArgs);
+                    return Interop.ToRagnarValue(result);
+                }
+                catch (TargetInvocationException ex)
+                {
+                    throw ex.InnerException ?? ex;
+                }
+            }, arity);
+        }
 
         throw new Exception($"Member '{memberName}' not found on {type.Name}");
     }
