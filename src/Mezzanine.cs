@@ -57,6 +57,37 @@ public static class Mezzanine
             ]
             result
         ]
+        map-each: func ["Evaluates a block for each value(s) in a series and returns them as a block." 'word data body] [
+            words: either block? :word [:word] [append copy [] :word]
+            if empty? words [return []]
+            
+            orig-values: []
+            foreach w words [
+                append orig-values attempt [get w]
+            ]
+            
+            results: []
+            cursor: data
+            
+            while [not empty? cursor] [
+                foreach w words [
+                    val: either empty? cursor [none] [first cursor]
+                    set w :val
+                    if not empty? cursor [cursor: next cursor]
+                ]
+                append results do body
+            ]
+            
+            idx: 1
+            while [idx <= length? words] [
+                w: pick words idx
+                val: pick orig-values idx
+                set w :val
+                idx: idx + 1
+            ]
+            
+            results
+        ]
         max: func ["Returns the greater of two values." a b] [ either greater? a b [a] [b] ]
         min: func ["Returns the lesser of two values." a b] [ either greater? a b [b] [a] ]
         negate: func ["Returns the negative of a number." n] [ n * -1 ]
