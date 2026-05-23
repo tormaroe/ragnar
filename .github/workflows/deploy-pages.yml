@@ -38,8 +38,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire www directory
-          path: './www'
+          # Upload entire docs directory
+          path: './docs'
       
       - name: Deploy to GitHub Pages
         id: deployment
