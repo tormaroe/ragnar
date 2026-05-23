@@ -47,6 +47,7 @@
                     <ul class="nav-list">
                         <li><a href="#repl" class="menu-item">REPL & Reflection</a></li>
                         <li><a href="#core" class="menu-item">Core Features</a></li>
+                        <li><a href="#interop" class="menu-item">.NET Interop</a></li>
                         <li><a href="#objects" class="menu-item">Objects Support</a></li>
                         <li><a href="#parse" class="menu-item">Parse Dialect</a></li>
                         <li><a href="#tco" class="menu-item">Tail-Call Optimization</a></li>
@@ -297,6 +298,62 @@ foreach n data [
 pick evens 1   ; returns 10 (1-indexed)
 evens/2        ; returns 30 (path access)
 select [a 1 b 2] 'b ; returns 2</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- .NET Interop Section -->
+            <section id="interop" class="content-section">
+                <div class="card">
+                    <h1>.NET Interop</h1>
+                    <p>Ragnar is hosted on the .NET platform and features native, seamless integration with C# and the .NET Base Class Library (BCL). You can instantiate .NET classes, invoke instance or static methods, access or set properties, and iterate over any standard collection that implements <code>IEnumerable</code>.</p>
+
+                    <h2>1. Instantiation and Method Calls</h2>
+                    <p>Use the <code>new</code> native function to instantiate types. You can call instance methods using the <code>call-method</code> function:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#interop-new">Copy</button>
+                        <pre><code id="interop-new">; Instantiate a StringBuilder with initial text "Hello"
+builder: new "System.Text.StringBuilder" ["Hello"]
+
+; Call instance method to append text
+call-method builder "Append" [" World"]
+
+; Print the string value
+print [call-method builder "ToString" []]
+; Output: Hello World</code></pre>
+                    </div>
+
+                    <h2>2. Path Navigation Syntax</h2>
+                    <p>Ragnar supports path notation to access and mutate .NET fields, properties, and static members in a clean and readable format:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#interop-path">Copy</button>
+                        <pre><code id="interop-path">; Retrieve an instance property (Length)
+len: builder/Length
+print ["Length:" len] ; Output: 11
+
+; Mutate an instance property
+builder/Length: 5
+print [call-method builder "ToString" []] ; Output: Hello
+
+; Access a static property or field
+pi: System.Math/PI
+print ["PI value:" pi] ; Output: 3.141592653589793</code></pre>
+                    </div>
+
+                    <h2>3. Enumerating IEnumerables</h2>
+                    <p>Ragnar provides the <code>enumerate</code> mezzanine function to iterate through .NET collections that implement <code>IEnumerable</code>. You bind a block variable to each item and evaluate a body block:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#interop-enum">Copy</button>
+                        <pre><code id="interop-enum">; Retrieve a Dictionary containing environment variables
+vars: call-static "System.Environment" "GetEnvironmentVariables" []
+
+; Print the total count (property access)
+print ["Total variables:" vars/Count]
+
+; Iterate and print Key/Value properties
+enumerate vars item [
+    print ["Key:" item/Key "Value:" item/Value]
+]</code></pre>
                     </div>
                 </div>
             </section>
