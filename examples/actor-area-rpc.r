@@ -27,9 +27,12 @@ start-area-server: does [
 print {
     ;;; To run this example:
     server: start-area-server
-    _ print ["Response from server:" rpc server [rectangle 5 10]]
-    _ print ["Response from server:" rpc server [circle 5]]
-    _ print ["Response from server:" rpc server [triangle 5 10]]
+    tell server [rectangle 5 10]
+    _ print ["Response from server:" second receive]
+    tell server [circle 5]
+    _ print ["Response from server:" second receive]
+    tell server [triangle 5 10]
+    _ print ["Response from server:" second receive]
     kill server
 }
 

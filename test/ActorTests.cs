@@ -1,81 +1,113 @@
 using Xunit;
 using Ragnar;
+using System.Threading.Tasks;
 
 namespace Ragnar.Tests;
 
 public class ActorTests : TestBase
 {
-    [Fact]
-    public void TestSpawnAndReceive()
+    [Fact(Timeout = 5000)]
+    public async Task TestSpawnAndReceive()
     {
         var script = @"
             a: spawn [
-                msg: receive
-                print msg
+                req: receive
+                client: first req
+                msg: second req
+                tell client msg
             ]
             tell a ""hello-from-actor""
-            wait 500
+            res: receive
+            second res
         ";
         
-        var (result, output) = RunWithOutput(script);
-        Assert.Contains("hello-from-actor", output);
+        var (result, ctx) = Run(script);
+        Assert.Equal("\"hello-from-actor\"", result.ToString());
+        await Task.CompletedTask;
     }
 
-    [Fact]
-    public void TestActorLoop()
+    [Fact(Timeout = 5000)]
+    public async Task TestActorLoop()
     {
         var script = @"
             a: spawn [
                 while [true] [
-                    msg: receive
-                    if msg = ""quit"" [ break ]
-                    print [""Got:"" msg]
+                    req: receive
+                    client: first req
+                    msg: second req
+                    if msg = ""quit"" [
+                        tell client ""done""
+                        break
+                    ]
+                    tell client join ""Got:"" msg
                 ]
             ]
             tell a ""hello""
+            res1: second receive
             tell a ""world""
+            res2: second receive
             tell a ""quit""
-            wait 1000
+            res3: second receive
+            reduce [res1 res2 res3]
         ";
         
-        var (result, output) = RunWithOutput(script);
-        Assert.Contains("Got: hello", output);
-        Assert.Contains("Got: world", output);
-        Assert.DoesNotContain("Got: quit", output);
+        var (result, ctx) = Run(script);
+        var resBlock = (Block)result;
+        Assert.Equal("\"Got:hello\"", resBlock.Children[0].ToString());
+        Assert.Equal("\"Got:world\"", resBlock.Children[1].ToString());
+        Assert.Equal("\"done\"", resBlock.Children[2].ToString());
+        await Task.CompletedTask;
     }
 
-    [Fact]
-    public void TestKillActor()
+    [Fact(Timeout = 5000)]
+    public async Task TestKillActor()
     {
         var script = @"
             a: spawn [
-                print ""Actor starting""
+                req: receive
+                client: first req
+                tell client ""started""
                 receive
                 print ""Actor received msg""
             ]
-            wait 500
+            tell a ""start""
+            receive ; wait for started
             kill a
+            
+            ; Wait until a is removed from system/actors
+            limit: 500
+            while [all [limit > 0 find system/actors a]] [
+                wait 10
+                limit: limit - 1
+            ]
+            
             tell a ""msg""
-            wait 500
         ";
         
         var (result, output) = RunWithOutput(script);
-        Assert.Contains("Actor starting", output);
         Assert.Contains("Actor error: Actor was killed.", output);
         Assert.DoesNotContain("Actor received msg", output);
+        await Task.CompletedTask;
     }
 
-    [Fact]
-    public void TestSystemActors()
+    [Fact(Timeout = 5000)]
+    public async Task TestSystemActors()
     {
         var script = @"
+            initial: length? system/actors
             a: spawn [ receive ]
             b: spawn [ receive ]
-            wait 500
-            count1: length? system/actors
+            count1: (length? system/actors) - initial
             kill a
-            wait 500
-            count2: length? system/actors
+            
+            ; Wait until a is removed from system/actors
+            limit: 500
+            while [all [limit > 0 find system/actors a]] [
+                wait 10
+                limit: limit - 1
+            ]
+            
+            count2: (length? system/actors) - initial
             kill b ; cleanup
             reduce [count1 count2]
         ";
@@ -84,26 +116,37 @@ public class ActorTests : TestBase
         var resBlock = (Block)result;
         Assert.Equal(2, ((Integer)resBlock.Children[0]).Number);
         Assert.Equal(1, ((Integer)resBlock.Children[1]).Number);
+        await Task.CompletedTask;
     }
 
-    [Fact]
-    public void TestRpc()
+    [Fact(Timeout = 5000)]
+    public async Task TestRpc()
     {
         var script = @"
             server: spawn [
                 while [true] [
-                    request: receive
-                    client: first request
-                    msg: second request
+                    req: receive
+                    client: first req
+                    msg: second req
                     tell client join ""echo:"" msg
                 ]
             ]
-            response: rpc server ""hello""
+            tell server ""hello""
+            res: second receive
             kill server
-            response
+            
+            ; Wait for server to die
+            limit: 500
+            while [all [limit > 0 find system/actors server]] [
+                wait 10
+                limit: limit - 1
+            ]
+            
+            res
         ";
         
         var (result, ctx) = Run(script);
         Assert.Equal("\"echo:hello\"", result.ToString());
+        await Task.CompletedTask;
     }
 }

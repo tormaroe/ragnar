@@ -109,7 +109,7 @@ public static class Actor
             // Load Mezzanine
             interpreter.Evaluate(GetMezzanineBlock(), actorContext);
             
-            actorContext.Set("self", new DotNetValue(actor));
+            actorContext.SetLocal("self", new DotNetValue(actor));
 
             // Run the actor body in a background task
             _ = Task.Run(() =>
@@ -134,13 +134,27 @@ public static class Actor
 
         ctx.Set("tell", new Native((args, refinements, context, interpreter, isTail) =>
         {
-            if (args.Count != 2 || args[0] is not DotNetValue actorValue || actorValue.Instance is not ActorInstance actor)
+            if (args.Count != 2 || args[0] is not DotNetValue actorValue || actorValue.Instance is not ActorInstance recipient)
             {
                 throw new ArgumentException("tell expects an actor and a message.");
             }
 
-            actor.Tell(args[1]);
-            return args[1]; // Return message for chaining
+            var message = args[1];
+
+            // Look up "self" in the context to determine the sender
+            Value senderVal = new Word("none");
+            if (context.TryGet("self", out var selfVal) && selfVal is DotNetValue dnv && dnv.Instance is ActorInstance)
+            {
+                senderVal = selfVal;
+            }
+
+            // Construct envelope block: [sender message]
+            var envelope = new Block();
+            envelope.Children.Add(senderVal);
+            envelope.Children.Add(message);
+
+            recipient.Tell(envelope);
+            return message;
         }, 2).WithTitle("Send a message to an actor."));
 
         ctx.Set("kill", new Native((args, refinements, context, interpreter, isTail) =>
@@ -162,24 +176,5 @@ public static class Actor
             }
             throw new Exception("receive can only be called from within an actor.");
         }, 0).WithTitle("Wait for and return a message from the actor's mailbox."));
-
-        ctx.Set("rpc", new Native((args, refinements, context, interpreter, isTail) =>
-        {
-            if (args.Count != 2 || args[0] is not DotNetValue serverActorValue || serverActorValue.Instance is not ActorInstance serverActor)
-            {
-                throw new ArgumentException("rpc expects a server-actor and a message.");
-            }
-
-            var clientActor = new ActorInstance();
-            var message = args[1];
-
-            var messageBlock = new Block();
-            messageBlock.Children.Add(new DotNetValue(clientActor));
-            messageBlock.Children.Add(message);
-
-            serverActor.Tell(messageBlock);
-
-            return clientActor.Receive();
-        }, 2).WithTitle("Send a message to an actor and wait for a response."));
     }
 }

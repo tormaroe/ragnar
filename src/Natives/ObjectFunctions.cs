@@ -23,7 +23,7 @@ public static class ObjectFunctions
                 var obj = new ObjectValue(objContext);
                 
                 // Add 'self' to the context
-                objContext.Set("self", obj);
+                objContext.SetLocal("self", obj);
 
                 // Evaluate the block in the object context
                 interpreter.Evaluate(block, objContext);

@@ -223,10 +223,20 @@ public class ReadmeTests : TestBase
             ]
 
             server: start-area-server
-            res1: rpc server [rectangle 5 10]
-            res2: rpc server [circle 5]
-            res3: rpc server [triangle 5 10]
+            tell server [rectangle 5 10]
+            res1: second receive
+            tell server [circle 5]
+            res2: second receive
+            tell server [triangle 5 10]
+            res3: second receive
             kill server
+            
+            ; wait for server to die
+            limit: 500
+            while [all [limit > 0 find system/actors server]] [
+                wait 10
+                limit: limit - 1
+            ]
             
             reduce [res1 res2 res3]
         ";

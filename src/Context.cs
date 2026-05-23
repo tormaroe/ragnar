@@ -9,6 +9,9 @@ public class Context
     private readonly Dictionary<string, Value> _bindings = [];
     private readonly Context? _parent;
     private readonly Context? _secondaryParent;
+    private ActorInstance? _actor;
+
+    public ActorInstance Actor => _actor ??= new ActorInstance();
 
     public Context(Context? parent = null, Context? secondaryParent = null)
     {
@@ -32,6 +35,17 @@ public class Context
         if (TryUpdate(name, value)) return;
 
         // Not found in any context, so set it in the current one.
+        _bindings[name] = value;
+    }
+
+    // Set a value strictly in the current context, ignoring parent bindings.
+    public void SetLocal(string name, Value value)
+    {
+        if (name == "it")
+        {
+            LastResult = value;
+            return;
+        }
         _bindings[name] = value;
     }
 
@@ -88,6 +102,12 @@ public class Context
         {
             value = GetLastResult();
             return value != null;
+        }
+
+        if (name == "self")
+        {
+            value = new DotNetValue(Actor);
+            return true;
         }
 
         value = null;

@@ -33,6 +33,12 @@ public static class ComparisonFunctions
             // For now, simple object equality or string representation comparison
             if (args[0] is Integer i1 && args[1] is Integer i2) return new Logic(i1.Number == i2.Number);
             if (args[0] is Decimal dec1 && args[1] is Decimal dec2) return new Logic(dec1.Number == dec2.Number);
+            if (args[0] is DotNetValue dnv1 && args[1] is DotNetValue dnv2)
+            {
+                if (dnv1.Instance == null && dnv2.Instance == null) return new Logic(true);
+                if (dnv1.Instance == null || dnv2.Instance == null) return new Logic(false);
+                return new Logic(dnv1.Instance.Equals(dnv2.Instance));
+            }
             return new Logic(args[0].ToString() == args[1].ToString());
         }, 2).WithTitle("Returns true if the values are equal.");
         ctx.Set("equal?", equal);
@@ -44,6 +50,12 @@ public static class ComparisonFunctions
         {
             if (args[0] is Integer i1 && args[1] is Integer i2) return new Logic(i1.Number != i2.Number);
             if (args[0] is Decimal dec1 && args[1] is Decimal dec2) return new Logic(dec1.Number != dec2.Number);
+            if (args[0] is DotNetValue dnv1 && args[1] is DotNetValue dnv2)
+            {
+                if (dnv1.Instance == null && dnv2.Instance == null) return new Logic(false);
+                if (dnv1.Instance == null || dnv2.Instance == null) return new Logic(true);
+                return new Logic(!dnv1.Instance.Equals(dnv2.Instance));
+            }
             return new Logic(args[0].ToString() != args[1].ToString());
         }, 2).WithTitle("Returns true if the values are not equal.");
         ctx.Set("not-equal?", notEqual);

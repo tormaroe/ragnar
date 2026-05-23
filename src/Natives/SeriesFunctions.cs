@@ -171,6 +171,12 @@ public static class SeriesFunctions
                     {
                         return string.Equals(t1.Content, t2.Content, caseSens ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
                     }
+                    if (v1 is DotNetValue dnv1 && v2 is DotNetValue dnv2)
+                    {
+                        if (dnv1.Instance == null && dnv2.Instance == null) return true;
+                        if (dnv1.Instance == null || dnv2.Instance == null) return false;
+                        return dnv1.Instance.Equals(dnv2.Instance);
+                    }
                     return v1.ToString() == v2.ToString();
                 }
 
@@ -319,6 +325,12 @@ public static class SeriesFunctions
                         if (v1 is Text t1 && target is Text t2)
                         {
                             isMatch = string.Equals(t1.Content, t2.Content, StringComparison.OrdinalIgnoreCase);
+                        }
+                        else if (v1 is DotNetValue dnv1 && target is DotNetValue dnv2)
+                        {
+                            if (dnv1.Instance == null && dnv2.Instance == null) isMatch = true;
+                            else if (dnv1.Instance == null || dnv2.Instance == null) isMatch = false;
+                            else isMatch = dnv1.Instance.Equals(dnv2.Instance);
                         }
                         else
                         {

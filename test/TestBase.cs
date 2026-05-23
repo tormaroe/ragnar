@@ -1,3 +1,7 @@
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace Ragnar.Tests;
 
 public abstract class TestBase

@@ -419,9 +419,8 @@ is-even? 10002  ; returns true</code></pre>
                     <h2>Actor Operations</h2>
                     <ul class="features-list">
                         <li><code>spawn [block]</code>: Starts a new actor process executing the block in the background.</li>
-                        <li><code>receive</code>: Blocks the calling actor until a message is sent to its mailbox.</li>
-                        <li><code>tell actor msg</code>: Sends a message asynchronously to another actor's mailbox.</li>
-                        <li><code>rpc actor msg</code>: Sends a message and blocks, waiting for a reply.</li>
+                        <li><code>receive</code>: Blocks the calling actor until a message is sent to its mailbox. Returns a <code>[sender message]</code> block.</li>
+                        <li><code>tell actor msg</code>: Sends a message asynchronously to another actor's mailbox (implicitly packaging the sender as <code>[sender message]</code>).</li>
                         <li><code>kill actor</code>: Terminates the target actor's thread.</li>
                     </ul>
 
@@ -431,7 +430,7 @@ is-even? 10002  ; returns true</code></pre>
                         <pre><code id="actor-example">start-area-server: does [
     spawn [  ; Starts a new actor process
         forever [
-            msg: receive  ; Wait for a message in mailbox
+            msg: receive  ; Wait for a message in mailbox, returns [sender message]
             client: first msg  ; Sender actor reference
             shape: second msg  ; Content of shape details
             
@@ -453,13 +452,16 @@ is-even? 10002  ; returns true</code></pre>
 ]
 
 server: start-area-server
-print ["Response:" rpc server [rectangle 5 10]]
+tell server [rectangle 5 10]
+print ["Response:" second receive]
 ; Response: area of rectangle is 50
 
-print ["Response:" rpc server [circle 5]]
+tell server [circle 5]
+print ["Response:" second receive]
 ; Response: area of circle is 78.53975
 
-print ["Response:" rpc server [triangle 5 10]]
+tell server [triangle 5 10]
+print ["Response:" second receive]
 ; Response: i don't know what the area of a triangle is.
 
 kill server</code></pre>
