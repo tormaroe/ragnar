@@ -13,4 +13,4 @@ test:
     dotnet test
 
 deploy:
-    dotnet publish src/Ragnar.csproj -c Release -o dist
+    dotnet publish src/Ragnar.csproj -c Release -o dist -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:SelfContained=false
