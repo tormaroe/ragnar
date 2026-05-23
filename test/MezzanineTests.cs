@@ -101,5 +101,64 @@ public class MezzanineTests : TestBase
         var (result, _) = Run(script);
         Assert.Equal("[ 10 20 ]", result.ToString());
     }
+
+    [Fact]
+    public void Test_FuncMap()
+    {
+        string script = @"
+            double: func [x] [x * 2]
+            funcmap :double [1 2 3]
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal("[ 2 4 6 ]", result.ToString());
+    }
+
+    [Fact]
+    public void Test_FuncFlatMap()
+    {
+        string script = @"
+            expand: func [x] [reduce [x x * 10]]
+            funcflatmap :expand [1 2 3]
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal("[ 1 10 2 20 3 30 ]", result.ToString());
+    }
+
+    [Fact]
+    public void Test_FuncFilter()
+    {
+        string script = @"
+            even?: func [x] [x // 2 = 0]
+            funcfilter :even? [1 2 3 4 5 6]
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal("[ 2 4 6 ]", result.ToString());
+    }
+
+    [Fact]
+    public void Test_FuncFold()
+    {
+        string script = @"
+            sum: func [a b] [a + b]
+            r1: funcfold :sum [1 2 3 4]
+            r2: funcfold/initial :sum [1 2 3 4] 10
+            reduce [r1 r2]
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal("[ 10 20 ]", result.ToString());
+    }
+
+    [Fact]
+    public void Test_FuncMap_BlockResult()
+    {
+        string script = @"
+            expand: func [x] [reduce [x x * 10]]
+            funcmap :expand [1 2 3]
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal("[ [ 1 10 ] [ 2 20 ] [ 3 30 ] ]", result.ToString());
+    }
 }
+
+
 

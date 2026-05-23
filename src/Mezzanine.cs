@@ -38,6 +38,44 @@ public static class Mezzanine
             ]
         ]
         does: func ["Defines a function with no arguments." block] [ func [] block ]
+        funcmap: func ["Applies a function to each item in a block and returns the results." fn block] [
+            result: copy []
+            foreach item block [
+                append result fn :item
+            ]
+            result
+        ]
+        funcflatmap: func ["Applies a function to each item in a block and flattens the results." fn block] [
+            result: copy []
+            foreach item block [
+                val: fn :item
+                either block? :val [
+                    foreach sub-item val [
+                        append result :sub-item
+                    ]
+                ] [
+                    append result :val
+                ]
+            ]
+            result
+        ]
+        funcfilter: func ["Filters a block using a function that returns true for items to keep." fn block] [
+            result: copy []
+            foreach item block [
+                if fn :item [ append result :item ]
+            ]
+            result
+        ]
+        funcfold: func ["Reduces a block to a single value using a binary function." fn block /initial initial-value] [
+            if empty? block [ return either initial [initial-value] [none] ]
+            acc: either initial [initial-value] [first block]
+            idx: either initial [1] [2]
+            while [idx <= length? block] [
+                acc: fn :acc pick block idx
+                idx: idx + 1
+            ]
+            acc
+        ]
         get-env: func ["Returns the value of an environment variable." name] [call-static "System.Environment" "GetEnvironmentVariable" reduce [name]]
         enumerate: func ["Iterates a .NET IEnumerable, binding word to each item and evaluating block." enumerable 'word block] [
             enumerator: call-method enumerable "GetEnumerator" []
@@ -50,7 +88,7 @@ public static class Mezzanine
         _: func ["Consume one argument and return none (alias for ignore)." x] [ none ]
         list-env: func ["Lists all environment variables as a block of name-value pairs."] [
             vars: call-static "System.Environment" "GetEnvironmentVariables" []
-            result: []
+            result: copy []
             enumerate vars item [
                 append result item/key 
                 append result item/value
@@ -61,12 +99,12 @@ public static class Mezzanine
             words: either block? :word [:word] [append copy [] :word]
             if empty? words [return []]
             
-            orig-values: []
+            orig-values: copy []
             foreach w words [
                 append orig-values attempt [get w]
             ]
             
-            results: []
+            results: copy []
             cursor: data
             
             while [not empty? cursor] [

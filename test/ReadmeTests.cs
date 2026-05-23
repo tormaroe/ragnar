@@ -288,4 +288,32 @@ public class ReadmeTests : TestBase
         Assert.Equal(12, ((Integer)b.Children[3]).Number);
         Assert.Equal(11, ((Integer)b.Children[4]).Number);
     }
+
+    [Fact]
+    public void Test_FunctionalMezzanines()
+    {
+        var code = @"
+            ; 1. funcmap - Applies a function to each item
+            double: func [x] [x * 2]
+            r1: funcmap :double [1 2 3]
+
+            ; 2. funcflatmap - Applies a function and flattens the results
+            expand: func [x] [reduce [x x * 10]]
+            r2: funcflatmap :expand [1 2 3]
+
+            ; 3. funcfilter - Keeps items where the function returns true
+            even?: func [x] [x // 2 = 0]
+            r3: funcfilter :even? [1 2 3 4 5 6]
+
+            ; 4. funcfold - Reduces a block using a binary function (optional /initial)
+            sum: func [a b] [a + b]
+            r4: funcfold :sum [1 2 3 4]
+            r5: funcfold/initial :sum [1 2 3 4] 10
+
+            reduce [r1 r2 r3 r4 r5]
+        ";
+        var (result, _) = Run(code);
+        Assert.Equal("[ [ 2 4 6 ] [ 1 10 2 20 3 30 ] [ 2 4 6 ] 10 20 ]", result.ToString());
+    }
 }
+

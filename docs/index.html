@@ -568,6 +568,28 @@ f-backward: :inc << :double ; (x * 2) + 1
 f-forward 5  ; returns 12
 f-backward 5 ; returns 11</code></pre>
                     </div>
+
+                    <h2>4. Higher-Order Mezzanine Functions</h2>
+                    <p>Ragnar provides built-in higher-order functions to map, filter, and reduce collections:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#func-mezzanines">Copy</button>
+                        <pre><code id="func-mezzanines">; 1. funcmap - Applies a function to each item
+double: func [x] [x * 2]
+funcmap :double [1 2 3]  ; returns [2 4 6]
+
+; 2. funcflatmap - Applies a function and flattens the results
+expand: func [x] [reduce [x x * 10]]
+funcflatmap :expand [1 2 3]  ; returns [1 10 2 20 3 30]
+
+; 3. funcfilter - Keeps items where the function returns true
+even?: func [x] [x // 2 = 0]
+funcfilter :even? [1 2 3 4 5 6]  ; returns [2 4 6]
+
+; 4. funcfold - Reduces a block using a binary function (optional /initial)
+sum: func [a b] [a + b]
+funcfold :sum [1 2 3 4]  ; returns 10
+funcfold/initial :sum [1 2 3 4] 10  ; returns 20</code></pre>
+                    </div>
                 </div>
             </section>
 
