@@ -478,15 +478,14 @@ kill server</code></pre>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#func-closure">Copy</button>
                         <pre><code id="func-closure">make-counter: func [start] [
-    func [] [
-        current: start
-        start: start + 1
-        current
+    current: start
+    func [] [       
+        current: current + 1
     ]
 ]
 counter: make-counter 10
-counter ; returns 10
-counter ; returns 11</code></pre>
+counter ; returns 11
+counter ; returns 12</code></pre>
                     </div>
 
                     <h2>2. Partial Application</h2>
