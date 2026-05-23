@@ -11,3 +11,6 @@ build:
 
 test:
     dotnet test
+
+deploy:
+    dotnet publish src/Ragnar.csproj -c Release -o dist
