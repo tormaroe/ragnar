@@ -60,6 +60,7 @@
                     <span class="nav-group-title">Libraries</span>
                     <ul class="nav-list">
                         <li><a href="#sqlserver" class="menu-item">SQL Server</a></li>
+                        <li><a href="#excel" class="menu-item">Excel Library</a></li>
                     </ul>
                 </div>
             </nav>
@@ -670,6 +671,107 @@ print ["Database Name:" select db1 "name" "ID:" select db1 "database_id"]
 ; 5. Close connection
 conn/close</code></pre>
                     </div>
+                </div>
+            </section>
+
+            <!-- Excel Library Section -->
+            <section id="excel" class="content-section">
+                <div class="card">
+                    <h1>Excel Library</h1>
+                    <p>The Ragnar Excel library provides a clean wrapper around the <strong>ClosedXML</strong> .NET library, allowing you to read, write, format, and structure spreadsheets in pure Ragnar scripts.</p>
+
+                    <h2>How to Use</h2>
+                    <p>To use the library, load it via <code>do</code>, create/load workbooks, populate sheets, insert tables, style themes, and retrieve range data:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#excel-usage">Copy</button>
+                        <pre><code id="excel-usage">; 1. Load the library
+excel: do %lib/excel.r
+
+; 2. Create a new workbook and add a sheet
+wb: excel/new
+ws: wb/worksheets/add "Employee Data"
+
+; 3. Write individual cell values
+c1: ws/cell "A1"
+c1/set-value "Staff List"
+
+; 4. Insert bulk data starting from a cell
+c2: ws/cell "A3"
+tbl: c2/insert-data reduce [
+    ["Name" "Department" "Active"]
+    reduce ["Alice" "Engineering" true]
+    reduce ["Bob" "Product" false]
+    reduce ["Charlie" "Sales" true]
+]
+
+; 5. Set table styles using Word/LitWord themes
+tbl/set-theme 'TableStyleMedium9
+
+; 6. Save the workbook
+wb/save-as %employees.xlsx
+
+; 7. Load workbook back and retrieve data blocks
+wb2: excel/load %employees.xlsx
+ws2: wb2/worksheets/get "Employee Data"
+
+data: ws2/get-data "A3:C6"
+foreach row data [
+    print ["Employee:" pick row 1 "Dept:" pick row 2 "Active:" pick row 3]
+]</code></pre>
+                    </div>
+
+                    <h2>API Reference</h2>
+                    <h3>Workbook Operations</h3>
+                    <ul class="features-list">
+                        <li>
+                            <strong class="teal-text">excel/new:</strong> Instantiates a new Excel workbook.
+                        </li>
+                        <li>
+                            <strong class="teal-text">excel/load [file]:</strong> Loads an existing Excel workbook from a file path.
+                        </li>
+                        <li>
+                            <strong class="teal-text">wb/save-as [file]:</strong> Saves the workbook to the specified file path.
+                        </li>
+                    </ul>
+
+                    <h3>Worksheet Operations</h3>
+                    <ul class="features-list">
+                        <li>
+                            <strong class="teal-text">wb/worksheets/add [name]:</strong> Adds a new worksheet with the given name to the workbook.
+                        </li>
+                        <li>
+                            <strong class="teal-text">wb/worksheets/get [name]:</strong> Retrieves a worksheet by name.
+                        </li>
+                        <li>
+                            <strong class="teal-text">ws/cell [address]:</strong> Returns a wrapped cell object at the specified address (e.g. <code>"A1"</code>).
+                        </li>
+                        <li>
+                            <strong class="teal-text">ws/range [address]:</strong> Returns a wrapped range object at the specified address (e.g. <code>"A1:C5"</code>).
+                        </li>
+                        <li>
+                            <strong class="teal-text">ws/get-data [address]:</strong> Retrieves the values of cells in a range as a block of rows (lists of native values).
+                        </li>
+                    </ul>
+
+                    <h3>Cell Operations</h3>
+                    <ul class="features-list">
+                        <li>
+                            <strong class="teal-text">cell/set-value [val]:</strong> Sets the value of the cell. Supports numbers, strings, and booleans.
+                        </li>
+                        <li>
+                            <strong class="teal-text">cell/get-value:</strong> Returns the native Ragnar value (or <code>none</code>) of the cell.
+                        </li>
+                        <li>
+                            <strong class="teal-text">cell/insert-data [data-block]:</strong> Bulk-inserts a collection of collections (block of blocks) starting at the cell, converts the range to an Excel table, and returns a wrapped table object.
+                        </li>
+                    </ul>
+
+                    <h3>Table Operations</h3>
+                    <ul class="features-list">
+                        <li>
+                            <strong class="teal-text">tbl/set-theme [theme-name]:</strong> Sets the visual style theme of the table (e.g., <code>'TableStyleMedium9</code> or <code>'TableStyleLight16</code>).
+                        </li>
+                    </ul>
                 </div>
             </section>
 

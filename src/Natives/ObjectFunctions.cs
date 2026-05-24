@@ -60,8 +60,8 @@ public static class ObjectFunctions
         {
             if (args[0] is Word w)
             {
-                if (w.Binding != null) w.Binding.Set(w.Name, args[1]);
-                else context.Set(w.Name, args[1]);
+                if (w.Binding != null) w.Binding.Set(w.Name, args[1], forceGlobal: true);
+                else context.Set(w.Name, args[1], forceGlobal: true);
                 return args[1];
             }
             throw new Exception("set requires a word.");
@@ -76,6 +76,40 @@ public static class ObjectFunctions
             BindBlock(block, obj.Context);
             return block;
         }, 2).WithTitle("Binds all words in a block to an object's context."));
+
+        // use [vars] [body]
+        ctx.Set("use", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            List<string> varNames = new List<string>();
+            if (args[0] is Word singleW)
+            {
+                varNames.Add(singleW.Name);
+            }
+            else if (args[0] is Block vars)
+            {
+                foreach (var item in vars.Children.Skip(vars.Index))
+                {
+                    if (item is Word w)
+                    {
+                        varNames.Add(w.Name);
+                    }
+                }
+            }
+            else
+            {
+                throw new Exception("use requires a word or block of words.");
+            }
+
+            if (args[1] is not Block body) throw new Exception("use requires a body block.");
+
+            var localContext = new Context(context);
+            foreach (var name in varNames)
+            {
+                localContext.SetLocal(name, new Word("none"));
+            }
+
+            return interpreter.Evaluate(body, localContext, isTail);
+        }, 2).WithTitle("Defines a block with local variables."));
 
         // context?
         ctx.Set("context?", new Native((args, refs, context, interpreter, isTail) =>

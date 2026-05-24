@@ -417,11 +417,21 @@ public class Interpreter
             .Where(m => string.Equals(m.Name, memberName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
+        if (methods.Count == 0 && !type.IsInterface)
+        {
+            foreach (var iface in type.GetInterfaces())
+            {
+                var ifaceMethods = iface.GetMethods(flags)
+                    .Where(m => string.Equals(m.Name, memberName, StringComparison.OrdinalIgnoreCase));
+                methods.AddRange(ifaceMethods);
+            }
+        }
+
         if (methods.Count > 0)
         {
-            var orderedMethods = methods.OrderBy(m => m.GetParameters().Length).ToList();
-            var targetMethod = orderedMethods[0];
-            int arity = targetMethod.GetParameters().Length;
+            int minRequired = methods.Min(m => m.GetParameters().Count(p => !p.IsOptional));
+            int arity = minRequired;
+            var targetMethod = methods.OrderBy(m => m.GetParameters().Length).First();
 
             return new Native((args, refs, context, interpreter, isTail) =>
             {
@@ -435,10 +445,10 @@ public class Interpreter
                     foreach (var m in methods)
                     {
                         var parameters = m.GetParameters();
-                        if (parameters.Length == args.Count)
+                        if (parameters.Length >= args.Count)
                         {
                             bool compatible = true;
-                            for (int idx = 0; idx < parameters.Length; idx++)
+                            for (int idx = 0; idx < args.Count; idx++)
                             {
                                 var arg = methodArgs[idx];
                                 var paramType = parameters[idx].ParameterType;
@@ -450,13 +460,17 @@ public class Interpreter
                                         break;
                                     }
                                 }
-                                else if (!paramType.IsAssignableFrom(arg.GetType()))
+                                else if (!IsCompatible(arg, paramType))
                                 {
-                                    try
-                                    {
-                                        Convert.ChangeType(arg, paramType);
-                                    }
-                                    catch
+                                    compatible = false;
+                                    break;
+                                }
+                            }
+                            if (compatible)
+                            {
+                                for (int idx = args.Count; idx < parameters.Length; idx++)
+                                {
+                                    if (!parameters[idx].IsOptional)
                                     {
                                         compatible = false;
                                         break;
@@ -478,29 +492,16 @@ public class Interpreter
                 }
 
                 var finalParams = bestMethod.GetParameters();
-                object?[] finalArgs = new object?[methodArgs.Length];
-                for (int idx = 0; idx < methodArgs.Length; idx++)
+                object?[] finalArgs = new object?[finalParams.Length];
+                for (int idx = 0; idx < finalParams.Length; idx++)
                 {
-                    var arg = methodArgs[idx];
-                    var paramType = finalParams[idx].ParameterType;
-                    if (arg == null)
+                    if (idx < methodArgs.Length)
                     {
-                        finalArgs[idx] = null;
-                    }
-                    else if (paramType.IsAssignableFrom(arg.GetType()))
-                    {
-                        finalArgs[idx] = arg;
+                        finalArgs[idx] = Interop.CoerceType(methodArgs[idx], finalParams[idx].ParameterType);
                     }
                     else
                     {
-                        try
-                        {
-                            finalArgs[idx] = Convert.ChangeType(arg, paramType);
-                        }
-                        catch
-                        {
-                            finalArgs[idx] = arg;
-                        }
+                        finalArgs[idx] = finalParams[idx].DefaultValue;
                     }
                 }
 
@@ -534,12 +535,13 @@ public class Interpreter
         // Hybrid scoping: Primary parent is the DefiningContext (Lexical).
         // Secondary parent is the caller context (Dynamic).
         var localContext = new Context(func.DefiningContext, context);
+        localContext.IsFunctionFrame = true;
         int argIdx = 0;
 
         // Bind main parameters
         foreach (var param in func.MainParameters)
         {
-            localContext.Set(param.Name, argIdx < args.Count ? args[argIdx++] : new Word("none"));
+            localContext.SetLocal(param.Name, argIdx < args.Count ? args[argIdx++] : new Word("none"));
         }
 
         // Bind refinements and their args
@@ -565,14 +567,14 @@ public class Interpreter
         foreach (var refSpec in func.Refinements)
         {
             bool isActive = activeRefSet.Contains(refSpec.Name);
-            localContext.Set(refSpec.Name, new Logic(isActive));
+            localContext.SetLocal(refSpec.Name, new Logic(isActive));
             
             for (int i = 0; i < refSpec.Args.Count; i++)
             {
                 Value val = (isActive && refArgMap.ContainsKey(refSpec.Name)) 
                     ? refArgMap[refSpec.Name][i] 
                     : new Word("none");
-                localContext.Set(refSpec.Args[i], val);
+                localContext.SetLocal(refSpec.Args[i], val);
             }
         }
 
@@ -584,6 +586,50 @@ public class Interpreter
         catch (ReturnException ex)
         {
             return ex.Value;
+        }
+    }
+
+    private static bool IsCompatible(object? arg, Type targetType)
+    {
+        if (arg == null)
+        {
+            return !targetType.IsValueType || Nullable.GetUnderlyingType(targetType) != null;
+        }
+        if (targetType.IsAssignableFrom(arg.GetType())) return true;
+
+        if (targetType.IsEnum && (arg is string || arg is Text || arg is Word || arg is LitWord)) return true;
+
+        // Check if there is a static field/property of targetType with the given name
+        string? staticName = null;
+        if (arg is string str) staticName = str;
+        else if (arg is Text txt) staticName = txt.Content;
+        else if (arg is Word w) staticName = w.Name;
+        else if (arg is LitWord lw) staticName = lw.Name;
+
+        if (staticName != null)
+        {
+            var prop = targetType.GetProperty(staticName, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
+            if (prop != null && targetType.IsAssignableFrom(prop.PropertyType)) return true;
+
+            var field = targetType.GetField(staticName, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
+            if (field != null && targetType.IsAssignableFrom(field.FieldType)) return true;
+        }
+
+        if (targetType == typeof(string) && (arg is Text || arg is Word || arg is LitWord)) return true;
+
+        // Check if there is an implicit operator
+        var implicitOp = targetType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Any(m => m.Name == "op_Implicit" && m.ReturnType == targetType && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType.IsAssignableFrom(arg.GetType()));
+        if (implicitOp) return true;
+
+        try
+        {
+            Convert.ChangeType(arg, targetType);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

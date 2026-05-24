@@ -5,6 +5,7 @@ public class Context
 {
     public TextWriter Output { get; set; } = Console.Out;
     public Value? LastResult { get; set; }
+    public bool IsFunctionFrame { get; set; }
 
     private readonly Dictionary<string, Value> _bindings = [];
     private readonly Context? _parent;
@@ -26,13 +27,19 @@ public class Context
     // if one exists. Otherwise, set it in the current context.
     public void Set(string name, Value value)
     {
+        Set(name, value, forceGlobal: false);
+    }
+
+    public void Set(string name, Value value, bool forceGlobal)
+    {
         if (name == "it")
         {
             LastResult = value;
             return;
         }
 
-        if (TryUpdate(name, value)) return;
+        bool stopAtGlobal = IsInsideFunctionFrame() && !forceGlobal;
+        if (TryUpdate(name, value, stopAtGlobal)) return;
 
         // Not found in any context, so set it in the current one.
         _bindings[name] = value;
@@ -49,11 +56,15 @@ public class Context
         _bindings[name] = value;
     }
 
-    private bool TryUpdate(string name, Value value)
+    public bool TryUpdate(string name, Value value, bool stopAtGlobal = false)
     {
         Context? current = this;
         while (current != null)
         {
+            if (stopAtGlobal && current._parent == null)
+            {
+                break;
+            }
             if (current._bindings.ContainsKey(name))
             {
                 current._bindings[name] = value;
@@ -62,7 +73,19 @@ public class Context
             current = current._parent;
         }
 
-        if (_secondaryParent != null && _secondaryParent.TryUpdate(name, value))
+        return false;
+    }
+
+    public bool IsInsideFunctionFrame()
+    {
+        Context? current = this;
+        while (current != null)
+        {
+            if (current.IsFunctionFrame) return true;
+            current = current._parent;
+        }
+
+        if (_secondaryParent != null && _secondaryParent.IsInsideFunctionFrame())
         {
             return true;
         }

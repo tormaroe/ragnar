@@ -9,6 +9,7 @@ public class Interop
         try
         {
             _ = typeof(Microsoft.Data.SqlClient.SqlConnection).FullName;
+            _ = typeof(ClosedXML.Excel.XLWorkbook).FullName;
         }
         catch {}
     }
@@ -53,6 +54,12 @@ public class Interop
             case DotNetValue dnv:
                 return dnv.Instance;
 
+            case Word w when w.Name == "none":
+                return null;
+
+            case Block b:
+                return b.Children.Skip(b.Index).Select(ToNetObject).ToList();
+
             default:
                 return value;
         }
@@ -94,7 +101,7 @@ public class Interop
         var prop = GetPropertySafe(type, memberName, flags);
         if (prop != null && prop.CanWrite)
         {
-            prop.SetValue(isStatic ? null : target, rawValue);
+            prop.SetValue(isStatic ? null : target, CoerceType(rawValue, prop.PropertyType));
             return;
         }
 
@@ -102,7 +109,7 @@ public class Interop
         var field = GetFieldSafe(type, memberName, flags);
         if (field != null)
         {
-            field.SetValue(isStatic ? null : target, rawValue);
+            field.SetValue(isStatic ? null : target, CoerceType(rawValue, field.FieldType));
             return;
         }
 
@@ -149,13 +156,10 @@ public class Interop
 
                 // --- FIX: Evaluate the contents of the block first ---
                 var evaluatedArgs = new List<Value>();
-                foreach (var child in argBlock.Children)
+                int blockIdx = 0;
+                while (blockIdx < argBlock.Children.Count)
                 {
-                    // We evaluate each child individually. 
-                    // If it's a Word or GetWord, it gets resolved.
-                    // If it's a literal, it stays a literal.
-                    var tempBlock = new Block(new[] { child });
-                    evaluatedArgs.Add(interpreter.Evaluate(tempBlock, context));
+                    evaluatedArgs.Add(interpreter.Next(argBlock, ref blockIdx, context));
                 }
 
                 // Now convert those evaluated Ragnar values to .NET objects
@@ -180,10 +184,10 @@ public class Interop
             {
                 // 1. Evaluate every argument in the block
                 var evaluatedArgs = new List<Value>();
-                foreach (var child in argBlock.Children)
+                int blockIdx = 0;
+                while (blockIdx < argBlock.Children.Count)
                 {
-                    var tempBlock = new Block(new[] { child });
-                    evaluatedArgs.Add(interpreter.Evaluate(tempBlock, context));
+                    evaluatedArgs.Add(interpreter.Next(argBlock, ref blockIdx, context));
                 }
 
                 // 2. Unbox to .NET objects
@@ -193,6 +197,15 @@ public class Interop
 
                 // 3. Find the method that matches the signature
                 var method = dnv.Instance?.GetType().GetMethod(methodName.Content, argTypes);
+
+                if (method == null && dnv.Instance != null)
+                {
+                    foreach (var iface in dnv.Instance.GetType().GetInterfaces())
+                    {
+                        method = iface.GetMethod(methodName.Content, argTypes);
+                        if (method != null) break;
+                    }
+                }
 
                 if (method == null)
                     throw new Exception($"Method '{methodName.Content}' not found for the provided argument types.");
@@ -237,14 +250,7 @@ public class Interop
 
                 try
                 {
-                    // Reflection can be picky. If the property expects a specific type 
-                    // that ToNetObject didn't catch (like an Enum or a byte), 
-                    // Convert.ChangeType can provide an extra layer of safety.
-                    object? finalValue = netValue;
-                    if (netValue != null && prop.PropertyType != netValue.GetType())
-                    {
-                        finalValue = Convert.ChangeType(netValue, prop.PropertyType);
-                    }
+                    object? finalValue = CoerceType(netValue, prop.PropertyType);
 
                     prop.SetValue(instance, finalValue);
                     return args[2]; // Return the value that was set (Rebol convention)
@@ -302,20 +308,113 @@ public class Interop
         }, 3).WithTitle("Calls a static .NET method."));
     }
 
-    public static PropertyInfo? GetPropertySafe(Type type, string name, BindingFlags flags)
+    public static object? CoerceType(object? arg, Type targetType)
     {
+        if (arg == null) return null;
+        if (targetType.IsAssignableFrom(arg.GetType())) return arg;
+
+        // Check for Enum conversion
+        if (targetType.IsEnum)
+        {
+            string? s = null;
+            if (arg is string str) s = str;
+            else if (arg is Text txt) s = txt.Content;
+            else if (arg is Word w) s = w.Name;
+            else if (arg is LitWord lw) s = lw.Name;
+
+            if (s != null)
+            {
+                try
+                {
+                    return Enum.Parse(targetType, s, true);
+                }
+                catch {}
+            }
+        }
+        else
+        {
+            // Check for static field/property of targetType matching the name
+            string? s = null;
+            if (arg is string str) s = str;
+            else if (arg is Text txt) s = txt.Content;
+            else if (arg is Word w) s = w.Name;
+            else if (arg is LitWord lw) s = lw.Name;
+
+            if (s != null)
+            {
+                var prop = targetType.GetProperty(s, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
+                if (prop != null && targetType.IsAssignableFrom(prop.PropertyType))
+                {
+                    try { return prop.GetValue(null); } catch {}
+                }
+
+                var field = targetType.GetField(s, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
+                if (field != null && targetType.IsAssignableFrom(field.FieldType))
+                {
+                    try { return field.GetValue(null); } catch {}
+                }
+            }
+        }
+
+        // Check for String conversion from Word/LitWord
+        if (targetType == typeof(string))
+        {
+            if (arg is string str) return str;
+            if (arg is Text txt) return txt.Content;
+            if (arg is Word w) return w.Name;
+            if (arg is LitWord lw) return lw.Name;
+        }
+
+        // Check for implicit conversion operator on the target type
+        var implicitOp = targetType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .FirstOrDefault(m => m.Name == "op_Implicit" && m.ReturnType == targetType && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType.IsAssignableFrom(arg.GetType()));
+        
+        if (implicitOp != null)
+        {
+            try
+            {
+                return implicitOp.Invoke(null, new[] { arg });
+            }
+            catch {}
+        }
+
+        // Standard ChangeType fallback
         try
         {
-            return type.GetProperty(name, flags);
+            return Convert.ChangeType(arg, targetType);
+        }
+        catch
+        {
+            return arg;
+        }
+    }
+
+    public static PropertyInfo? GetPropertySafe(Type type, string name, BindingFlags flags)
+    {
+        PropertyInfo? prop = null;
+        try
+        {
+            prop = type.GetProperty(name, flags);
         }
         catch (AmbiguousMatchException)
         {
             var props = type.GetProperties(flags)
                 .Where(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
                 .ToList();
-            if (props.Count == 0) return null;
-            return props.OrderBy(p => GetInheritanceDistance(type, p.DeclaringType)).First();
+            if (props.Count > 0)
+                prop = props.OrderBy(p => GetInheritanceDistance(type, p.DeclaringType)).First();
         }
+
+        if (prop == null && !type.IsInterface)
+        {
+            foreach (var iface in type.GetInterfaces())
+            {
+                prop = GetPropertySafe(iface, name, flags);
+                if (prop != null) break;
+            }
+        }
+
+        return prop;
     }
 
     public static FieldInfo? GetFieldSafe(Type type, string name, BindingFlags flags)
