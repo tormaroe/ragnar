@@ -59,7 +59,7 @@ make object! [
                 append row reader/GetValue col-idx
                 col-idx: col-idx + 1
             ]
-            append result row
+            append result to-record row
         ]
         reader/close
         result

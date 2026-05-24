@@ -75,8 +75,8 @@ public class SqlLibraryTests : TestBase
         var b = Assert.IsType<Block>(result);
         Assert.Equal(2, b.Children.Count);
         
-        var row1 = Assert.IsType<Block>(b.Children[0]);
-        var row2 = Assert.IsType<Block>(b.Children[1]);
+        var row1 = Assert.IsType<Record>(b.Children[0]);
+        var row2 = Assert.IsType<Record>(b.Children[1]);
         
         // Check row1: ["id" 1 "name" "A"]
         Assert.Equal(4, row1.Children.Count);
@@ -84,7 +84,7 @@ public class SqlLibraryTests : TestBase
         Assert.Equal(1, ((Integer)row1.Children[1]).Number);
         Assert.Equal("\"name\"", row1.Children[2].ToString());
         Assert.Equal("A", ((Text)row1.Children[3]).Content);
-
+        
         // Check row2: ["id" 2 "name" "B"]
         Assert.Equal(4, row2.Children.Count);
         Assert.Equal("\"id\"", row2.Children[0].ToString());
