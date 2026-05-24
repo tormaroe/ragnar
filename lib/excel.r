@@ -1,24 +1,12 @@
 let [
     get-cell-val func [cell-val] [
-        val: none
-        either cell-val/IsBlank [
-            val: none
-        ] [
-            either cell-val/IsBoolean [
-                val: cell-val/GetBoolean
-            ] [
-                either cell-val/IsNumber [
-                    val: cell-val/GetNumber
-                ] [
-                    either cell-val/IsDateTime [
-                        val: cell-val/GetDateTime
-                    ] [
-                        val: cell-val/GetText
-                    ]
-                ]
-            ]
+        case [
+            cell-val/IsBlank [none]
+            cell-val/IsBoolean [cell-val/GetBoolean]
+            cell-val/IsNumber [cell-val/GetNumber]
+            cell-val/IsDateTime [cell-val/GetDateTime]
+            true [cell-val/GetText]
         ]
-        val
     ]
 
     wrap-table func [t] [
