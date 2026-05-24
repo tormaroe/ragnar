@@ -1,5 +1,5 @@
-use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook net-new] [
-    get-cell-val: func [cell-val] [
+let [
+    get-cell-val func [cell-val] [
         val: none
         either cell-val/IsBlank [
             val: none
@@ -21,7 +21,7 @@ use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook n
         val
     ]
 
-    wrap-table: func [t] [
+    wrap-table func [t] [
         make object! [
             set-theme: func [theme-name] [
                 t/Theme: theme-name
@@ -29,7 +29,7 @@ use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook n
         ]
     ]
 
-    wrap-range: func [r] [
+    wrap-range func [r] [
         make object! [
             create-table: func [/with name] [
                 table-name: either with [name] [none]
@@ -43,7 +43,7 @@ use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook n
         ]
     ]
 
-    wrap-cell: func [c] [
+    wrap-cell func [c] [
         make object! [
             set-value: func [val] [
                 c/Value: val
@@ -59,7 +59,7 @@ use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook n
         ]
     ]
 
-    wrap-worksheet: func [sheet] [
+    wrap-worksheet func [sheet] [
         make object! [
             cell: func [address] [
                 wrap-cell call-method sheet "Cell" [address]
@@ -84,7 +84,7 @@ use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook n
         ]
     ]
 
-    wrap-workbook: func [wb] [
+    wrap-workbook func [wb] [
         make object! [
             worksheets: make object! [
                 add: func [name] [
@@ -100,7 +100,8 @@ use [get-cell-val wrap-table wrap-range wrap-cell wrap-worksheet wrap-workbook n
         ]
     ]
 
-    net-new: :new
+    net-new :new
+] [
     make object! [
         new: func [] [
             wrap-workbook net-new "ClosedXML.Excel.XLWorkbook" []

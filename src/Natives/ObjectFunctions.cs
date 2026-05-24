@@ -120,6 +120,32 @@ public static class ObjectFunctions
             return interpreter.Evaluate(body, localContext, isTail);
         }, 2).WithTitle("Defines a block with local variables."));
 
+        // let [bindings] [body]
+        ctx.Set("let", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            if (args[0] is not Block bindings) throw new Exception("let bindings must be a block.");
+            if (args[1] is not Block body) throw new Exception("let body must be a block.");
+
+            var localContext = new Context(context);
+            var bindingsBlock = new Block(bindings.Children, bindings.Index);
+            int idx = 0;
+
+            while (idx < bindingsBlock.Children.Count)
+            {
+                var item = bindingsBlock.Children[idx];
+                if (item is not Word w)
+                {
+                    throw new Exception("let binding names must be words.");
+                }
+                idx++;
+
+                Value val = interpreter.Next(bindingsBlock, ref idx, localContext);
+                localContext.SetLocal(w.Name, val);
+            }
+
+            return interpreter.Evaluate(body, localContext, isTail);
+        }, 2).WithTitle("Defines local variables with initial values and evaluates a body block."));
+
         // context?
         ctx.Set("context?", new Native((args, refs, context, interpreter, isTail) =>
         {

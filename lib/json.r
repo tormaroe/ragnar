@@ -1,7 +1,6 @@
 ; Ragnar JSON Library
 
-use [ragnar-parse] [
-    ragnar-parse: :parse
+let [ragnar-parse :parse] [
 
     make object! [
         ; --- Parser Stack ---

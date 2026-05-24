@@ -130,4 +130,55 @@ public class ScopingTests : TestBase
         Assert.Equal(10, ((Integer)result.Children[0]).Number);
         Assert.Equal(20, ((Integer)result.Children[1]).Number);
     }
+
+    [Fact]
+    public void LetFunctionShouldCreateLocalVariablesWithInitialValues()
+    {
+        var code = @"
+            x: 10
+            res: let [x 20 y 30] [
+                x + y
+            ]
+            reduce [x res]
+        ";
+
+        var result = (Block)Run(code).Result;
+        Assert.Equal(10, ((Integer)result.Children[0]).Number);
+        Assert.Equal(50, ((Integer)result.Children[1]).Number);
+    }
+
+    [Fact]
+    public void LetFunctionShouldSupportSequentialEvaluation()
+    {
+        var code = @"
+            res: let [x 10 y x + 5] [
+                y
+            ]
+            res
+        ";
+
+        var result = (Integer)Run(code).Result;
+        Assert.Equal(15, result.Number);
+    }
+
+    [Fact]
+    public void LetFunctionShouldBindSharedLexicalContextForFunctions()
+    {
+        var code = @"
+            f: let [
+                counter 0
+                increment func [] [
+                    counter: counter + 1
+                    counter
+                ]
+            ] [
+                :increment
+            ]
+            f
+            f
+        ";
+
+        var result = (Integer)Run(code).Result;
+        Assert.Equal(2, result.Number);
+    }
 }
