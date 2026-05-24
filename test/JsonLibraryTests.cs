@@ -210,4 +210,15 @@ public class JsonLibraryTests : TestBase
         var result = Run(code).Result;
         Assert.Equal("none", result.ToUserString());
     }
+
+    [Fact]
+    public void Json_DoesNotPolluteGlobalScope_Works()
+    {
+        var code = @"
+            json: do %lib/json.r
+            attempt [get 'ragnar-parse]
+        ";
+        var result = Run(code).Result;
+        Assert.Equal("none", result.ToUserString());
+    }
 }

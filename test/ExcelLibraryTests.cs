@@ -193,4 +193,26 @@ public class ExcelLibraryTests : TestBase
             }
         }
     }
+
+    [Fact]
+    public void Excel_DoesNotPolluteGlobalScope_Works()
+    {
+        var code = @"
+            excel: do %lib/excel.r
+            reduce [
+                attempt [get 'get-cell-val]
+                attempt [get 'wrap-table]
+                attempt [get 'wrap-range]
+                attempt [get 'wrap-cell]
+                attempt [get 'wrap-worksheet]
+                attempt [get 'wrap-workbook]
+                attempt [get 'net-new]
+            ]
+        ";
+        var result = (Block)Run(code).Result;
+        foreach (var item in result.Children)
+        {
+            Assert.Equal("none", item.ToUserString());
+        }
+    }
 }
