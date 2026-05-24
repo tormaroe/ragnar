@@ -10,20 +10,20 @@ let [ragnar-parse :parse] [
             append stack :v
         ]
         
-        pop: func [/local v] [
+        pop: func [] [
             v: last stack
             remove back tail stack
             :v
         ]
         
-        append-to-array: func [/local val arr] [
+        append-to-array: func [] [
             val: pop
             arr: pop
             append arr :val
             push arr
         ]
         
-        append-to-object: func [/local val key obj] [
+        append-to-object: func [] [
             val: pop
             key: pop
             obj: pop
@@ -33,7 +33,7 @@ let [ragnar-parse :parse] [
         ]
         
         ; --- String Unescaping ---
-        unescape: func [s /local res char esc-code val hex-digit] [
+        unescape: func [s] [
             res: copy ""
             hex-digit: charset "0123456789abcdefABCDEF"
             ragnar-parse s [
@@ -113,7 +113,7 @@ let [ragnar-parse :parse] [
     
         ; --- JSON Stringification ---
         
-        escape-string: func [s /local res char val hex] [
+        escape-string: func [s] [
             res: copy "\""
             foreach char s [
                 val: to-integer to-char char
@@ -138,7 +138,7 @@ let [ragnar-parse :parse] [
             res
         ]
     
-        stringify-val: func [val indent /local newline-str next-indent res first-item idx k v item] [
+        stringify-val: func [val indent] [
             newline-str: either none? indent [""] [to-string #"^/"]
             next-indent: either none? indent [none] [rejoin [indent "    "]]
             
@@ -213,7 +213,7 @@ let [ragnar-parse :parse] [
             ]
         ]
     
-        stringify: func [val /pretty /local indent] [
+        stringify: func [val /pretty] [
             indent: either pretty [copy ""] [none]
             stringify-val :val indent
         ]

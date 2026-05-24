@@ -55,7 +55,7 @@ let [
             range: func [address] [
                 wrap-range call-method sheet "Range" [address]
             ]
-            get-data: func [address /local r rows data row-data cells] [
+            get-data: func [address] [
                 r: call-method sheet "Range" [address]
                 rows: r/Rows
                 data: copy []

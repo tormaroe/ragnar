@@ -62,6 +62,7 @@
                         <li><a href="#sqlserver" class="menu-item">SQL Server</a></li>
                         <li><a href="#excel" class="menu-item">Excel Library</a></li>
                         <li><a href="#json" class="menu-item">JSON Library</a></li>
+                        <li><a href="#prettytable" class="menu-item">Pretty Table Library</a></li>
                     </ul>
                 </div>
             </nav>
@@ -849,6 +850,61 @@ print [pretty-str]
 ;         "Rebol"
 ;     ]
 ; }</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pretty Table Section -->
+            <section id="prettytable" class="content-section">
+                <div class="card">
+                    <h1>Pretty Table Library</h1>
+                    <p>The Ragnar Pretty Table library stringifies series data (block of blocks or block of records) into a beautifully formatted ASCII table.</p>
+
+                    <h2>How to Use</h2>
+                    <p>To use the library, load it via <code>do %lib/prettytable.r</code>, which returns the table generator function. Column widths are dynamically calculated, and numeric types (integers and decimals) are right-aligned, while other types are left-aligned.</p>
+
+                    <h3>1. Formatting a Block of Blocks</h3>
+                    <p>When given a block of blocks, the library treats all blocks as regular data rows and prints top and bottom border separators:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#table-block-code">Copy</button>
+                        <pre><code id="table-block-code">; Load the library
+make-table: do %lib/prettytable.r
+
+data: [
+    ["Name" "Age" "City"]
+    ["Alice" 30 "New York"]
+    ["Bob" 25 "Los Angeles"]
+    ["Charlie" 35 "Chicago"]
+]
+
+print make-table data
+; Output:
+; +---------+-----+-------------+
+; | Name    | Age | City        |
+; | Alice   |  30 | New York    |
+; | Bob     |  25 | Los Angeles |
+; | Charlie |  35 | Chicago     |
+; +---------+-----+-------------+</code></pre>
+                    </div>
+
+                    <h3>2. Formatting a Block of Records</h3>
+                    <p>When given a block of records, the first record's keys determine the column headers. A separator line is printed after the header row, followed by the record values in corresponding columns:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#table-record-code">Copy</button>
+                        <pre><code id="table-record-code">; Format records
+print make-table funcmap :to-record [
+    ["Name" "Alice" "Age" 30 "City" "New York"]
+    ["Name" "Bob" "Age" 25 "City" "Los Angeles"]
+    ["Name" "Charlie" "Age" 35 "City" "Chicago"]
+]
+; Output:
+; +---------+-----+-------------+
+; | Name    | Age | City        |
+; +---------+-----+-------------+
+; | Alice   |  30 | New York    |
+; | Bob     |  25 | Los Angeles |
+; | Charlie |  35 | Chicago     |
+; +---------+-----+-------------+</code></pre>
                     </div>
                 </div>
             </section>
