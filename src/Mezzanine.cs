@@ -3,6 +3,22 @@ namespace Ragnar;
 public static class Mezzanine
 {
     public const string SOURCE = """
+        block?: func ["Returns true if the value is a block." v] [ (type? :v) = 'block! ]
+        paren?: func ["Returns true if the value is a paren." v] [ (type? :v) = 'paren! ]
+        record?: func ["Returns true if the value is a record." v] [ (type? :v) = 'record! ]
+        text?: func ["Returns true if the value is a string (Text)." v] [ (type? :v) = 'text! ]
+        string?: func ["Returns true if the value is a string." v] [ (type? :v) = 'text! ]
+        integer?: func ["Returns true if the value is an integer." v] [ (type? :v) = 'integer! ]
+        decimal?: func ["Returns true if the value is a decimal." v] [ (type? :v) = 'decimal! ]
+        logic?: func ["Returns true if the value is a logic (boolean)." v] [ (type? :v) = 'logic! ]
+        word?: func ["Returns true if the value is a word type." v] [
+            any [
+                (type? :v) = 'word!
+                (type? :v) = 'lit-word!
+                (type? :v) = 'set-word!
+                (type? :v) = 'get-word!
+            ]
+        ]
         ask: func ["Prompts the user for input and returns it as a string." prompt] [
             prin prompt
             input

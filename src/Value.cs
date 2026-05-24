@@ -29,20 +29,36 @@ public abstract class Series : Value
     public abstract Series At(int newIndex);
 }
 
+public class StringHolder(string value)
+{
+    public string Value { get; set; } = value;
+}
+
 public class Text : Series
 {
-    public string Content { get; set; }
+    public StringHolder Holder { get; }
+    public string Content
+    {
+        get => Holder.Value;
+        set => Holder.Value = value;
+    }
     public override int Length => Math.Max(0, Content.Length - Index);
     
     public Text(string value, int index = 0) 
     { 
-        Content = value; 
+        Holder = new StringHolder(value); 
         Index = index; 
+    }
+
+    public Text(StringHolder holder, int index = 0)
+    {
+        Holder = holder;
+        Index = index;
     }
 
     public override string ToString() => $"\"{Content[Index..].Replace("\"", "\\\"")}\"";
     public override string ToUserString() => Content[Index..];
-    public override Series At(int newIndex) => new Text(Content, newIndex);
+    public override Series At(int newIndex) => new Text(Holder, newIndex);
 }
 
 public class Word(string name, Context? binding = null) : Value
@@ -94,13 +110,22 @@ public class GetWord(string name) : Value
 
 public class Block : Series
 {
-    public List<Value> Children { get; } = [];
+    public List<Value> Children { get; }
     public override int Length => Math.Max(0, Children.Count - Index);
 
-    public Block(int index = 0) { Index = index; }
+    public Block(int index = 0) 
+    { 
+        Children = []; 
+        Index = index; 
+    }
+    public Block(List<Value> children, int index)
+    {
+        Children = children;
+        Index = index;
+    }
     public Block(IEnumerable<Value> values, int index = 0)
     {
-        Children.AddRange(values);
+        Children = new List<Value>(values);
         Index = index;
     }
 
@@ -123,10 +148,21 @@ public class Block : Series
 public class Paren : Block
 {
     public Paren(int index = 0) : base(index) { }
+    public Paren(List<Value> children, int index) : base(children, index) { }
     public Paren(IEnumerable<Value> parts, int index = 0) : base(parts, index) { }
 
     public override string ToString() => "(" + string.Join(" ", Children.Skip(Index)) + ")";
     public override Series At(int newIndex) => new Paren(Children, newIndex);
+}
+
+public class Record : Block
+{
+    public Record(int index = 0) : base(index) { }
+    public Record(List<Value> children, int index) : base(children, index) { }
+    public Record(IEnumerable<Value> values, int index = 0) : base(values, index) { }
+
+    public override string ToString() => "#( " + string.Join(" ", Children.Skip(Index)) + " )";
+    public override Series At(int newIndex) => new Record(Children, newIndex);
 }
 
 // The new signature includes the refinements HashSet and isTail flag

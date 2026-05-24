@@ -165,20 +165,7 @@ public static class SeriesFunctions
                 int matchLen = 1; // Default for block elements
 
                 // Comparison helper
-                bool IsMatch(Value v1, Value v2)
-                {
-                    if (v1 is Text t1 && v2 is Text t2)
-                    {
-                        return string.Equals(t1.Content, t2.Content, caseSens ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
-                    }
-                    if (v1 is DotNetValue dnv1 && v2 is DotNetValue dnv2)
-                    {
-                        if (dnv1.Instance == null && dnv2.Instance == null) return true;
-                        if (dnv1.Instance == null || dnv2.Instance == null) return false;
-                        return dnv1.Instance.Equals(dnv2.Instance);
-                    }
-                    return v1.ToString() == v2.ToString();
-                }
+                bool IsMatch(Value v1, Value v2) => SeriesFunctions.IsMatch(v1, v2, caseSens);
 
                 if (match)
                 {
@@ -319,23 +306,8 @@ public static class SeriesFunctions
                 {
                     for (int i = s.Index; i < b.Children.Count; i++)
                     {
-                        // Comparison helper (simplified, should match find)
-                        bool isMatch;
                         Value v1 = b.Children[i];
-                        if (v1 is Text t1 && target is Text t2)
-                        {
-                            isMatch = string.Equals(t1.Content, t2.Content, StringComparison.OrdinalIgnoreCase);
-                        }
-                        else if (v1 is DotNetValue dnv1 && target is DotNetValue dnv2)
-                        {
-                            if (dnv1.Instance == null && dnv2.Instance == null) isMatch = true;
-                            else if (dnv1.Instance == null || dnv2.Instance == null) isMatch = false;
-                            else isMatch = dnv1.Instance.Equals(dnv2.Instance);
-                        }
-                        else
-                        {
-                            isMatch = v1.ToString() == target.ToString();
-                        }
+                        bool isMatch = SeriesFunctions.IsMatch(v1, target, false);
 
                         if (isMatch)
                         {
@@ -445,5 +417,149 @@ public static class SeriesFunctions
             }
             throw new Exception("reverse requires a series.");
         }, 1).WithTitle("Reverses a series."));
+
+        // back [series]
+        ctx.Set("back", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("back requires a series.");
+            return s.At(Math.Max(0, s.Index - 1));
+        }, 1).WithTitle("Returns the series at its previous position."));
+
+        // head [series]
+        ctx.Set("head", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("head requires a series.");
+            return s.At(0);
+        }, 1).WithTitle("Returns the series at its starting position."));
+
+        // tail [series]
+        ctx.Set("tail", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("tail requires a series.");
+            int len = s is Block b ? b.Children.Count : ((Text)s).Content.Length;
+            return s.At(len);
+        }, 1).WithTitle("Returns the series at its end position."));
+
+        // head? [series]
+        ctx.Set("head?", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("head? requires a series.");
+            return new Logic(s.Index == 0);
+        }, 1).WithTitle("Returns true if the series is at its starting position."));
+
+        // tail? [series]
+        ctx.Set("tail?", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("tail? requires a series.");
+            int len = s is Block b ? b.Children.Count : ((Text)s).Content.Length;
+            return new Logic(s.Index >= len);
+        }, 1).WithTitle("Returns true if the series is at its end position."));
+
+        // clear [series]
+        ctx.Set("clear", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("clear requires a series.");
+            if (s is Block b)
+            {
+                if (b.Index >= 0 && b.Index < b.Children.Count)
+                {
+                    b.Children.RemoveRange(b.Index, b.Children.Count - b.Index);
+                }
+                return b;
+            }
+            if (s is Text t)
+            {
+                if (t.Index >= 0 && t.Index < t.Content.Length)
+                {
+                    t.Content = t.Content.Substring(0, t.Index);
+                }
+                return t;
+            }
+            throw new Exception("clear requires a block or text series.");
+        }, 1).WithTitle("Removes series values from the current index to the end."));
+
+        // remove [series]
+        ctx.Set("remove", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("remove requires a series.");
+            if (s is Block b)
+            {
+                if (b.Index >= 0 && b.Index < b.Children.Count)
+                {
+                    b.Children.RemoveAt(b.Index);
+                }
+                return b;
+            }
+            if (s is Text t)
+            {
+                if (t.Index >= 0 && t.Index < t.Content.Length)
+                {
+                    t.Content = t.Content.Remove(t.Index, 1);
+                }
+                return t;
+            }
+            throw new Exception("remove requires a block or text series.");
+        }, 1).WithTitle("Removes the series value at the current index."));
+
+        // take [series]
+        ctx.Set("take", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("take requires a series.");
+            if (s is Block b)
+            {
+                if (b.Index >= 0 && b.Index < b.Children.Count)
+                {
+                    Value val = b.Children[b.Index];
+                    b.Children.RemoveAt(b.Index);
+                    return val;
+                }
+                return new Word("none");
+            }
+            if (s is Text t)
+            {
+                if (t.Index >= 0 && t.Index < t.Content.Length)
+                {
+                    char ch = t.Content[t.Index];
+                    t.Content = t.Content.Remove(t.Index, 1);
+                    return new Character(ch);
+                }
+                return new Word("none");
+            }
+            throw new Exception("take requires a block or text series.");
+        }, 1).WithTitle("Removes the series value at the current index and returns it."));
+    }
+
+    private static string? GetWordName(Value v)
+    {
+        if (v is Word w) return w.Name;
+        if (v is LitWord lw) return lw.Name;
+        if (v is SetWord sw) return sw.Name;
+        if (v is GetWord gw) return gw.Name;
+        return null;
+    }
+
+    private static bool IsMatch(Value v1, Value v2, bool caseSens = false)
+    {
+        if (v1 is Text t1 && v2 is Text t2)
+        {
+            return string.Equals(t1.Content, t2.Content, caseSens ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
+        }
+        if (v1 is DotNetValue dnv1 && v2 is DotNetValue dnv2)
+        {
+            if (dnv1.Instance == null && dnv2.Instance == null) return true;
+            if (dnv1.Instance == null || dnv2.Instance == null) return false;
+            return dnv1.Instance.Equals(dnv2.Instance);
+        }
+        string? w1 = GetWordName(v1);
+        string? w2 = GetWordName(v2);
+        if (w1 != null && w2 != null)
+        {
+            return string.Equals(w1, w2, StringComparison.OrdinalIgnoreCase);
+        }
+        if (w1 != null || w2 != null)
+        {
+            return false;
+        }
+        return v1.ToString() == v2.ToString();
     }
 }

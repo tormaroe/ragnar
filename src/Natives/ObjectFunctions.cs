@@ -8,6 +8,9 @@ public static class ObjectFunctions
         // object! (type constant)
         ctx.Set("object!", new Word("object!"));
 
+        // error! (type constant)
+        ctx.Set("error!", new Word("error!"));
+
         // make object! [ ... ]
         ctx.Set("make", new Native((args, refs, context, interpreter, isTail) =>
         {
@@ -29,6 +32,12 @@ public static class ObjectFunctions
                 interpreter.Evaluate(block, objContext);
 
                 return obj;
+            }
+
+            if (typeWord?.Name == "error!")
+            {
+                string msg = args[1].ToUserString();
+                throw new Exception(msg);
             }
 
             throw new Exception($"make does not support type {args[0]}");

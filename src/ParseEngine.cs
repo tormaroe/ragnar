@@ -446,7 +446,7 @@ public class ParseEngine
                 name == "insert" || name == "remove" || name == "change" ||
                 name == "fail" || name == "break" || name == "reject" ||
                 name == "integer!" || name == "string!" || name == "text!" || name == "char!" ||
-                name == "word!" || name == "block!" || name == "logic!")
+                name == "word!" || name == "block!" || name == "logic!" || name == "record!")
             {
                 return true;
             }
@@ -658,7 +658,7 @@ public class ParseEngine
 
                 string name = wordRule.Name;
                 bool isDatatype = name == "integer!" || name == "string!" || name == "text!" ||
-                                  name == "char!" || name == "word!" || name == "block!" || name == "logic!";
+                                  name == "char!" || name == "word!" || name == "block!" || name == "logic!" || name == "record!";
                 if (isDatatype)
                 {
                     bool typeMatched = name switch
@@ -668,7 +668,8 @@ public class ParseEngine
                         "text!"    => inputValue is Text,
                         "char!"    => inputValue is Character,
                         "word!"    => inputValue is Word || inputValue is LitWord || inputValue is SetWord || inputValue is GetWord,
-                        "block!"   => inputValue is Block,
+                        "block!"   => inputValue is Block && inputValue is not Record,
+                        "record!"  => inputValue is Record,
                         "logic!"   => inputValue is Logic,
                         _          => false
                     };

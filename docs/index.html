@@ -61,6 +61,7 @@
                     <ul class="nav-list">
                         <li><a href="#sqlserver" class="menu-item">SQL Server</a></li>
                         <li><a href="#excel" class="menu-item">Excel Library</a></li>
+                        <li><a href="#json" class="menu-item">JSON Library</a></li>
                     </ul>
                 </div>
             </nav>
@@ -772,6 +773,83 @@ foreach row data [
                             <strong class="teal-text">tbl/set-theme [theme-name]:</strong> Sets the visual style theme of the table (e.g., <code>'TableStyleMedium9</code> or <code>'TableStyleLight16</code>).
                         </li>
                     </ul>
+                </div>
+            </section>
+
+            <!-- JSON Library Section -->
+            <section id="json" class="content-section">
+                <div class="card">
+                    <h1>JSON Library</h1>
+                    <p>Ragnar includes a built-in JSON library that supports serializing and deserializing JSON strings using Ragnar's parse dialect and a new <code>record!</code> data type.</p>
+
+                    <h2>The record! Datatype</h2>
+                    <p>JSON objects are represented in Ragnar as <code>record!</code> values (constructed using <code>to-record</code> or returned from JSON parsing). Records print with a <code>#( ... )</code> prefix and hold key-value pairs sequentially, similar to block representation, but report type <code>record!</code> (for which <code>record?</code> is true and <code>block?</code> is false).</p>
+                    
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#json-record-code">Copy</button>
+                        <pre><code id="json-record-code">; Construct a record
+r: to-record [name "Alice" age 30]
+print [type? r] ; Output: record!
+
+; Retrieve values by word key
+print [select r 'name] ; Output: Alice
+print [select r 'age]  ; Output: 30
+
+; check type
+record? r  ; returns true
+block? r   ; returns false</code></pre>
+                    </div>
+
+                    <h2>Serialization & Deserialization</h2>
+                    <p>To use the library, load it via <code>do %lib/json.r</code>. It exposes two functions:</p>
+                    <ul class="features-list">
+                        <li>
+                            <strong class="teal-text">json/parse [json-string]:</strong> Parses a JSON string using Ragnar's native parse dialect, returning records for objects, blocks for arrays, and native datatypes for primitives.
+                        </li>
+                        <li>
+                            <strong class="teal-text">json/stringify [value] /pretty:</strong> Serializes any Ragnar value to a JSON string. Use the <code>/pretty</code> refinement to produce formatted, indented JSON output.
+                        </li>
+                    </ul>
+
+                    <h2>How to Use</h2>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#json-usage">Copy</button>
+                        <pre><code id="json-usage">; 1. Load the library
+json: do %lib/json.r
+
+; 2. Parse JSON strings into Ragnar records and arrays
+data: json/parse "{ \"name\": \"Alice\", \"skills\": [\"C#\", \"Ragnar\"], \"age\": 30 }"
+
+print [select data 'name] ; Output: Alice
+skills: select data 'skills
+print [pick skills 2] ; Output: Ragnar
+
+; 3. Stringify Ragnar structures back to JSON strings
+ragnar-obj: to-record [
+    title "Language Implementer"
+    years 12
+    languages ["Ragnar" "C#" "Rebol"]
+]
+
+; Standard stringification
+str: json/stringify ragnar-obj
+print [str]
+; Output: {"title":"Language Implementer","years":12,"languages":["Ragnar","C#","Rebol"]}
+
+; Pretty printed stringification
+pretty-str: json/stringify/pretty ragnar-obj
+print [pretty-str]
+; Output:
+; {
+;     "title": "Language Implementer",
+;     "years": 12,
+;     "languages": [
+;         "Ragnar",
+;         "C#",
+;         "Rebol"
+;     ]
+; }</code></pre>
+                    </div>
                 </div>
             </section>
 

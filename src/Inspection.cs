@@ -123,6 +123,8 @@ public class Inspection
                 SetWord  => "set-word!",
                 GetWord  => "get-word!",
                 LitWord  => "lit-word!",
+                Record   => "record!",
+                Paren    => "paren!",
                 Block    => "block!",
                 Logic    => "logic!",
                 Function => "function!",
