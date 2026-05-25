@@ -1,51 +1,109 @@
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace Ragnar;
 
 class Program
 {
+    private static string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+
     static void Main(string[] args)
     {
-        var interpreter = new Interpreter();
-        var globalContext = Runtime.CreateGlobalContext();
-        
-        new Banner("ragnar", ConsoleColor.DarkYellow)
-            .AddTrailingText(2, "  RAGNAR interpreter")
-            .AddTrailingText(3, $"  Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}")
-            .AddTrailingText(4, "  https://github.com/tormaroe/ragnar")
-            .Print();
+        var options = CommandLineOptions.Parse(args);
+
+        if (options.ShowHelp)
+        {
+            PrintHelp();
+            return;
+        }
+
+        if (options.ShowVersion)
+        {
+            PrintVersion();
+            return;
+        }
+
+        if (options.Errors.Count > 0)
+        {
+            foreach (var error in options.Errors)
+            {
+                Repl.WriteError(error);
+            }
+            PrintHelp();
+            Environment.Exit(1);
+        }
+
+        if (!options.NoBanner)
+        {
+            new Banner("ragnar", ConsoleColor.DarkYellow)
+                .AddTrailingText(2, "  RAGNAR interpreter")
+                .AddTrailingText(3, $"  Version {Version}")
+                .AddTrailingText(4, "  https://github.com/tormaroe/ragnar")
+                .Print();
+        }
 
         // Repl.PrintColors();
 
+        var interpreter = new Interpreter();
+        var globalContext = Runtime.CreateGlobalContext();
         RunCode(interpreter, globalContext, Mezzanine.SOURCE);
 
-        // --- NEW: Load user startup script ---
-        string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        string startupScript = System.IO.Path.Combine(homeDir, ".ragnar.r");
-        if (System.IO.File.Exists(startupScript))
+        if (!options.NoConfig)
         {
-            try
+            string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string startupScript = System.IO.Path.Combine(homeDir, ".ragnar.r");
+            if (System.IO.File.Exists(startupScript))
             {
-                RunFile(startupScript, interpreter, globalContext);
-            }
-            catch (Exception ex)
-            {
-                Repl.WriteError($"Error in startup script {startupScript}: {ex.Message}");
+                try
+                {
+                    RunFile(startupScript, interpreter, globalContext);
+                }
+                catch (Exception ex)
+                {
+                    Repl.WriteError($"Error in startup script {startupScript}: {ex.Message}");
+                }
             }
         }
 
-        // 1. Process files if provided
-        if (args.Length > 0)
+        foreach (var target in options.Targets)
         {
-            foreach (var path in args)
+            if (target.Type == EvaluationType.File)
             {
-                RunFile(path, interpreter, globalContext);
+                RunFile(target.Value, interpreter, globalContext);
+            }
+            else if (target.Type == EvaluationType.Expression)
+            {
+                try
+                {
+                    RunCode(interpreter, globalContext, target.Value);
+                }
+                catch (Exception ex)
+                {
+                    Repl.WriteError($"Error evaluating expression: {ex.Message}");
+                }
             }
         }
 
-        // 2. Start the REPL
-        RunRepl(interpreter, globalContext);
+        if (!options.NoRepl)
+        {
+            RunRepl(interpreter, globalContext);
+        }
     }
+
+    static void PrintHelp()
+    {
+        Console.WriteLine("Usage: ragnar [options]");
+        Console.WriteLine();
+        Console.WriteLine("Options:");
+        Console.WriteLine("  -f, --file <path>       a ragnar file to be evaluated");
+        Console.WriteLine("  -e, --eval <string>     a ragnar expression to be evaluated");
+        Console.WriteLine("  --no-banner             do not print the banner");
+        Console.WriteLine("  --no-config             do not evaluate the user startup script");
+        Console.WriteLine("  --no-repl               do not start repl mode (just exit when evaluation is done)");
+        Console.WriteLine("  -v, --version           prints the version number and exits");
+        Console.WriteLine("  -h, --help              prints command line arguments help and exits");
+    }
+
+    static void PrintVersion() => Console.WriteLine(Version);
 
     static void RunFile(string path, Interpreter interpreter, Context context)
     {

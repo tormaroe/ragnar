@@ -148,7 +148,22 @@ just build   # Or: dotnet build</code></pre>
                     </div>
 
                     <h2>Running Ragnar</h2>
-                    <p>Ragnar features both an interactive REPL mode and the ability to execute script files directly.</p>
+                    <p>Ragnar features both an interactive REPL mode and the ability to execute script files and expressions directly via command-line arguments.</p>
+
+                    <h3>Command Line Options</h3>
+                    <p>Ragnar supports the following options and flags:</p>
+                    <div class="code-wrapper">
+                        <pre><code>Usage: ragnar [options]
+
+Options:
+  -f, --file &lt;path&gt;       a ragnar file to be evaluated
+  -e, --eval &lt;string&gt;     a ragnar expression to be evaluated
+  --no-banner             do not print the banner
+  --no-config             do not evaluate the user startup script
+  --no-repl               do not start repl mode (just exit when evaluation is done)
+  -v, --version           prints the version number and exits
+  -h, --help              prints command line arguments help and exits</code></pre>
+                    </div>
 
                     <h3>Interactive REPL</h3>
                     <p>Launch the REPL by running:</p>
@@ -157,12 +172,18 @@ just build   # Or: dotnet build</code></pre>
                         <pre><code id="run-repl">just run     # Or: dotnet run --project src/Ragnar.csproj</code></pre>
                     </div>
 
-                    <h3>Executing Scripts</h3>
-                    <p>You can execute a `.r` source script file by passing its path to the compiler:</p>
+                    <h3>Executing Scripts & Expressions</h3>
+                    <p>Evaluate a script file using the <code>-f</code> option:</p>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#run-file">Copy</button>
-                        <pre><code id="run-file">just eval examples/pingpong.r   # Or: dotnet run --project src/Ragnar.csproj examples/pingpong.r</code></pre>
+                        <pre><code id="run-file">dotnet run --project src/Ragnar.csproj -- -f examples/pingpong.r</code></pre>
                     </div>
+                    <p>Or evaluate an expression directly using the <code>-e</code> option (use <code>--no-repl</code> to prevent dropping into the REPL):</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#run-eval">Copy</button>
+                        <pre><code id="run-eval">dotnet run --project src/Ragnar.csproj -- -e "print 42" --no-repl</code></pre>
+                    </div>
+                    <p>Multiple <code>-f</code> and <code>-e</code> targets can be specified in any order, and they will be evaluated in the order they are provided.</p>
                 </div>
             </section>
 
