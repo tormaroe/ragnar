@@ -1,5 +1,5 @@
 
-![Ragnar logo](assets/ragnar-logo-1200.png)
+![Ragnar](assets/repl-logo.png)
 
 ***Ragnar*** is a programming language made for fun, and carefully vibecoded using Antigravity. 
 
