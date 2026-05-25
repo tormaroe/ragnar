@@ -1,3 +1,7 @@
+{
+    This example is WORK IN PROGRESS and may not run as-is. 
+}
+
 print "--- Initializing Ragnar Audit ---"
 
 ; 1. Environment Info
@@ -11,15 +15,15 @@ print ["User Context:" user]
 print ["Current Time:" (call-method now "ToLongTimeString" [])]
 
 ; 2. Prepare the Report
-report: new System.Text.StringBuilder ["AUDIT REPORT^/"]
+report: new "System.Text.StringBuilder" ["AUDIT REPORT^/"]
 call-method report "AppendLine" [(rejoin ["OS Version: " os])]
 call-method report "AppendLine" ["-------------------------"]
 
 ; 3. File System Inspection
 files: call-static "System.IO.Directory" "GetFiles" ["."]
-print ["Found" (length? files) "files. Summarizing..."]
+print ["Found" (files/Count) "files. Summarizing..."]
 
-foreach file files [
+enumerate 'file files [
     info: new "System.IO.FileInfo" [file]
     name: info/Name
     size: info/Length
