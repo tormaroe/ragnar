@@ -126,26 +126,13 @@ either age > 18 [
             <section id="getting-started" class="content-section">
                 <div class="card">
                     <h1>Getting Started</h1>
-                    <p>Ragnar runs on .NET 10.0 and can be built and executed easily on Windows, macOS, or Linux.</p>
+                    <p>Ragnar runs on .NET 10.0 and can be executed easily on Windows, macOS, or Linux.</p>
 
                     <h2>Prerequisites</h2>
-                    <p>Ensure you have the <strong>.NET 10.0 SDK</strong> installed on your machine. You can verify this by running:</p>
-                    <div class="code-wrapper">
-                        <button class="copy-btn" data-clipboard-target="#verify-dotnet">Copy</button>
-                        <pre><code id="verify-dotnet">dotnet --version</code></pre>
-                    </div>
+                    <p>Ensure you have the <strong>.NET 10.0 Runtime</strong> (or SDK) installed on your machine.</p>
 
-                    <h2>Clone and Build</h2>
-                    <p>Clone the repository and run the project using the <code>just</code> command-runner or dotnet CLI:</p>
-                    <div class="code-wrapper">
-                        <button class="copy-btn" data-clipboard-target="#clone-build">Copy</button>
-                        <pre><code id="clone-build"># Clone the repository
-git clone https://github.com/tormaroe/ragnar.git
-cd ragnar
-
-# Build the project
-just build   # Or: dotnet build</code></pre>
-                    </div>
+                    <h2>Download</h2>
+                    <p>Download the latest package from the <a href="https://github.com/tormaroe/ragnar/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> page and extract the ZIP archive to a folder of your choice.</p>
 
                     <h2>Running Ragnar</h2>
                     <p>Ragnar features both an interactive REPL mode and the ability to execute script files and expressions directly via command-line arguments.</p>
@@ -166,22 +153,35 @@ Options:
                     </div>
 
                     <h3>Interactive REPL</h3>
-                    <p>Launch the REPL by running:</p>
+                    <p>Launch the REPL by running the executable directly from your terminal:</p>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#run-repl">Copy</button>
-                        <pre><code id="run-repl">just run     # Or: dotnet run --project src/Ragnar.csproj</code></pre>
+                        <pre><code id="run-repl"># Windows
+.\Ragnar.exe
+
+# macOS / Linux
+chmod +x Ragnar
+./Ragnar</code></pre>
                     </div>
 
                     <h3>Executing Scripts & Expressions</h3>
                     <p>Evaluate a script file using the <code>-f</code> option:</p>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#run-file">Copy</button>
-                        <pre><code id="run-file">dotnet run --project src/Ragnar.csproj -- -f examples/pingpong.r</code></pre>
+                        <pre><code id="run-file"># Windows
+.\Ragnar.exe -f examples/pingpong.r
+
+# macOS / Linux
+./Ragnar -f examples/pingpong.r</code></pre>
                     </div>
                     <p>Or evaluate an expression directly using the <code>-e</code> option (use <code>--no-repl</code> to prevent dropping into the REPL):</p>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#run-eval">Copy</button>
-                        <pre><code id="run-eval">dotnet run --project src/Ragnar.csproj -- -e "print 42" --no-repl</code></pre>
+                        <pre><code id="run-eval"># Windows
+.\Ragnar.exe -e "print 42" --no-repl
+
+# macOS / Linux
+./Ragnar -e "print 42" --no-repl</code></pre>
                     </div>
                     <p>Multiple <code>-f</code> and <code>-e</code> targets can be specified in any order, and they will be evaluated in the order they are provided.</p>
                 </div>

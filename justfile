@@ -17,7 +17,7 @@ test:
 deploy:
     dotnet publish src/Ragnar.csproj -c Release -o dist -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:SelfContained=false
 
-release: deploy
+release:
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1
 
 site:
