@@ -26,6 +26,17 @@ public class Repl
         Console.ResetColor();
     }
 
+    public static void PrintColors()
+    {
+        var colors = Enum.GetValues<ConsoleColor>();
+        foreach (var fg in colors)
+        {
+            Console.ForegroundColor = fg;
+            Console.Write($" ██ {fg,-15}");
+            Console.WriteLine();
+        }
+    }
+
     public string ReadLine(string prompt)
     {
         if (Console.IsInputRedirected)

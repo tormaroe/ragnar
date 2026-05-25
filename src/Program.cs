@@ -1,4 +1,6 @@
-﻿namespace Ragnar;
+using System.Reflection;
+
+namespace Ragnar;
 
 class Program
 {
@@ -7,21 +9,13 @@ class Program
         var interpreter = new Interpreter();
         var globalContext = Runtime.CreateGlobalContext();
         
-        Repl.Write("""
-                 ___                                                                
-                /___\                                                 
-               (|0 0|)                                                    
-             __/{\U/}\_ ___/vvv                                                
-            / \  {~}   / _|_P|                                                 
-            | /\  ~   /_/   ||                                                 
-            |_| (____)      ||                       
-            \_]/______\  /\_||_/\ 
-               _\_||_/_ |] _||_ [|            
-              (_,_||_,_) \/ [] \/
-            """, ConsoleColor.Blue);
+        new Banner("ragnar", ConsoleColor.DarkYellow)
+            .AddTrailingText(2, "  RAGNAR interpreter")
+            .AddTrailingText(3, $"  Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}")
+            .AddTrailingText(4, "  https://github.com/tormaroe/ragnar")
+            .Print();
 
-        Repl.WritePrint("  RAGNAR interpreter", newline: true);
-        Repl.WritePrint("    https://github.com/tormaroe/ragnar\n", newline: true);
+        // Repl.PrintColors();
 
         RunCode(interpreter, globalContext, Mezzanine.SOURCE);
 

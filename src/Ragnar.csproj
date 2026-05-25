@@ -5,6 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,5 +38,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="ConfigureGitHooks" AfterTargets="BeforeBuild" Condition="Exists('$(MSBuildProjectDirectory)\..\.git') And '$(GITHUB_RUN_NUMBER)' == ''">
+    <Exec Command="git config core.hooksPath .githooks" IgnoreExitCode="true" StandardOutputImportance="Low" StandardErrorImportance="Low" />
+  </Target>
 
 </Project>
