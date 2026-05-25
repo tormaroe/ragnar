@@ -18,10 +18,10 @@ if [ -z "$STAGED_FILES" ]; then
     exit 0
 fi
 
-# Check if stdin is a TTY and stdout is a TTY
-if [ -t 0 ] && [ -t 1 ]; then
-    # Redirect stdin from the controlling terminal to allow interactive prompts
-    exec < /dev/tty
+# Check if stdout is a TTY and we can redirect stdin to /dev/tty
+if [ -t 1 ] && [ -c /dev/tty ] && exec < /dev/tty 2>/dev/null; then
+    # We successfully redirected stdin from the controlling terminal
+    :
 else
     echo "Non-interactive environment detected. Skipping version prompt."
     exit 0
