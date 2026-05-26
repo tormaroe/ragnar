@@ -177,7 +177,7 @@ public static class Mezzanine
                 join first block next block
             ]
         ]
-        what-dir: func ["Returns the current working directory."] [call-static "System.IO.Directory" "GetCurrentDirectory" []]
+        what-dir: func ["Returns the current working directory."] [to-file call-static "System.IO.Directory" "GetCurrentDirectory" []]
         wait: func ["Wait for a number of milliseconds." ms] [call-static "System.Threading.Thread" "Sleep" reduce [ms]]
         zero?: func ["Returns true if the value is zero." x] [ x = 0 ]
         switch: func ["Selects a choice and evaluates the first block that follows it." value cases /default case-default] [
@@ -187,6 +187,298 @@ public static class Mezzanine
             ] [
                 either default [ do case-default ] [ none ]
             ]
+        ]
+
+        cd: func ["Changes the current working directory." target] [
+            call-static "System.IO.Directory" "SetCurrentDirectory" reduce [to-string target]
+            what-dir
+        ]
+
+        ls: func ["Returns a block of paths in the current directory as file values." /all] [
+            show-all?: :all
+            entries: call-static "System.IO.Directory" "GetFileSystemEntries" reduce [what-dir]
+            result: copy []
+            enumerate entries entry [
+                name: call-static "System.IO.Path" "GetFileName" reduce [entry]
+                show?: true
+                if not :show-all? [
+                    either (pick name 1) = "." [
+                        show?: false
+                    ] [
+                        attr: call-static "System.IO.File" "GetAttributes" reduce [entry]
+                        hidden-enum: get-static "System.IO.FileAttributes" "Hidden"
+                        if call-method attr "HasFlag" reduce [hidden-enum] [ show?: false ]
+                    ]
+                ]
+                if show? [
+                    is-dir?: call-static "System.IO.Directory" "Exists" reduce [entry]
+                    either is-dir? [
+                        append result to-file join name "/"
+                    ] [
+                        append result to-file name
+                    ]
+                ]
+            ]
+            result
+        ]
+
+        mkdir: func ["Creates a directory and any parent directories if they don't exist." path /verbose /v] [
+            str-path: to-string path
+            exists?: call-static "System.IO.Directory" "Exists" reduce [str-path]
+            either exists? [
+                if any [:verbose :v] [
+                    print rejoin ["Directory already exists: " str-path]
+                ]
+            ] [
+                if any [:verbose :v] [
+                    print rejoin ["Creating directory: " str-path]
+                ]
+                call-static "System.IO.Directory" "CreateDirectory" reduce [str-path]
+            ]
+            none
+        ]
+
+        rmdir: func ["Removes a directory if it is empty." path /verbose /v] [
+            str-path: to-string path
+            exists?: call-static "System.IO.Directory" "Exists" reduce [str-path]
+            either not exists? [
+                throw rejoin ["Directory does not exist: " str-path]
+            ] [
+                entries: call-static "System.IO.Directory" "GetFileSystemEntries" reduce [str-path]
+                either entries/Length = 0 [
+                    if any [:verbose :v] [
+                        print rejoin ["Removing directory: " str-path]
+                    ]
+                    call-static "System.IO.Directory" "Delete" reduce [str-path]
+                ] [
+                    throw rejoin ["Directory is not empty: " str-path]
+                ]
+            ]
+            none
+        ]
+
+        rm-helper: func [entry recursive verbose interactive] [
+            is-dir?: call-static "System.IO.Directory" "Exists" reduce [entry]
+            either is-dir? [
+                either recursive [
+                    children: call-static "System.IO.Directory" "GetFileSystemEntries" reduce [entry]
+                    enumerate children child [
+                        rm-helper child recursive verbose interactive
+                    ]
+                    should-delete?: true
+                    if interactive [
+                        should-delete?: confirm rejoin ["remove directory " entry "?"]
+                    ]
+                    if should-delete? [
+                        if verbose [ print rejoin ["Removing directory: " entry] ]
+                        call-static "System.IO.Directory" "Delete" reduce [entry]
+                    ]
+                ] [
+                    print rejoin ["rm: " entry ": is a directory"]
+                ]
+            ] [
+                should-delete?: true
+                if interactive [
+                    should-delete?: confirm rejoin ["remove file " entry "?"]
+                ]
+                if should-delete? [
+                    if verbose [ print rejoin ["Removing file: " entry] ]
+                    call-static "System.IO.File" "Delete" reduce [entry]
+                ]
+            ]
+        ]
+
+        rm: func ["Removes files or directories." path /recursive /r /verbose /v /interactive /i] [
+            str-path: to-string path
+            is-recursive: any [:recursive :r]
+            is-verbose: any [:verbose :v]
+            is-interactive: any [:interactive :i]
+            
+            has-wildcard?: any [
+                not none? find str-path "*"
+                not none? find str-path "?"
+            ]
+            
+            either has-wildcard? [
+                dir: call-static "System.IO.Path" "GetDirectoryName" reduce [str-path]
+                pattern: call-static "System.IO.Path" "GetFileName" reduce [str-path]
+                if any [none? dir empty? dir] [ dir: what-dir ]
+                if any [none? pattern empty? pattern] [ pattern: "*" ]
+                
+                dir-exists?: call-static "System.IO.Directory" "Exists" reduce [dir]
+                either dir-exists? [
+                    entries: call-static "System.IO.Directory" "GetFileSystemEntries" reduce [dir pattern]
+                    enumerate entries entry [
+                        rm-helper entry is-recursive is-verbose is-interactive
+                    ]
+                ] [
+                    print rejoin ["rm: " dir ": No such directory"]
+                ]
+            ] [
+                exists-file?: call-static "System.IO.File" "Exists" reduce [str-path]
+                exists-dir?: call-static "System.IO.Directory" "Exists" reduce [str-path]
+                either any [exists-file? exists-dir?] [
+                    rm-helper str-path is-recursive is-verbose is-interactive
+                ] [
+                    print rejoin ["rm: " str-path ": No such file or directory"]
+                ]
+            ]
+            none
+        ]
+
+        pushd: func ["Pushes the current directory onto the stack and changes to the target directory." target] [
+            if not block? attempt [system/dir-stack] [
+                system/dir-stack: copy []
+            ]
+            append system/dir-stack what-dir
+            cd target
+        ]
+
+        popd: func ["Pops a directory from the stack and changes to it."] [
+            stack: attempt [system/dir-stack]
+            either any [none? stack empty? :stack] [
+                print "Directory stack is empty"
+                none
+            ] [
+                target: take back tail stack
+                cd target
+            ]
+        ]
+
+        mv: func ["Moves/renames a file or directory." src dest /force /f /verbose /v] [
+            src-str: to-string src
+            dest-str: to-string dest
+            
+            is-dir?: call-static "System.IO.Directory" "Exists" reduce [src-str]
+            is-file?: call-static "System.IO.File" "Exists" reduce [src-str]
+            
+            either not any [is-dir? is-file?] [
+                print rejoin ["mv: " src-str ": No such file or directory"]
+            ] [
+                allow-overwrite: any [:force :f]
+                is-v: any [:verbose :v]
+                
+                either is-dir? [
+                    dest-exists-dir?: call-static "System.IO.Directory" "Exists" reduce [dest-str]
+                    dest-exists-file?: call-static "System.IO.File" "Exists" reduce [dest-str]
+                    
+                    if any [dest-exists-dir? dest-exists-file?] [
+                        either allow-overwrite [
+                            if dest-exists-dir? [
+                                call-static "System.IO.Directory" "Delete" reduce [dest-str true]
+                            ]
+                            if dest-exists-file? [
+                                call-static "System.IO.File" "Delete" reduce [dest-str]
+                            ]
+                        ] [
+                            throw rejoin ["Destination path already exists: " dest-str]
+                        ]
+                    ]
+                    
+                    if is-v [
+                        print rejoin ["Moving directory: " src-str " to " dest-str]
+                    ]
+                    call-static "System.IO.Directory" "Move" reduce [src-str dest-str]
+                ] [
+                    dest-exists-dir?: call-static "System.IO.Directory" "Exists" reduce [dest-str]
+                    dest-exists-file?: call-static "System.IO.File" "Exists" reduce [dest-str]
+                    
+                    if dest-exists-dir? [
+                        filename: call-static "System.IO.Path" "GetFileName" reduce [src-str]
+                        dest-str: call-static "System.IO.Path" "Combine" reduce [dest-str filename]
+                        dest-exists-file?: call-static "System.IO.File" "Exists" reduce [dest-str]
+                    ]
+                    
+                    if dest-exists-file? [
+                        either allow-overwrite [
+                            call-static "System.IO.File" "Delete" reduce [dest-str]
+                        ] [
+                            throw rejoin ["Destination file already exists: " dest-str]
+                        ]
+                    ]
+                    
+                    if is-v [
+                        print rejoin ["Moving file: " src-str " to " dest-str]
+                    ]
+                    call-static "System.IO.File" "Move" reduce [src-str dest-str]
+                ]
+            ]
+            none
+        ]
+
+        cp-file-helper: func [src dest overwrite verbose] [
+            exists?: call-static "System.IO.File" "Exists" reduce [dest]
+            either exists? [
+                either overwrite [
+                    if verbose [ print rejoin ["Copying file: " src " to " dest " (overwrite)"] ]
+                    call-static "System.IO.File" "Copy" reduce [src dest true]
+                ] [
+                    throw rejoin ["Destination file already exists: " dest]
+                ]
+            ] [
+                if verbose [ print rejoin ["Copying file: " src " to " dest] ]
+                call-static "System.IO.File" "Copy" reduce [src dest false]
+            ]
+        ]
+
+        cp: func ["Copies files." src dest /force /f /verbose /v] [
+            src-str: to-string src
+            dest-str: to-string dest
+            
+            allow-overwrite: any [:force :f]
+            is-v: any [:verbose :v]
+            
+            has-wildcard?: any [
+                not none? find src-str "*"
+                not none? find src-str "?"
+            ]
+            
+            either has-wildcard? [
+                dir: call-static "System.IO.Path" "GetDirectoryName" reduce [src-str]
+                pattern: call-static "System.IO.Path" "GetFileName" reduce [src-str]
+                if any [none? dir empty? dir] [ dir: what-dir ]
+                if any [none? pattern empty? pattern] [ pattern: "*" ]
+                
+                dest-dir-exists?: call-static "System.IO.Directory" "Exists" reduce [dest-str]
+                if not dest-dir-exists? [
+                    throw rejoin ["cp: target '" dest-str "' is not a directory"]
+                ]
+                
+                dir-exists?: call-static "System.IO.Directory" "Exists" reduce [dir]
+                either dir-exists? [
+                    entries: call-static "System.IO.Directory" "GetFileSystemEntries" reduce [dir pattern]
+                    enumerate entries entry [
+                        is-file?: call-static "System.IO.File" "Exists" reduce [entry]
+                        if is-file? [
+                            filename: call-static "System.IO.Path" "GetFileName" reduce [entry]
+                            dest-file: call-static "System.IO.Path" "Combine" reduce [dest-str filename]
+                            cp-file-helper entry dest-file allow-overwrite is-v
+                        ]
+                    ]
+                ] [
+                    print rejoin ["cp: " dir ": No such directory"]
+                ]
+            ] [
+                src-exists-file?: call-static "System.IO.File" "Exists" reduce [src-str]
+                either src-exists-file? [
+                    dest-exists-dir?: call-static "System.IO.Directory" "Exists" reduce [dest-str]
+                    either dest-exists-dir? [
+                        filename: call-static "System.IO.Path" "GetFileName" reduce [src-str]
+                        dest-file: call-static "System.IO.Path" "Combine" reduce [dest-str filename]
+                    ] [
+                        dest-file: dest-str
+                    ]
+                    cp-file-helper src-str dest-file allow-overwrite is-v
+                ] [
+                    src-exists-dir?: call-static "System.IO.Directory" "Exists" reduce [src-str]
+                    either src-exists-dir? [
+                        print rejoin ["cp: " src-str " is a directory (not supported)"]
+                    ] [
+                        print rejoin ["cp: " src-str ": No such file or directory"]
+                    ]
+                ]
+            ]
+            none
         ]
 
     """;

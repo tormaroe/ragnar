@@ -37,6 +37,13 @@ public static class ConversionFunctions
             return new Text(args[0].ToUserString());
         }, 1).WithTitle("Converts a value to a string."));
 
+        // to-file [value]
+        ctx.Set("to-file", new Native((args, refs, _, _, isTail) =>
+        {
+            if (args[0] is File f) return f;
+            return new File(args[0].ToUserString());
+        }, 1).WithTitle("Converts a value to a file path."));
+
         // to-char [value]
         ctx.Set("to-char", new Native((args, refs, _, _, _) =>
         {

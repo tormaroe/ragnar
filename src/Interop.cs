@@ -48,6 +48,9 @@ public class Interop
             case Text t:
                 return t.Content;
 
+            case File f:
+                return f.Path;
+
             case Logic l:
                 return l.Condition;
 

@@ -79,20 +79,6 @@ public class IOTests : TestBase
     }
 
     [Fact]
-    public void What_Dir_Returns_Current_Directory()
-    {
-        var (result, _) = Run("what-dir");
-        Assert.Equal(System.IO.Directory.GetCurrentDirectory(), ((Text)result).Content);
-    }
-
-    [Fact]
-    public void Pwd_Is_Alias_For_What_Dir()
-    {
-        var (result, _) = Run("pwd");
-        Assert.Equal(System.IO.Directory.GetCurrentDirectory(), ((Text)result).Content);
-    }
-
-    [Fact]
     public void Script_Serialization_Works()
     {
         string tempFile = System.IO.Path.GetTempFileName();

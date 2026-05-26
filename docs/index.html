@@ -46,6 +46,7 @@
                     <span class="nav-group-title">Language Features</span>
                     <ul class="nav-list">
                         <li><a href="#repl" class="menu-item">REPL & Reflection</a></li>
+                        <li><a href="#shell" class="menu-item">REPL as a Shell</a></li>
                         <li><a href="#core" class="menu-item">Core Features</a></li>
                         <li><a href="#interop" class="menu-item">.NET Interop</a></li>
                         <li><a href="#objects" class="menu-item">Objects Support</a></li>
@@ -268,6 +269,81 @@ print           Prints a value to the output.
 >> probe 10 + 20
 30
 == 30</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REPL as a Shell Section -->
+            <section id="shell" class="content-section">
+                <div class="card">
+                    <h1>REPL as a Shell</h1>
+                    <p>The Ragnar REPL integrates standard shell operations as mezzanine functions. Using C#/.NET interop, you can navigate directories, list contents, and manipulate files and folders directly from your interactive session.</p>
+
+                    <h2>Navigation & Working Directory</h2>
+                    <p>Manage your current directory context:</p>
+                    <ul class="features-list">
+                        <li><code>pwd</code> / <code>what-dir</code>: Returns the current working directory as a <code>file!</code> path type (e.g., <code>%C:/path/to/dir</code>).</li>
+                        <li><code>cd target</code>: Changes the working directory to <code>target</code> (accepts <code>text!</code> or <code>file!</code>) and returns the new directory path.</li>
+                        <li><code>pushd target</code>: Pushes the current directory onto the directory stack and changes directory to <code>target</code>.</li>
+                        <li><code>popd</code>: Pops the last directory from the stack and navigates back to it.</li>
+                    </ul>
+
+                    <h2>Listing Directory Contents</h2>
+                    <p>Use <code>ls</code> to inspect directories:</p>
+                    <ul class="features-list">
+                        <li><code>ls</code>: Returns a block of <code>file!</code> paths representing the contents of the current directory (directories are automatically suffixed with <code>/</code>). Filters out hidden and dot-prefixed files.</li>
+                        <li><code>ls/all</code>: Lists all entries in the current directory, including hidden and dot-prefixed files.</li>
+                    </ul>
+
+                    <h2>Directory Manipulation</h2>
+                    <p>Create and remove directories:</p>
+                    <ul class="features-list">
+                        <li><code>mkdir path</code>: Recursively creates directory levels. Supports verbose printout refinements <code>/verbose</code> or <code>/v</code>.</li>
+                        <li><code>rmdir path</code>: Removes a directory if it is empty. Supports verbose printout refinements <code>/verbose</code> or <code>/v</code>.</li>
+                    </ul>
+
+                    <h2>File & Directory Operations</h2>
+                    <p>Move, copy, or remove files:</p>
+                    <ul class="features-list">
+                        <li><code>cp src dest</code>: Copies a file (or files via wildcards) to a destination file path or directory. Supports overwriting targets with <code>/force</code> (or <code>/f</code>) and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
+                        <li><code>mv src dest</code>: Moves or renames a file or directory. Supports overwriting targets with <code>/force</code> (or <code>/f</code>) and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
+                        <li><code>rm path</code>: Deletes files. Supports wildcards (e.g., <code>%*.txt</code>), confirmation prompts with <code>/interactive</code> (or <code>/i</code>), recursive folder removal with <code>/recursive</code> (or <code>/r</code>), and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
+                    </ul>
+
+                    <h2>Example Session</h2>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#shell-session">Copy</button>
+                        <pre><code id="shell-session">>> pwd
+== %C:/Users/username
+
+>> cd %ragnar-projects/
+== %C:/Users/username/ragnar-projects
+
+>> mkdir/verbose %sandbox/sub-level
+Creating directory: sandbox/sub-level
+
+>> cd %sandbox
+== %C:/Users/username/ragnar-projects/sandbox
+
+>> ls
+== [%sub-level/ %file.txt]
+
+>> pushd %sub-level
+== %C:/Users/username/ragnar-projects/sandbox/sub-level
+
+>> popd
+== %C:/Users/username/ragnar-projects/sandbox
+
+>> cp/verbose %file.txt %file-copy.txt
+Copying file: file.txt to file-copy.txt
+
+>> mv/verbose %file.txt %sub-level/file-new.txt
+Moving file: file.txt to sub-level/file-new.txt
+
+>> rm/recursive/verbose %sub-level
+Removing file: sub-level/file-new.txt
+Removing directory: sub-level
+== none</code></pre>
                     </div>
                 </div>
             </section>
