@@ -259,4 +259,48 @@ public class ShellUtilityTests : TestBase
         Assert.True(System.IO.File.Exists(System.IO.Path.Combine(sandbox.Path, "dest-dir", "test2.txt")));
         Assert.Equal("t1", System.IO.File.ReadAllText(System.IO.Path.Combine(sandbox.Path, "dest-dir", "test1.txt")));
     }
+
+    [Fact]
+    public void Zip_And_Unzip_CompressesAndExtractsFiles()
+    {
+        using var sandbox = new Sandbox();
+        
+        // Setup source directory and files
+        string srcDir = System.IO.Path.Combine(sandbox.Path, "src-folder");
+        System.IO.Directory.CreateDirectory(srcDir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "hello a");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "b.txt"), "hello b");
+
+        // Setup destination directories
+        string destDir = System.IO.Path.Combine(sandbox.Path, "extracted");
+        
+        // 1. Basic zip creation
+        Run("zip %archive.zip %src-folder");
+        Assert.True(System.IO.File.Exists(System.IO.Path.Combine(sandbox.Path, "archive.zip")));
+
+        // 2. Unzip extraction
+        Run("unzip %archive.zip %extracted");
+        Assert.True(System.IO.File.Exists(System.IO.Path.Combine(destDir, "a.txt")));
+        Assert.True(System.IO.File.Exists(System.IO.Path.Combine(destDir, "b.txt")));
+        Assert.Equal("hello a", System.IO.File.ReadAllText(System.IO.Path.Combine(destDir, "a.txt")));
+
+        // 3. Test overwrite error on zip without /force
+        Assert.ThrowsAny<Exception>(() => Run("zip %archive.zip %src-folder"));
+
+        // 4. Test overwrite success on zip with /force
+        Run("zip/force %archive.zip %src-folder");
+
+        // 5. Test overwrite error on unzip without /force
+        Assert.ThrowsAny<Exception>(() => Run("unzip %archive.zip %extracted"));
+
+        // 6. Test overwrite success on unzip with /force
+        Run("unzip/force %archive.zip %extracted");
+
+        // 7. Test verbose output
+        var (_, zipOut) = RunWithOutput("zip/force/verbose %archive.zip %src-folder");
+        Assert.Contains("Adding file: a.txt", zipOut);
+
+        var (_, unzipOut) = RunWithOutput("unzip/force/verbose %archive.zip %extracted");
+        Assert.Contains("Extracting: a.txt", unzipOut);
+    }
 }

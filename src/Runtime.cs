@@ -72,6 +72,7 @@ public static class Runtime
         IO.AddIoFunctions(ctx);
         IoFunctions.Add(ctx);
         Actor.AddActorFunctions(ctx);
+        ZipFunctions.Add(ctx);
 
         // System object
         ctx.Set("system", SystemObject);

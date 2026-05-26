@@ -303,11 +303,13 @@ print           Prints a value to the output.
                     </ul>
 
                     <h2>File & Directory Operations</h2>
-                    <p>Move, copy, or remove files:</p>
+                    <p>Move, copy, compress, or remove files:</p>
                     <ul class="features-list">
                         <li><code>cp src dest</code>: Copies a file (or files via wildcards) to a destination file path or directory. Supports overwriting targets with <code>/force</code> (or <code>/f</code>) and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
                         <li><code>mv src dest</code>: Moves or renames a file or directory. Supports overwriting targets with <code>/force</code> (or <code>/f</code>) and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
                         <li><code>rm path</code>: Deletes files. Supports wildcards (e.g., <code>%*.txt</code>), confirmation prompts with <code>/interactive</code> (or <code>/i</code>), recursive folder removal with <code>/recursive</code> (or <code>/r</code>), and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
+                        <li><code>zip archive sources</code>: Compresses files or directories recursively into a <code>.zip</code> file. Supports overwriting with <code>/force</code> (or <code>/f</code>), verbose output with <code>/verbose</code> (or <code>/v</code>), and custom compression levels with <code>/level lvl</code> (optimal, fastest, none).</li>
+                        <li><code>unzip archive dest</code>: Extracts a <code>.zip</code> archive into the destination directory. Supports overwriting existing files with <code>/force</code> (or <code>/f</code>) and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
                     </ul>
 
                     <h2>Example Session</h2>
@@ -339,6 +341,13 @@ Copying file: file.txt to file-copy.txt
 
 >> mv/verbose %file.txt %sub-level/file-new.txt
 Moving file: file.txt to sub-level/file-new.txt
+
+>> zip/verbose %sandbox.zip %sub-level
+Adding file: file-new.txt
+
+>> unzip/force/verbose %sandbox.zip %extracted
+Extracting: file-new.txt
+== %C:/Users/username/ragnar-projects/sandbox/extracted
 
 >> rm/recursive/verbose %sub-level
 Removing file: sub-level/file-new.txt

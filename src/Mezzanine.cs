@@ -481,6 +481,21 @@ public static class Mezzanine
             none
         ]
 
+        zip: func ["Zips files or folders into an archive." archive sources /force /f /verbose /v /level lvl] [
+            is-force: any [:force :f]
+            is-verbose: any [:verbose :v]
+            comp-level: either level [to-string lvl] ["optimal"]
+            
+            native-zip archive sources is-force is-verbose comp-level
+        ]
+
+        unzip: func ["Extracts the contents of a zip archive." archive dest /force /f /verbose /v] [
+            is-force: any [:force :f]
+            is-verbose: any [:verbose :v]
+            
+            native-unzip archive dest is-force is-verbose
+        ]
+
     """;
 
 }
