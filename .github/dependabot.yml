@@ -5,7 +5,26 @@
 
 version: 2
 updates:
-  - package-ecosystem: "NuGet" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Keep NuGet dependencies up to date
+  - package-ecosystem: "nuget"
+    directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "deps"
+    groups:
+      nuget-group:
+        patterns:
+          - "*"
+
+  # Keep GitHub Actions workflows up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions-group:
+        patterns:
+          - "*"
