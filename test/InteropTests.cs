@@ -63,7 +63,7 @@ public class InteropTests : TestBase
     [Fact]
     public void Interop_Throws_On_Missing_Type()
     {
-        Assert.Throws<Exception>(() => Run("get-type \"NonExistent.Class\""));
+        Assert.ThrowsAny<Exception>(() => Run("get-type \"NonExistent.Class\""));
     }
 
     [Fact]

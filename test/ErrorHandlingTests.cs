@@ -52,4 +52,28 @@ public class ErrorHandlingTests : TestBase
     {
         Assert.Throws<ThrowException>(() => Run("throw 10"));
     }
+
+    [Fact]
+    public void RuntimeException_InfixError_ContainsNearContext()
+    {
+        var ex = Assert.Throws<RagnarRuntimeException>(() => Run("1 / 0"));
+        Assert.Contains("Division by zero", ex.Message);
+        Assert.Contains("Near: 1 ** / ** 0", ex.Message);
+    }
+
+    [Fact]
+    public void RuntimeException_PrefixError_ContainsNearContext()
+    {
+        var ex = Assert.Throws<RagnarRuntimeException>(() => Run("add \"hello\" 1"));
+        Assert.Contains("Cannot perform math on Text", ex.Message);
+        Assert.Contains("Near: ** add ** \"hello\"", ex.Message);
+    }
+
+    [Fact]
+    public void RuntimeException_NestedError_ContainsInnerContext()
+    {
+        var ex = Assert.Throws<RagnarRuntimeException>(() => Run("if true [1 / 0]"));
+        Assert.Contains("Division by zero", ex.Message);
+        Assert.Contains("Near: 1 ** / ** 0", ex.Message);
+    }
 }

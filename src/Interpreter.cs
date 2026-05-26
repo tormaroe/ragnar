@@ -57,14 +57,27 @@ public class Interpreter
             Value nextToken = block.Children[index];
             if (nextToken is Word w && context.TryGet(w.Name, out Value? v) && v is Op op)
             {
+                int opIdx = index;
                 index++; // consume the Op word
                 // An infix call is in tail position ONLY if it's the very last thing in the block 
                 // and there are no more infix operators following THIS one.
                 bool lastInfix = !HasInfix(block, index, context);
                 
-                // Arguments to operators are NEVER in tail position.
-                Value right = NextExpression(block, ref index, context, false);
-                left = op.Action([left, right], [], context, this, isTail && lastInfix);
+                try
+                {
+                    // Arguments to operators are NEVER in tail position.
+                    Value right = NextExpression(block, ref index, context, false);
+                    left = op.Action([left, right], [], context, this, isTail && lastInfix);
+                }
+                catch (BreakException) { throw; }
+                catch (ContinueException) { throw; }
+                catch (ReturnException) { throw; }
+                catch (ThrowException) { throw; }
+                catch (RagnarRuntimeException) { throw; }
+                catch (Exception ex)
+                {
+                    throw new RagnarRuntimeException(ex.Message, ex, nextToken, block, opIdx);
+                }
                 
                 // If the operator call itself was a tail call (unlikely for built-ins, but possible),
                 // we should handle it.
@@ -102,7 +115,25 @@ public class Interpreter
             throw new Exception("Unexpected end of block: more arguments expected.");
 
         Value current = block.Children[index++];
+        int currentIdx = index - 1;
 
+        try
+        {
+            return EvaluateExpression(current, block, ref index, context, isTail);
+        }
+        catch (BreakException) { throw; }
+        catch (ContinueException) { throw; }
+        catch (ReturnException) { throw; }
+        catch (ThrowException) { throw; }
+        catch (RagnarRuntimeException) { throw; }
+        catch (Exception ex)
+        {
+            throw new RagnarRuntimeException(ex.Message, ex, current, block, currentIdx);
+        }
+    }
+
+    private Value EvaluateExpression(Value current, Block block, ref int index, Context context, bool isTail = false)
+    {
         // --- PAREN EVALUATION ---
         if (current is Paren p)
         {
