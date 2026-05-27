@@ -66,7 +66,11 @@ public class Interpreter
                 try
                 {
                     // Arguments to operators are NEVER in tail position.
-                    Value right = NextExpression(block, ref index, context, false);
+                    Value right;
+                    using (new PreservedState(context))
+                    {
+                        right = NextExpression(block, ref index, context, false);
+                    }
                     left = op.Action([left, right], [], context, this, isTail && lastInfix);
                 }
                 catch (BreakException) { throw; }
@@ -177,18 +181,21 @@ public class Interpreter
             if (boundValue is Native native)
             {
                 List<Value> args = [];
-                for (int i = 0; i < native.Arity; i++)
+                using (new PreservedState(context))
                 {
-                    if (native.EvalArgs[i])
+                    for (int i = 0; i < native.Arity; i++)
                     {
-                        // Function arguments use Next to allow them to be greedy
-                        // for infix operators (giving infix higher priority than prefix)
-                        args.Add(Next(block, ref index, context, false));
-                    }
-                    else
-                    {
-                        if (index >= block.Children.Count) throw new Exception("Argument missing.");
-                        args.Add(block.Children[index++]);
+                        if (native.EvalArgs[i])
+                        {
+                            // Function arguments use Next to allow them to be greedy
+                            // for infix operators (giving infix higher priority than prefix)
+                            args.Add(Next(block, ref index, context, false));
+                        }
+                        else
+                        {
+                            if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                            args.Add(block.Children[index++]);
+                        }
                     }
                 }
                 return native.Action(args, [], context, this, isTail);
@@ -197,16 +204,19 @@ public class Interpreter
             if (boundValue is Function func)
             {
                 var args = new List<Value>();
-                foreach (var param in func.MainParameters)
+                using (new PreservedState(context))
                 {
-                    if (param.Evaluate)
+                    foreach (var param in func.MainParameters)
                     {
-                        args.Add(Next(block, ref index, context, false));
-                    }
-                    else
-                    {
-                        if (index >= block.Children.Count) throw new Exception("Argument missing.");
-                        args.Add(block.Children[index++]);
+                        if (param.Evaluate)
+                        {
+                            args.Add(Next(block, ref index, context, false));
+                        }
+                        else
+                        {
+                            if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                            args.Add(block.Children[index++]);
+                        }
                     }
                 }
                 
@@ -274,32 +284,38 @@ public class Interpreter
                     if (currentVal is Native n)
                     {
                         var args = new List<Value>();
-                        for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
+                        using (new PreservedState(context))
+                        {
+                            for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
+                        }
                         return n.Action(args, new HashSet<string>(refinements), context, this, isTail);
                     }
                     else if (currentVal is Function f)
                     {
                         var args = new List<Value>();
-                        // Main args
-                        foreach (var param in f.MainParameters)
+                        using (new PreservedState(context))
                         {
-                            if (param.Evaluate) args.Add(Next(block, ref index, context, false));
-                            else
+                            // Main args
+                            foreach (var param in f.MainParameters)
                             {
-                                if (index >= block.Children.Count) throw new Exception("Argument missing.");
-                                args.Add(block.Children[index++]);
-                            }
-                        }
-                        
-                        // Refinement args in order of refinements in the path
-                        foreach (var refName in refinements)
-                        {
-                            var refSpec = f.Refinements.FirstOrDefault(r => r.Name == refName);
-                            if (refSpec.Name != null)
-                            {
-                                foreach (var _ in refSpec.Args)
+                                if (param.Evaluate) args.Add(Next(block, ref index, context, false));
+                                else
                                 {
-                                    args.Add(Next(block, ref index, context, false));
+                                    if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                                    args.Add(block.Children[index++]);
+                                }
+                            }
+                            
+                            // Refinement args in order of refinements in the path
+                            foreach (var refName in refinements)
+                            {
+                                var refSpec = f.Refinements.FirstOrDefault(r => r.Name == refName);
+                                if (refSpec.Name != null)
+                                {
+                                    foreach (var _ in refSpec.Args)
+                                    {
+                                        args.Add(Next(block, ref index, context, false));
+                                    }
                                 }
                             }
                         }
@@ -349,20 +365,26 @@ public class Interpreter
                 if (currentVal is Native n)
                 {
                     var args = new List<Value>();
-                    for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
+                    using (new PreservedState(context))
+                    {
+                        for (int k = 0; k < n.Arity; k++) args.Add(Next(block, ref index, context, false));
+                    }
                     return n.Action(args, new HashSet<string>(), context, this, isTail);
                 }
                 else if (currentVal is Function f)
                 {
                     var args = new List<Value>();
-                    // Main args
-                    foreach (var param in f.MainParameters)
+                    using (new PreservedState(context))
                     {
-                        if (param.Evaluate) args.Add(Next(block, ref index, context, false));
-                        else
+                        // Main args
+                        foreach (var param in f.MainParameters)
                         {
-                            if (index >= block.Children.Count) throw new Exception("Argument missing.");
-                            args.Add(block.Children[index++]);
+                            if (param.Evaluate) args.Add(Next(block, ref index, context, false));
+                            else
+                            {
+                                if (index >= block.Children.Count) throw new Exception("Argument missing.");
+                                args.Add(block.Children[index++]);
+                            }
                         }
                     }
 
@@ -661,6 +683,23 @@ public class Interpreter
         catch
         {
             return false;
+        }
+    }
+
+    private struct PreservedState : IDisposable
+    {
+        private readonly Context _context;
+        private readonly Value? _savedLastResult;
+
+        public PreservedState(Context context)
+        {
+            _context = context;
+            _savedLastResult = context.LastResult;
+        }
+
+        public void Dispose()
+        {
+            _context.LastResult = _savedLastResult;
         }
     }
 }
