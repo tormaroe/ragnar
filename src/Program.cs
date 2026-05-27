@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace Ragnar;
 
@@ -177,7 +177,7 @@ class Program
                 }
             }
 
-            string input = repl.ReadLine(prompt);
+            string input = repl.ReadLine(prompt, context);
 
             if (string.IsNullOrWhiteSpace(input) && buffer.Length == 0)
                 continue;
