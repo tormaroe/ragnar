@@ -19,6 +19,14 @@ public static class Mezzanine
                 (type? :v) = 'get-word!
             ]
         ]
+
+        |: func ["Pipe previous result into a function of arity 1." fn] [ fn it ]
+        |>: func ["Pipe previous result into a function of arity 2 as the first argument." fn x] [ fn it x ]
+        >|: func ["Pipe previous result into a function of arity 2 as the second argument." fn x] [ fn x it ]
+        |>>: func ["Pipe previous result into a function of arity 3 as the first argument." fn x y] [ fn it x y ]
+        >|>: func ["Pipe previous result into a function of arity 3 as the second argument." fn x y] [ fn x it y ]
+        >>|: func ["Pipe previous result into a function of arity 3 as the third argument." fn x y] [ fn x y it ]
+
         ask: func ["Prompts the user for input and returns it as a string." prompt] [
             prin prompt
             input
