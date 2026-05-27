@@ -361,13 +361,21 @@ public class Repl
 
     private int SafeGetBufferWidth()
     {
-        try { return Console.BufferWidth; }
+        try
+        {
+            int w = Console.BufferWidth;
+            return w > 0 ? w : 80;
+        }
         catch { return 80; }
     }
 
     private int SafeGetBufferHeight()
     {
-        try { return Console.BufferHeight; }
+        try
+        {
+            int h = Console.BufferHeight;
+            return h > 0 ? h : 24;
+        }
         catch { return 24; }
     }
 
