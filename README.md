@@ -16,3 +16,51 @@
 Ragnar homepage: [tormaroe.github.io/ragnar](https://tormaroe.github.io/ragnar)
 
 [![.NET](https://github.com/tormaroe/ragnar/actions/workflows/dotnet.yml/badge.svg)](https://github.com/tormaroe/ragnar/actions/workflows/dotnet.yml)
+
+---
+
+## Ragnar Quick Reference & Cheat Sheet
+
+### Scoping
+- **Hybrid Binding**: Functions evaluate in a local context with a lexical parent (`DefiningContext`) and dynamic parent (caller context).
+- **Lookup**: Word resolution traverses the lexical parent chain first, falling back to the dynamic parent chain.
+- **Assignment**: Setting a word updates its nearest bound parent context. Inside a function frame, updates do not traverse past the global context, defaulting to local assignment unless forced global.
+
+### Functions, Closures & TCO
+- **Closures**: Functions defined via `func` or `does` capture their lexical definition environment.
+- **Tail Call Optimization (TCO)**: The interpreter optimizes tail calls by returning a `TailCall` token, resolved iteratively in a trampoline loop.
+
+### REPL Features
+- **Special Variable `it`**: Evaluates to the last printed/computed result in the context chain.
+- **Auto-completion**: 
+  - `Tab` / `Right Arrow`: Cycle forward through context bindings matching the prefix.
+  - `Shift + Tab` / `Left Arrow`: Cycle backward.
+  - `Escape`: Cancel and restore original input.
+  - `Enter`: Accept selection and execute.
+- **Navigation & Editing**: `Up`/`Down` (history navigation), `Left`/`Right` (cursor movement), `Home`/`End` (cursor jump), `Backspace`/`Delete`.
+- **Customization**: Configure custom behavior at runtime via:
+  - `system/console/prompt`: Set a string or evaluation block for prompt.
+  - `system/console/result`: Set prefix for evaluated output (defaults to `== `).
+  - `system/console/history`: Block storing command line history.
+- **Startup Script**: Evaluates `.ragnar.r` in the user's home directory.
+
+### Core Vocabulary & Functions
+All native and mezzanine functions categorized:
+
+- **Constants**: `true`, `false`, `none`
+- **Output & Evaluation**: `print`, `prin`, `do`, `probe`
+- **Conditionals**: `if`, `either`, `all`, `any`, `case`, `switch`
+- **Loops & Iteration**: `loop`, `forever`, `while`, `foreach`, `enumerate`, `map-each`, `funcmap`, `funcflatmap`, `funcfilter`, `funcfold`, `break`, `continue`
+- **Math & Comparison**: `add`, `+`, `sub`, `-`, `multiply`, `mul`, `*`, `divide`, `/`, `remainder`, `//`, `random`, `abs`, `max`, `min`, `negate`, `zero?`, `greater?`, `>`, `less?`, `<`, `equal?`, `=`, `==`, `not-equal?`, `<>`, `!=`, `greater-or-equal?`, `>=`, `less-or-equal?`, `<=`
+- **Logical**: `not`, `and`, `and?`, `or`, `or?`, `xor`, `xor?`
+- **Objects & Contexts**: `make`, `in`, `get`, `set`, `bind`, `use`, `let`, `context?`, `object!`, `error!`, `system`
+- **Series & Blocks**: `first`, `second`, `next`, `last`, `length?`, `empty?`, `find`, `append`, `join`, `pick`, `select`, `poke`, `index?`, `copy`, `sort`, `reverse`, `back`, `head`, `tail`, `head?`, `tail?`, `clear`, `remove`, `take`, `reduce`, `compose`, `block?`, `paren?`, `record?`
+- **Strings & Characters**: `trim`, `replace`, `uppercase`, `lowercase`, `split`, `char?`, `charset`, `text?`, `string?`, `reform`, `rejoin`
+- **Control Flow**: `func`, `does`, `return`, `exit`, `quit`, `try`, `attempt`, `catch`, `throw`, `ignore`, `_`
+- **Functional Operators**: `>>`, `<<`, `partial`, `|`, `|>`, `>|`, `|>>`, `>|>`, `>>|`
+- **IO & File System**: `read`, `write`, `load`, `save`, `cd`, `ls`, `mkdir`, `rmdir`, `rm`, `pushd`, `popd`, `mv`, `cp`, `pwd`, `what-dir`, `ask`, `confirm`
+- **.NET Interop**: `get-type`, `new`, `call-method`, `get-prop`, `set-prop`, `get-static`, `call-static`
+- **Inspection & OS**: `what`, `help`, `?`, `type?`, `format`, `call`, `home`, `get-env`, `list-env`, `now`, `wait`, `rc-file-name`
+- **Actors (Erlang-like)**: `spawn`, `tell`, `kill`, `receive`
+- **Compression**: `zip`, `unzip`, `native-zip`, `native-unzip`
+- **Parsing**: `parse`
