@@ -293,22 +293,22 @@ public class ReadmeTests : TestBase
     public void Test_FunctionalMezzanines()
     {
         var code = @"
-            ; 1. funcmap - Applies a function to each item
+            ; 1. map - Applies a function to each item
             double: func [x] [x * 2]
-            r1: funcmap :double [1 2 3]
+            r1: map :double [1 2 3]
 
-            ; 2. funcflatmap - Applies a function and flattens the results
+            ; 2. flatmap - Applies a function and flattens the results
             expand: func [x] [reduce [x x * 10]]
-            r2: funcflatmap :expand [1 2 3]
+            r2: flatmap :expand [1 2 3]
 
-            ; 3. funcfilter - Keeps items where the function returns true
+            ; 3. filter - Keeps items where the function returns true
             even?: func [x] [x // 2 = 0]
-            r3: funcfilter :even? [1 2 3 4 5 6]
+            r3: filter :even? [1 2 3 4 5 6]
 
-            ; 4. funcfold - Reduces a block using a binary function (optional /initial)
+            ; 4. fold - Reduces a block using a binary function (optional /initial)
             sum: func [a b] [a + b]
-            r4: funcfold :sum [1 2 3 4]
-            r5: funcfold/initial :sum [1 2 3 4] 10
+            r4: fold :sum [1 2 3 4]
+            r5: fold/initial :sum [1 2 3 4] 10
 
             reduce [r1 r2 r3 r4 r5]
         ";

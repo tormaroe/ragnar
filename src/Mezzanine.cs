@@ -62,14 +62,14 @@ public static class Mezzanine
             ]
         ]
         does: func ["Defines a function with no arguments." block] [ func [] block ]
-        funcmap: func ["Applies a function to each item in a block and returns the results." fn block] [
+        map: func ["Applies a function to each item in a block and returns the results." fn block] [
             result: copy []
             foreach item block [
                 append result fn :item
             ]
             result
         ]
-        funcflatmap: func ["Applies a function to each item in a block and flattens the results." fn block] [
+        flatmap: func ["Applies a function to each item in a block and flattens the results." fn block] [
             result: copy []
             foreach item block [
                 val: fn :item
@@ -83,14 +83,14 @@ public static class Mezzanine
             ]
             result
         ]
-        funcfilter: func ["Filters a block using a function that returns true for items to keep." fn block] [
+        filter: func ["Filters a block using a function that returns true for items to keep." fn block] [
             result: copy []
             foreach item block [
                 if fn :item [ append result :item ]
             ]
             result
         ]
-        funcfold: func ["Reduces a block to a single value using a binary function." fn block /initial initial-value] [
+        fold: func ["Reduces a block to a single value using a binary function." fn block /initial initial-value] [
             if empty? block [ return either initial [initial-value] [none] ]
             acc: either initial [initial-value] [first block]
             idx: either initial [1] [2]

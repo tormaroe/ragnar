@@ -38,7 +38,7 @@ public class PrettyTableTests : TestBase
     {
         var code = @"
             make-table: do %lib/prettytable.r
-            data: funcmap :to-record [
+            data: map :to-record [
                 [""Name"" ""Alice"" ""Age"" 30 ""City"" ""New York""]
                 [""Name"" ""Bob"" ""Age"" 25 ""City"" ""Los Angeles""]
                 [""Name"" ""Charlie"" ""Age"" 35 ""City"" ""Chicago""]

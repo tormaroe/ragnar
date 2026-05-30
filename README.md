@@ -50,7 +50,7 @@ All native and mezzanine functions categorized:
 - **Constants**: `true`, `false`, `none`
 - **Output & Evaluation**: `print`, `prin`, `do`, `probe`
 - **Conditionals**: `if`, `either`, `all`, `any`, `case`, `switch`
-- **Loops & Iteration**: `loop`, `forever`, `while`, `foreach`, `enumerate`, `map-each`, `funcmap`, `funcflatmap`, `funcfilter`, `funcfold`, `break`, `continue`
+- **Loops & Iteration**: `loop`, `forever`, `while`, `foreach`, `enumerate`, `map-each`, `map`, `flatmap`, `filter`, `fold`, `break`, `continue`
 - **Math & Comparison**: `add`, `+`, `sub`, `-`, `multiply`, `mul`, `*`, `divide`, `/`, `remainder`, `//`, `random`, `abs`, `max`, `min`, `negate`, `zero?`, `greater?`, `>`, `less?`, `<`, `equal?`, `=`, `==`, `not-equal?`, `<>`, `!=`, `greater-or-equal?`, `>=`, `less-or-equal?`, `<=`
 - **Logical**: `not`, `and`, `and?`, `or`, `or?`, `xor`, `xor?`
 - **Objects & Contexts**: `make`, `in`, `get`, `set`, `bind`, `use`, `let`, `context?`, `object!`, `error!`, `system`
