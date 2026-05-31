@@ -296,17 +296,18 @@ public class Repl
         }
     }
 
-    public void AddHistory(string line)
+    public bool AddHistory(string line)
     {
-        if (string.IsNullOrWhiteSpace(line)) return;
+        if (string.IsNullOrWhiteSpace(line)) return false;
         
         string sanitized = string.Join(" ", line.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                                                 .Select(l => l.Trim()));
         
-        if (string.IsNullOrWhiteSpace(sanitized)) return;
-        if (_history.Count > 0 && _history[^1] == sanitized) return;
+        if (string.IsNullOrWhiteSpace(sanitized)) return false;
+        if (_history.Count > 0 && _history[^1] == sanitized) return false;
         
         _history.Add(sanitized);
+        return true;
     }
 
     private void Redraw(string prompt, StringBuilder line, int pos, int startTop, int startLeft)

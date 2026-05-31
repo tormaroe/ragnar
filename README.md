@@ -38,6 +38,7 @@ Ragnar homepage: [tormaroe.github.io/ragnar](https://tormaroe.github.io/ragnar)
   - `Escape`: Cancel and restore original input.
   - `Enter`: Accept selection and execute.
 - **Navigation & Editing**: `Up`/`Down` (history navigation), `Left`/`Right` (cursor movement), `Home`/`End` (cursor jump), `Backspace`/`Delete`.
+- **Persistent History**: Executed commands are saved asynchronously to a `.ragnar_history` file in the user's home directory and loaded on REPL startup (capped at 1,000 entries; filters consecutive duplicates).
 - **Customization**: Configure custom behavior at runtime via:
   - `system/console/prompt`: Set a string or evaluation block for prompt.
   - `system/console/result`: Set prefix for evaluated output (defaults to `== `).

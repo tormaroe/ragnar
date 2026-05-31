@@ -139,6 +139,23 @@ class Program
         context.Output = new ColoredTextWriter(Console.Out, ReplConfig.PrinterColor);
 
         var repl = new Repl();
+
+        try
+        {
+            var systemObj = (ObjectValue)context.Get("system");
+            var consoleObj = (ObjectValue)systemObj.Context.Get("console");
+            var histVal = consoleObj.Context.Get("history");
+            if (histVal is Block hbInit)
+            {
+                var persistentHistory = ReplHistoryManager.LoadHistory();
+                foreach (var h in persistentHistory)
+                {
+                    hbInit.Children.Add(new Text(h));
+                }
+            }
+        }
+        catch { }
+
         var buffer = new System.Text.StringBuilder();
 
         while (true)
@@ -209,8 +226,10 @@ class Program
                     }
                 }
 
-                // 6. Add the current command to history and sync back
-                repl.AddHistory(code.TrimEnd('\r', '\n'));
+                if (repl.AddHistory(code.TrimEnd('\r', '\n')))
+                {
+                    ReplHistoryManager.AppendHistory(repl._history[^1]);
+                }
                 
                 if (histValAfter is Block chb)
                 {

@@ -490,3 +490,6 @@ $RECYCLE.BIN/
 # Antigravity CLI
 .antigravitycli/
 
+# Ragnar History
+.ragnar_history
+.ragnar_history.tmp
