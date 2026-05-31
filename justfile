@@ -18,7 +18,7 @@ deploy:
     dotnet publish src/Ragnar.csproj -c Release -o dist -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:SelfContained=false
 
 release:
-    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1
+    python3 scripts/release.py || python scripts/release.py
 
 site:
     node docs/server.js
