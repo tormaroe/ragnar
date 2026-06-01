@@ -210,11 +210,30 @@ public class Interop
                     }
                 }
 
+                if (method == null && dnv.Instance != null)
+                {
+                    method = FindMethod(dnv.Instance.GetType(), methodName.Content, BindingFlags.Instance | BindingFlags.Public, methodArgs);
+                    if (method == null)
+                    {
+                        foreach (var iface in dnv.Instance.GetType().GetInterfaces())
+                        {
+                            method = FindMethod(iface, methodName.Content, BindingFlags.Instance | BindingFlags.Public, methodArgs);
+                            if (method != null) break;
+                        }
+                    }
+                }
+
                 if (method == null)
                     throw new Exception($"Method '{methodName.Content}' not found for the provided argument types.");
 
                 // 4. Invoke and wrap the result
-                object? result = method.Invoke(dnv.Instance, methodArgs);
+                var parameters = method.GetParameters();
+                object?[] coercedArgs = new object?[methodArgs.Length];
+                for (int k = 0; k < methodArgs.Length; k++)
+                {
+                    coercedArgs[k] = CoerceType(methodArgs[k], parameters[k].ParameterType);
+                }
+                object? result = method.Invoke(dnv.Instance, coercedArgs);
 
                 return ToRagnarValue(result);
             }
@@ -304,10 +323,21 @@ public class Interop
                 null, argTypes, null);
 
             if (method == null)
+            {
+                method = FindMethod(type, methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.FlattenHierarchy, invokeArgs);
+            }
+
+            if (method == null)
                 throw new Exception($"No static method {methodName} on {typeName} matches these arguments.");
 
             // 3. Execute and convert the result back to Ragnar
-            return ToRagnarValue(method.Invoke(null, invokeArgs));
+            var parameters = method.GetParameters();
+            object?[] coercedArgs = new object?[invokeArgs.Length];
+            for (int k = 0; k < invokeArgs.Length; k++)
+            {
+                coercedArgs[k] = CoerceType(invokeArgs[k], parameters[k].ParameterType);
+            }
+            return ToRagnarValue(method.Invoke(null, coercedArgs));
         }, 3).WithTitle("Calls a static .NET method."));
     }
 
@@ -447,5 +477,48 @@ public class Interop
             current = current.BaseType;
         }
         return current == declaring ? distance : int.MaxValue;
+    }
+
+    private static MethodInfo? FindMethod(Type type, string methodName, BindingFlags flags, object?[] args)
+    {
+        var methods = type.GetMethods(flags)
+            .Where(m => m.Name == methodName && m.GetParameters().Length == args.Length);
+
+        foreach (var method in methods)
+        {
+            var parameters = method.GetParameters();
+            bool match = true;
+            for (int i = 0; i < args.Length; i++)
+            {
+                var paramType = parameters[i].ParameterType;
+                var arg = args[i];
+
+                if (arg == null)
+                {
+                    if (paramType.IsValueType && Nullable.GetUnderlyingType(paramType) == null)
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (!paramType.IsAssignableFrom(arg.GetType()))
+                    {
+                        try
+                        {
+                            CoerceType(arg, paramType);
+                        }
+                        catch
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (match) return method;
+        }
+        return null;
     }
 }

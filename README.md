@@ -45,6 +45,11 @@ Ragnar homepage: [tormaroe.github.io/ragnar](https://tormaroe.github.io/ragnar)
   - `system/console/history`: Block storing command line history.
 - **Startup Script**: Evaluates `.ragnar.r` in the user's home directory.
 
+### Executing Scripts & Command Line Arguments
+- **Unix Shebang Support**: Scripts can start with a hashbang line (e.g., `#!/usr/bin/env ragnar`) and be marked as executable (`chmod +x script.r`) to run them directly.
+- **Positional Command Line Invocation**: Execute a script by passing its path directly as the first argument, e.g. `ragnar script.r arg1 arg2`. Ragnar options parsing stops at the script path (or at the `--` separator), allowing script-specific arguments and flags.
+- **Accessing Arguments**: Scripts can access the block of arguments passed to them as string (`Text`) values via the `system/options/args` path.
+
 ### Core Vocabulary & Functions
 All native and mezzanine functions categorized:
 
@@ -59,9 +64,9 @@ All native and mezzanine functions categorized:
 - **Strings & Characters**: `trim`, `replace`, `uppercase`, `lowercase`, `split`, `char?`, `charset`, `text?`, `string?`, `reform`, `rejoin`
 - **Control Flow**: `func`, `does`, `return`, `exit`, `quit`, `try`, `attempt`, `catch`, `throw`, `ignore`, `_`
 - **Functional Operators**: `>>`, `<<`, `partial`, `|`, `|>`, `>|`, `|>>`, `>|>`, `>>|`
-- **IO & File System**: `read`, `write`, `load`, `save`, `cd`, `ls`, `mkdir`, `rmdir`, `rm`, `pushd`, `popd`, `mv`, `cp`, `pwd`, `what-dir`, `ask`, `confirm`
+- **IO & File System**: `read`, `write`, `load`, `save`, `cd`, `ls`, `mkdir`, `rmdir`, `rm`, `pushd`, `popd`, `mv`, `cp`, `pwd`, `what-dir`, `ask`, `confirm`, `exists?`
 - **.NET Interop**: `get-type`, `new`, `call-method`, `get-prop`, `set-prop`, `get-static`, `call-static`
-- **Inspection & OS**: `what`, `help`, `?`, `type?`, `format`, `call`, `home`, `get-env`, `list-env`, `now`, `wait`, `rc-file-name`
+- **Inspection & OS**: `what`, `help`, `?`, `type?`, `format`, `call`, `home`, `get-env`, `set-env`, `list-env`, `now`, `wait`, `rc-file-name`
 - **Actors (Erlang-like)**: `spawn`, `tell`, `kill`, `receive`
 - **Compression**: `zip`, `unzip`, `native-zip`, `native-unzip`
 - **Parsing**: `parse`

@@ -16,6 +16,15 @@ public class Lexer(string input)
     {
         var tokens = new List<Token>();
 
+        // Skip shebang if it's the very beginning of the input
+        if (_pos == 0 && _input.StartsWith("#!"))
+        {
+            while (_pos < _input.Length && _input[_pos] != '\n' && _input[_pos] != '\r')
+            {
+                _pos++;
+            }
+        }
+
         while (_pos < _input.Length)
         {
             char c = Peek();

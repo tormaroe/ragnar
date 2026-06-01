@@ -101,6 +101,20 @@ public static class Mezzanine
             acc
         ]
         get-env: func ["Returns the value of an environment variable." name] [call-static "System.Environment" "GetEnvironmentVariable" reduce [name]]
+        set-env: func ["Sets or deletes the value of an environment variable." name value] [
+            either none? :value [
+                call-static "System.Environment" "SetEnvironmentVariable" reduce [name none]
+            ] [
+                call-static "System.Environment" "SetEnvironmentVariable" reduce [name to-string :value]
+            ]
+        ]
+        exists?: func ["Returns true if a file or directory exists." path] [
+            str-path: to-string path
+            either any [
+                call-static "System.IO.File" "Exists" reduce [str-path]
+                call-static "System.IO.Directory" "Exists" reduce [str-path]
+            ] [true] [false]
+        ]
         enumerate: func ["Iterates a .NET IEnumerable, binding word to each item and evaluating block." enumerable 'word block] [
             enumerator: call-method enumerable "GetEnumerator" []
             while [call-method enumerator "MoveNext" []] [
@@ -165,6 +179,9 @@ public static class Mezzanine
             dt
         ]
         pwd: func ["Returns the current working directory."] [what-dir]
+        quit: func ["Exits the program." /with code] [
+            call-static "System.Environment" "Exit" reduce [either with [code] [0]]
+        ]
         rc-file-name: %.ragnar.r
         reform: func ["Evaluates a block and forms a string with spaces between values." block] [
             result: ""

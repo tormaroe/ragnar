@@ -1,4 +1,4 @@
-﻿namespace Ragnar.Tests;
+namespace Ragnar.Tests;
 
 public class LexerTests
 {
@@ -97,5 +97,19 @@ public class LexerTests
         Assert.Single(tokens);
         // The content should include the newlines and leading spaces
         Assert.Equal("\n    Line 1\n    Line 2\n", ((Text)tokens[0].Value!).Content);
+    }
+
+    [Fact]
+    public void Tokenize_ShebangIgnored()
+    {
+        var input = "#!/usr/bin/env ragnar\nprint \"hello\"";
+        var lexer = new Lexer(input);
+        var tokens = lexer.Tokenize();
+
+        Assert.Equal(2, tokens.Count);
+        var printWord = Assert.IsType<Word>(tokens[0].Value);
+        Assert.Equal("print", printWord.Name);
+        var textVal = Assert.IsType<Text>(tokens[1].Value);
+        Assert.Equal("hello", textVal.Content);
     }
 }

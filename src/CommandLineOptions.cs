@@ -18,6 +18,9 @@ public class CommandLineOptions
     public bool NoBanner { get; set; }
     public bool NoConfig { get; set; }
     public bool NoRepl { get; set; }
+    public bool ScriptMode { get; set; }
+    public string? ScriptPath { get; set; }
+    public List<string> ScriptArgs { get; } = new();
     public List<EvaluationTarget> Targets { get; } = new();
     public List<string> Errors { get; } = new();
 
@@ -28,61 +31,96 @@ public class CommandLineOptions
         while (i < args.Length)
         {
             string arg = args[i];
-            if (arg == "-h" || arg == "--help")
+            
+            if (arg.StartsWith('-') && arg != "-" && arg != "--")
             {
-                options.ShowHelp = true;
-                i++;
-            }
-            else if (arg == "-v" || arg == "--version")
-            {
-                options.ShowVersion = true;
-                i++;
-            }
-            else if (arg == "--no-banner")
-            {
-                options.NoBanner = true;
-                i++;
-            }
-            else if (arg == "--no-config")
-            {
-                options.NoConfig = true;
-                i++;
-            }
-            else if (arg == "--no-repl")
-            {
-                options.NoRepl = true;
-                i++;
-            }
-            else if (arg == "-f" || arg == "--file")
-            {
-                if (i + 1 < args.Length)
+                if (arg == "-h" || arg == "--help")
                 {
-                    options.Targets.Add(new EvaluationTarget(EvaluationType.File, args[i + 1]));
-                    i += 2;
-                }
-                else
-                {
-                    options.Errors.Add("Missing value for option -f/--file");
+                    options.ShowHelp = true;
                     i++;
                 }
-            }
-            else if (arg == "-e" || arg == "--eval")
-            {
-                if (i + 1 < args.Length)
+                else if (arg == "-v" || arg == "--version")
                 {
-                    options.Targets.Add(new EvaluationTarget(EvaluationType.Expression, args[i + 1]));
-                    i += 2;
+                    options.ShowVersion = true;
+                    i++;
+                }
+                else if (arg == "--no-banner")
+                {
+                    options.NoBanner = true;
+                    i++;
+                }
+                else if (arg == "--no-config")
+                {
+                    options.NoConfig = true;
+                    i++;
+                }
+                else if (arg == "--no-repl")
+                {
+                    options.NoRepl = true;
+                    i++;
+                }
+                else if (arg == "-f" || arg == "--file")
+                {
+                    if (i + 1 < args.Length)
+                    {
+                        options.Targets.Add(new EvaluationTarget(EvaluationType.File, args[i + 1]));
+                        i += 2;
+                    }
+                    else
+                    {
+                        options.Errors.Add("Missing value for option -f/--file");
+                        i++;
+                    }
+                }
+                else if (arg == "-e" || arg == "--eval")
+                {
+                    if (i + 1 < args.Length)
+                    {
+                        options.Targets.Add(new EvaluationTarget(EvaluationType.Expression, args[i + 1]));
+                        i += 2;
+                    }
+                    else
+                    {
+                        options.Errors.Add("Missing value for option -e/--eval");
+                        i++;
+                    }
                 }
                 else
                 {
-                    options.Errors.Add("Missing value for option -e/--eval");
+                    options.Errors.Add($"Unrecognized argument: {arg}");
                     i++;
                 }
             }
             else
             {
-                options.Errors.Add($"Unrecognized argument: {arg}");
-                i++;
+                // First positional or "--" starts script execution mode
+                if (arg == "--")
+                {
+                    i++; // consume "--"
+                    if (i < args.Length)
+                    {
+                        options.ScriptPath = args[i];
+                        options.ScriptMode = true;
+                        options.NoRepl = true;
+                        options.NoBanner = true;
+                        i++;
+                    }
+                }
+                else
+                {
+                    options.ScriptPath = arg;
+                    options.ScriptMode = true;
+                    options.NoRepl = true;
+                    options.NoBanner = true;
+                    i++;
+                }
+
+                // Consume all remaining parameters as arguments for the script
+                while (i < args.Length)
+                {
+                    options.ScriptArgs.Add(args[i]);
+                    i++;
+                }
             }
         }
         return options;

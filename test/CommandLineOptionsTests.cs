@@ -98,10 +98,38 @@ public class CommandLineOptionsTests
     [Fact]
     public void Parse_UnrecognizedArgument_AddsError()
     {
-        var options = CommandLineOptions.Parse(new[] { "--invalid", "something" });
+        var options = CommandLineOptions.Parse(new[] { "--invalid" });
 
-        Assert.Equal(2, options.Errors.Count);
+        Assert.Single(options.Errors);
         Assert.Contains("Unrecognized argument: --invalid", options.Errors[0]);
-        Assert.Contains("Unrecognized argument: something", options.Errors[1]);
+    }
+
+    [Fact]
+    public void Parse_ScriptArguments_SetsScriptMode()
+    {
+        var options = CommandLineOptions.Parse(new[] { "script.r", "arg1", "--flag" });
+
+        Assert.Empty(options.Errors);
+        Assert.True(options.ScriptMode);
+        Assert.Equal("script.r", options.ScriptPath);
+        Assert.True(options.NoRepl);
+        Assert.True(options.NoBanner);
+        Assert.Equal(2, options.ScriptArgs.Count);
+        Assert.Equal("arg1", options.ScriptArgs[0]);
+        Assert.Equal("--flag", options.ScriptArgs[1]);
+    }
+
+    [Fact]
+    public void Parse_ScriptSeparator_SetsScriptMode()
+    {
+        var options = CommandLineOptions.Parse(new[] { "--", "script.r", "arg1" });
+
+        Assert.Empty(options.Errors);
+        Assert.True(options.ScriptMode);
+        Assert.Equal("script.r", options.ScriptPath);
+        Assert.True(options.NoRepl);
+        Assert.True(options.NoBanner);
+        Assert.Single(options.ScriptArgs);
+        Assert.Equal("arg1", options.ScriptArgs[0]);
     }
 }

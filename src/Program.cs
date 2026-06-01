@@ -64,6 +64,22 @@ class Program
             }
         }
 
+        // Populate script arguments in system/options/args
+        if (options.ScriptMode && options.ScriptPath != null)
+        {
+            try
+            {
+                var systemObj = (ObjectValue)globalContext.Get("system");
+                var optionsObj = (ObjectValue)systemObj.Context.Get("options");
+                var argsBlock = (Block)optionsObj.Context.Get("args");
+                foreach (var arg in options.ScriptArgs)
+                {
+                    argsBlock.Children.Add(new Text(arg));
+                }
+            }
+            catch { }
+        }
+
         foreach (var target in options.Targets)
         {
             if (target.Type == EvaluationType.File)
@@ -83,6 +99,11 @@ class Program
             }
         }
 
+        if (options.ScriptMode && options.ScriptPath != null)
+        {
+            RunFile(options.ScriptPath, interpreter, globalContext);
+        }
+
         if (!options.NoRepl)
         {
             RunRepl(interpreter, globalContext);
@@ -91,7 +112,7 @@ class Program
 
     static void PrintHelp()
     {
-        Console.WriteLine("Usage: ragnar [options]");
+        Console.WriteLine("Usage: ragnar [options] [script-file] [script-args]");
         Console.WriteLine();
         Console.WriteLine("Options:");
         Console.WriteLine("  -f, --file <path>       a ragnar file to be evaluated");

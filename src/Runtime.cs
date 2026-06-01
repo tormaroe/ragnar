@@ -20,12 +20,16 @@ public static class Runtime
                     {
                         var systemCtx = new Context();
                         var consoleCtx = new Context();
+                        var optionsCtx = new Context();
 
                         consoleCtx.Set("prompt", new Text(">> "));
                         consoleCtx.Set("result", new Text("== "));
                         consoleCtx.Set("history", new Block());
 
+                        optionsCtx.Set("args", new Block());
+
                         systemCtx.Set("console", new ObjectValue(consoleCtx));
+                        systemCtx.Set("options", new ObjectValue(optionsCtx));
                         systemCtx.Set("actors", new Block());
 
                         _systemObject = new ObjectValue(systemCtx);

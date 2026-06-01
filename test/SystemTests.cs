@@ -40,4 +40,54 @@ public class SystemTests : TestBase
         Assert.IsType<File>(result);
         Assert.Equal(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ((File)result).Path);
     }
+
+    [Fact]
+    public void Exists_Mezzanine_Works()
+    {
+        Run("write %test-exists.txt \"hello\"");
+        try
+        {
+            var result1 = Run("exists? %test-exists.txt").Result;
+            Assert.IsType<Logic>(result1);
+            Assert.True(((Logic)result1).Condition);
+
+            var result2 = Run("exists? %non-existent-file-12345.txt").Result;
+            Assert.IsType<Logic>(result2);
+            Assert.False(((Logic)result2).Condition);
+        }
+        finally
+        {
+            if (System.IO.File.Exists("test-exists.txt"))
+            {
+                System.IO.File.Delete("test-exists.txt");
+            }
+        }
+    }
+
+    [Fact]
+    public void Set_Get_Env_Mezzanine_Works()
+    {
+        Run("set-env \"RAGNAR_TEST_VAR\" \"hello-ragnar\"");
+        var result1 = Run("get-env \"RAGNAR_TEST_VAR\"").Result;
+        Assert.IsType<Text>(result1);
+        Assert.Equal("hello-ragnar", ((Text)result1).Content);
+
+        Run("set-env \"RAGNAR_TEST_VAR\" none");
+        var result2 = Run("get-env \"RAGNAR_TEST_VAR\"").Result;
+        Assert.IsType<Word>(result2);
+        Assert.Equal("none", ((Word)result2).Name);
+    }
+
+    [Fact]
+    public void Call_Capture_Output_Works()
+    {
+        bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+        
+        // Use a basic command that prints text
+        string cmd = isWindows ? "cmd /c echo hello" : "echo hello";
+        
+        var result = Run($"call/output \"{cmd}\"").Result;
+        Assert.IsType<Text>(result);
+        Assert.Contains("hello", ((Text)result).Content);
+    }
 }

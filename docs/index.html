@@ -141,7 +141,7 @@ either age > 18 [
                     <h3>Command Line Options</h3>
                     <p>Ragnar supports the following options and flags:</p>
                     <div class="code-wrapper">
-                        <pre><code>Usage: ragnar [options]
+                        <pre><code>Usage: ragnar [options] [script-file] [script-args]
 
 Options:
   -f, --file &lt;path&gt;       a ragnar file to be evaluated
@@ -165,8 +165,29 @@ chmod +x Ragnar
 ./Ragnar</code></pre>
                     </div>
 
-                    <h3>Executing Scripts & Expressions</h3>
-                    <p>Evaluate a script file using the <code>-f</code> option:</p>
+                    <h3>Executing Scripts &amp; Expressions</h3>
+                    <p>You can execute a Ragnar script file directly by passing its path as a positional argument (Ragnar options parsing will stop at the script path, feeding subsequent inputs directly to the script):</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#run-file-positional">Copy</button>
+                        <pre><code id="run-file-positional"># Executing a script positionally (with optional arguments)
+# Windows
+.\Ragnar.exe examples/git-check.r src/
+
+# macOS / Linux
+./Ragnar examples/git-check.r src/</code></pre>
+                    </div>
+
+                    <p>Unix-like environments also support executing files directly using a shebang line (hashbang):</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#run-shebang">Copy</button>
+                        <pre><code id="run-shebang"># Make the script executable
+chmod +x examples/git-check.r
+
+# Run the script directly
+./examples/git-check.r src/</code></pre>
+                    </div>
+
+                    <p>You can also evaluate a script file using the <code>-f</code> option:</p>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#run-file">Copy</button>
                         <pre><code id="run-file"># Windows
@@ -175,6 +196,7 @@ chmod +x Ragnar
 # macOS / Linux
 ./Ragnar -f examples/pingpong.r</code></pre>
                     </div>
+
                     <p>Or evaluate an expression directly using the <code>-e</code> option (use <code>--no-repl</code> to prevent dropping into the REPL):</p>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#run-eval">Copy</button>
@@ -185,6 +207,50 @@ chmod +x Ragnar
 ./Ragnar -e "print 42" --no-repl</code></pre>
                     </div>
                     <p>Multiple <code>-f</code> and <code>-e</code> targets can be specified in any order, and they will be evaluated in the order they are provided.</p>
+
+                    <h3>Script Example: Git Status Checker</h3>
+                    <p>Below is a working shell script example (available in <a href="https://github.com/tormaroe/ragnar/blob/main/examples/git-check.r" target="_blank"><code>examples/git-check.r</code></a>). It accepts a target directory as a command line argument, checks if it is a git repository, and runs <code>git</code> status checks via the platform-aware <code>call/output</code> utility:</p>
+                    <div class="code-wrapper">
+                        <pre><code>#!/usr/bin/env ragnar
+
+args: system/options/args
+
+; 1. Determine directory to check
+target-dir: either empty? args ["."] [first args]
+
+print rejoin ["Checking repository status in: " target-dir]
+
+; 2. Ensure directory exists
+either exists? to-file target-dir [
+    cd to-file target-dir
+] [
+    print rejoin ["Error: Directory '" target-dir "' does not exist!"]
+    quit/with 1
+]
+
+; 3. Check for .git directory
+either exists? %.git [
+    print "Git repository detected."
+    
+    ; Get branch name
+    branch: trim call/output "git branch --show-current"
+    print rejoin ["Current branch: " branch]
+    
+    ; Check status summary
+    status: trim call/output "git status --short"
+    either empty? status [
+        print "Working tree is clean."
+    ] [
+        print "Uncommitted changes found:"
+        print status
+    ]
+] [
+    print "Not a git repository (no .git folder found)."
+    quit/with 1
+]
+
+quit/with 0</code></pre>
+                    </div>
                 </div>
             </section>
 
