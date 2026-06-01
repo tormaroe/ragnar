@@ -67,67 +67,81 @@ def main():
             except Exception as e:
                 print(f"Error deleting zip {item}: {e}")
 
-    # Build and package each platform
-    for rid in rids:
-        print(f"\n=== Building and Packaging for {rid} ===")
-        out_dir = os.path.join(dist_dir, rid)
+    created_zips = []
+    try:
+        # Build and package each platform
+        for rid in rids:
+            print(f"\n=== Building and Packaging for {rid} ===")
+            out_dir = os.path.join(dist_dir, rid)
 
-        publish_cmd = [
-            "dotnet", "publish", csproj_path,
-            "-c", "Release",
-            "-r", rid,
-            "-o", out_dir,
-            "-p:PublishSingleFile=true",
-            "-p:PublishReadyToRun=true",
-            "-p:SelfContained=false",
-            "--no-self-contained"
-        ]
-
-        print(f"Running dotnet publish for {rid}...")
-        ret, stdout, stderr = run_command(publish_cmd)
-        if ret != 0:
-            print(f"Failed to publish for {rid}:\n{stderr}")
-            sys.exit(1)
-
-        zip_name = f"Ragnar_{version}_{rid}"
-        zip_path = os.path.join(root_dir, zip_name)
-
-        print(f"Creating zip package: {zip_name}.zip...")
-        try:
-            shutil.make_archive(zip_path, 'zip', out_dir)
-            print(f"Zip package for {rid} created successfully.")
-        except Exception as e:
-            print(f"Failed to create zip package: {e}")
-            sys.exit(1)
-
-    # Check gh CLI status
-    if check_command("gh"):
-        print("\nGitHub CLI (gh) detected. Checking auth status...")
-        ret, stdout, stderr = run_command(["gh", "auth", "status"])
-        if ret == 0:
-            print(f"Creating GitHub Release v{version} and uploading zip packages...")
-            
-            zip_files = []
-            for item in os.listdir(root_dir):
-                if item.startswith(f"Ragnar_{version}_") and item.endswith(".zip"):
-                    zip_files.append(os.path.join(root_dir, item))
-
-            release_cmd = ["gh", "release", "create", f"v{version}"] + zip_files + [
-                "--title", f"v{version}",
-                "--generate-notes"
+            publish_cmd = [
+                "dotnet", "publish", csproj_path,
+                "-c", "Release",
+                "-r", rid,
+                "-o", out_dir,
+                "-p:PublishSingleFile=true",
+                "-p:PublishReadyToRun=true",
+                "-p:SelfContained=false",
+                "--no-self-contained"
             ]
 
-            ret, stdout, stderr = run_command(release_cmd)
-            if ret == 0:
-                print(f"GitHub Release v{version} successfully created and assets uploaded.")
-            else:
-                print(f"Failed to create GitHub Release:\n{stderr}")
+            print(f"Running dotnet publish for {rid}...")
+            ret, stdout, stderr = run_command(publish_cmd)
+            if ret != 0:
+                print(f"Failed to publish for {rid}:\n{stderr}")
                 sys.exit(1)
+
+            zip_name = f"Ragnar_{version}_{rid}"
+            zip_path = os.path.join(root_dir, zip_name)
+            zip_file = f"{zip_path}.zip"
+
+            print(f"Creating zip package: {zip_name}.zip...")
+            try:
+                shutil.make_archive(zip_path, 'zip', out_dir)
+                created_zips.append(zip_file)
+                print(f"Zip package for {rid} created successfully.")
+            except Exception as e:
+                print(f"Failed to create zip package: {e}")
+                sys.exit(1)
+
+        # Check gh CLI status
+        if check_command("gh"):
+            print("\nGitHub CLI (gh) detected. Checking auth status...")
+            ret, stdout, stderr = run_command(["gh", "auth", "status"])
+            if ret == 0:
+                print(f"Creating GitHub Release v{version} and uploading zip packages...")
+                
+                zip_files = []
+                for item in os.listdir(root_dir):
+                    if item.startswith(f"Ragnar_{version}_") and item.endswith(".zip"):
+                        zip_files.append(os.path.join(root_dir, item))
+
+                release_cmd = ["gh", "release", "create", f"v{version}"] + zip_files + [
+                    "--title", f"v{version}",
+                    "--generate-notes"
+                ]
+
+                ret, stdout, stderr = run_command(release_cmd)
+                if ret == 0:
+                    print(f"GitHub Release v{version} successfully created and assets uploaded.")
+                else:
+                    print(f"Failed to create GitHub Release:\n{stderr}")
+                    sys.exit(1)
+            else:
+                print("Warning: GitHub CLI is not authenticated. Skipping release creation on GitHub.")
+                print("Run 'gh auth login' to authenticate if you want to publish releases automatically.")
         else:
-            print("Warning: GitHub CLI is not authenticated. Skipping release creation on GitHub.")
-            print("Run 'gh auth login' to authenticate if you want to publish releases automatically.")
-    else:
-        print("Warning: GitHub CLI (gh) was not found in PATH. Skipping release creation on GitHub.")
+            print("Warning: GitHub CLI (gh) was not found in PATH. Skipping release creation on GitHub.")
+    finally:
+        if created_zips:
+            print("\n=== Cleaning up local release ZIP files ===")
+            for zip_file in created_zips:
+                if os.path.exists(zip_file):
+                    try:
+                        os.unlink(zip_file)
+                        print(f"Removed local release ZIP: {os.path.basename(zip_file)}")
+                    except Exception as e:
+                        print(f"Failed to remove {zip_file}: {e}")
 
 if __name__ == "__main__":
     main()
