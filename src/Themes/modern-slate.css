@@ -1,0 +1,181 @@
+body {
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding: 40px;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.gui-container {
+    max-width: 800px;
+    width: 100%;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 30px;
+    background-color: #1e293b;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gui-heading {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 8px;
+    letter-spacing: -0.025em;
+}
+
+.gui-text {
+    font-size: 1rem;
+    color: #cbd5e1;
+}
+
+.gui-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.gui-btn:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+}
+
+.gui-btn:active {
+    transform: scale(0.97);
+}
+
+.gui-field {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #f8fafc;
+    padding: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    flex-grow: 1;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gui-field:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.gui-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    color: #cbd5e1;
+}
+
+.gui-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0; width: 0;
+}
+
+.gui-checkbox-custom {
+    height: 18px;
+    width: 18px;
+    border-radius: 4px;
+    border: 1px solid #334155;
+    background-color: #0f172a;
+    display: inline-block;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.gui-checkbox:checked ~ .gui-checkbox-custom {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.gui-checkbox:checked ~ .gui-checkbox-custom::after {
+    content: "\2713";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.gui-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+}
+
+.gui-slider-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #94a3b8;
+}
+
+.gui-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #334155;
+    outline: none;
+}
+
+.gui-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #6366f1;
+    cursor: pointer;
+    border: 2px solid #1e293b;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.gui-slider::-webkit-slider-thumb:hover {
+    background: #4f46e5;
+    transform: scale(1.1);
+}
+
+.gui-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #334155;
+}

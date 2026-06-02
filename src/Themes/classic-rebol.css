@@ -1,0 +1,154 @@
+body {
+    background-color: #f0edf0;
+    color: #000000;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    padding: 40px;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.gui-container {
+    max-width: 800px;
+    width: 100%;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 30px;
+    background-color: #d4d0c8;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gui-heading {
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #808080;
+    padding-bottom: 3px;
+    color: #000080;
+}
+
+.gui-text {
+    font-size: 1rem;
+}
+
+.gui-btn {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    background-color: #d4d0c8;
+    color: #000000;
+    padding: 6px 16px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    font-weight: normal;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.gui-btn:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 7px 15px 5px 17px;
+}
+
+.gui-field {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background-color: #ffffff;
+    color: #000000;
+    padding: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    flex-grow: 1;
+    box-shadow: inset 1px 1px 2px #404040;
+}
+
+.gui-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.gui-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0; width: 0;
+}
+
+.gui-checkbox-custom {
+    height: 16px;
+    width: 16px;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background-color: #ffffff;
+    display: inline-block;
+    position: relative;
+    box-shadow: inset 1px 1px 2px #404040;
+}
+
+.gui-checkbox:checked ~ .gui-checkbox-custom::after {
+    content: "\2713";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000000;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.gui-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+}
+
+.gui-slider-label {
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.gui-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #e0dede;
+    outline: none;
+}
+
+.gui-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 20px;
+    background: #d4d0c8;
+    cursor: pointer;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+}
+
+.gui-img {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+}

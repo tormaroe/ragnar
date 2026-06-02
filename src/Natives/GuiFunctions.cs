@@ -20,6 +20,7 @@ public static class GuiFunctions
     private static readonly object _connLock = new();
     private static Timer? _disconnectTimer;
     private static GuiWidget? _rootWidget;
+    private static string _currentTheme = "retro-terminal";
 
     public static void Add(Context ctx)
     {
@@ -114,6 +115,27 @@ public static class GuiFunctions
 
             return widget.CurrentValue;
         }, 1).WithTitle("Returns the current value of a GUI widget."));
+
+        // set-theme theme
+        ctx.Set("set-theme", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            string themeName = args[0] switch
+            {
+                Word w => w.Name,
+                LitWord lw => lw.Name,
+                Text t => t.Content,
+                _ => throw new Exception("set-theme expects a theme name (word or text).")
+            };
+
+            themeName = themeName.ToLower();
+            if (themeName != "retro-terminal" && themeName != "classic-rebol" && themeName != "modern-slate")
+            {
+                throw new Exception($"Unknown theme: '{themeName}'. Supported themes: 'retro-terminal', 'classic-rebol', 'modern-slate'.");
+            }
+
+            _currentTheme = themeName;
+            return new Word(themeName);
+        }, 1).WithTitle("Sets the visual theme for view GUI applications."));
     }
 
     private static int GetFreePort()
@@ -296,7 +318,7 @@ public static class GuiFunctions
             {
                 string html = BuildHtml();
                 byte[] buffer = Encoding.UTF8.GetBytes(html);
-                response.ContentType = "text/html";
+                response.ContentType = "text/html; charset=utf-8";
                 response.ContentLength64 = buffer.Length;
                 response.OutputStream.Write(buffer, 0, buffer.Length);
                 response.OutputStream.Close();
@@ -520,194 +542,20 @@ public static class GuiFunctions
             }
         }
 
+        string cssContent = LoadThemeCss(_currentTheme);
+
         return $@"<!DOCTYPE html>
 <html>
 <head>
+    <meta charset=""UTF-8"">
     <title>{title}</title>
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
     <style>
-        body {{
-            background-color: #000c00;
-            color: #33ff33;
-            font-family: 'Fira Code', 'Courier New', Courier, monospace;
-            padding: 40px;
-            margin: 0;
-            overflow-x: hidden;
-            display: flex;
-            justify-content: center;
-            background-image: 
-                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 4px, 6px 100%;
-        }}
-        
-        .retro-container {{
-            max-width: 800px;
-            width: 100%;
-            border: 2px solid #33ff33;
-            padding: 30px;
-            box-shadow: 0 0 15px rgba(51, 255, 51, 0.3), inset 0 0 15px rgba(51, 255, 51, 0.2);
-            background: #000800;
-            position: relative;
-        }}
-
-        .retro-container::after {{
-            content: "" "";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: radial-gradient(circle, transparent 70%, rgba(0,0,0,0.4) 100%);
-            pointer-events: none;
-        }}
-
-        .column {{
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }}
-
-        .row {{
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }}
-
-        .retro-heading {{
-            font-size: 2rem;
-            margin: 0 0 10px 0;
-            border-bottom: 2px dashed #33ff33;
-            padding-bottom: 5px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }}
-
-        .retro-text {{
-            font-size: 1.1rem;
-        }}
-
-        .retro-btn {{
-            border: 2px solid #33ff33;
-            background-color: #001100;
-            color: #33ff33;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-family: inherit;
-            font-weight: bold;
-            box-shadow: 0 0 5px rgba(51, 255, 51, 0.3);
-            outline: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-        }}
-
-        .retro-btn:hover {{
-            background-color: #33ff33;
-            color: #000c00;
-            box-shadow: 0 0 15px #33ff33;
-        }}
-
-        .retro-field {{
-            border: 2px solid #33ff33;
-            background-color: #000600;
-            color: #33ff33;
-            padding: 10px;
-            font-size: 1rem;
-            font-family: inherit;
-            box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5);
-            outline: none;
-            flex-grow: 1;
-        }}
-
-        .retro-field:focus {{
-            box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5), 0 0 10px rgba(51, 255, 51, 0.5);
-        }}
-
-        .retro-checkbox-label {{
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            user-select: none;
-        }}
-
-        .retro-checkbox {{
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0; width: 0;
-        }}
-
-        .retro-checkbox-custom {{
-            height: 20px;
-            width: 20px;
-            border: 2px solid #33ff33;
-            background-color: #000600;
-            display: inline-block;
-            position: relative;
-        }}
-
-        .retro-checkbox:checked ~ .retro-checkbox-custom::after {{
-            content: ""X"";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #33ff33;
-            font-weight: bold;
-            font-size: 14px;
-        }}
-
-        .retro-slider-container {{
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            flex-grow: 1;
-        }}
-
-        .retro-slider-label {{
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }}
-
-        .retro-slider {{
-            -webkit-appearance: none;
-            width: 100%;
-            height: 10px;
-            border: 2px solid #33ff33;
-            background: #000600;
-            outline: none;
-            opacity: 0.8;
-            transition: opacity .2s;
-        }}
-
-        .retro-slider::-webkit-slider-thumb {{
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #33ff33;
-            cursor: pointer;
-            border: 1px solid #000c00;
-            box-shadow: 0 0 5px #33ff33;
-        }}
-
-        .retro-img {{
-            max-width: 100%;
-            height: auto;
-            border: 2px solid #33ff33;
-            box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
-        }}
-
-        /* Glow effects */
-        .retro-heading, .retro-text, .retro-btn, .retro-field, .retro-checkbox-label, .retro-slider-label {{
-            text-shadow: 0 0 5px rgba(51, 255, 51, 0.8), 0 0 10px rgba(51, 255, 51, 0.2);
-        }}
+        {cssContent}
     </style>
 </head>
 <body>
-    <div class=""retro-container"">
+    <div class=""gui-container"">
         <div class=""column"">
             {content}
         </div>
@@ -797,36 +645,51 @@ public static class GuiFunctions
                 break;
 
             case "heading":
-                sb.Append($"<h1 id=\"{widget.Id}\" class=\"retro-heading\">{widget.Text}</h1>");
+                sb.Append($"<h1 id=\"{widget.Id}\" class=\"gui-heading\">{widget.Text}</h1>");
                 break;
 
             case "text":
-                sb.Append($"<span id=\"{widget.Id}\" class=\"retro-text\">{widget.Text}</span>");
+                sb.Append($"<span id=\"{widget.Id}\" class=\"gui-text\">{widget.Text}</span>");
                 break;
 
             case "button":
-                sb.Append($"<button id=\"{widget.Id}\" onclick=\"triggerClick('{widget.Id}')\" class=\"retro-btn\">{widget.Text}</button>");
+                sb.Append($"<button id=\"{widget.Id}\" onclick=\"triggerClick('{widget.Id}')\" class=\"gui-btn\">{widget.Text}</button>");
                 break;
 
             case "field":
-                sb.Append($"<input id=\"{widget.Id}\" type=\"text\" class=\"retro-field\" value=\"{widget.CurrentValue.ToUserString()}\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/>");
+                sb.Append($"<input id=\"{widget.Id}\" type=\"text\" class=\"gui-field\" value=\"{widget.CurrentValue.ToUserString()}\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/>");
                 break;
 
             case "check":
                 bool isChecked = widget.CurrentValue is Logic l && l.Condition;
-                sb.Append($"<label class=\"retro-checkbox-label\"><input id=\"{widget.Id}\" type=\"checkbox\" class=\"retro-checkbox\" {(isChecked ? "checked" : "")} onchange=\"updateValue('{widget.Id}', this.checked){(widget.Action != null ? "; triggerAction('" + widget.Id + "')" : "")}\"/> <span class=\"retro-checkbox-custom\"></span>{widget.Text}</label>");
+                sb.Append($"<label class=\"gui-checkbox-label\"><input id=\"{widget.Id}\" type=\"checkbox\" class=\"gui-checkbox\" {(isChecked ? "checked" : "")} onchange=\"updateValue('{widget.Id}', this.checked){(widget.Action != null ? "; triggerAction('" + widget.Id + "')" : "")}\"/> <span class=\"gui-checkbox-custom\"></span>{widget.Text}</label>");
                 break;
 
             case "slider":
                 int val = widget.CurrentValue is Integer integer ? (int)integer.Number : 0;
-                sb.Append($"<div class=\"retro-slider-container\"><span class=\"retro-slider-label\">{widget.Text}</span><input id=\"{widget.Id}\" type=\"range\" min=\"0\" max=\"100\" value=\"{val}\" class=\"retro-slider\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/></div>");
+                sb.Append($"<div class=\"gui-slider-container\"><span class=\"gui-slider-label\">{widget.Text}</span><input id=\"{widget.Id}\" type=\"range\" min=\"0\" max=\"100\" value=\"{val}\" class=\"gui-slider\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/></div>");
                 break;
 
             case "image":
-                sb.Append($"<img id=\"{widget.Id}\" src=\"{widget.Text}\" class=\"retro-img\" alt=\"{widget.Id}\"/>");
+                sb.Append($"<img id=\"{widget.Id}\" src=\"{widget.Text}\" class=\"gui-img\" alt=\"{widget.Id}\"/>");
                 break;
         }
 
         return sb.ToString();
+    }
+
+    private static string LoadThemeCss(string themeName)
+    {
+        var assembly = typeof(GuiFunctions).Assembly;
+        string resourceName = $"Ragnar.Themes.{themeName}.css";
+
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null)
+        {
+            throw new Exception($"Embedded theme resource '{resourceName}' not found.");
+        }
+
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 }

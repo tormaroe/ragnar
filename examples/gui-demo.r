@@ -1,6 +1,20 @@
 ; Retro Terminal GUI Demo in Ragnar
 
-print "Starting Retro GUI Demo..."
+print "Starting GUI Demo..."
+
+theme-choice: ask "Choose theme (1: retro-terminal [default], 2: classic-rebol, 3: modern-slate): "
+either theme-choice = "2" [
+    set-theme 'classic-rebol
+    print "Theme set to: classic-rebol"
+] [
+    either theme-choice = "3" [
+        set-theme 'modern-slate
+        print "Theme set to: modern-slate"
+    ] [
+        set-theme 'retro-terminal
+        print "Theme set to: retro-terminal"
+    ]
+]
 
 view [
     title "Ragnar CRT Terminal v1.0"

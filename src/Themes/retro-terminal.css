@@ -1,0 +1,178 @@
+body {
+    background-color: #000c00;
+    color: #33ff33;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    padding: 40px;
+    margin: 0;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    background-image: 
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 6px 100%;
+}
+
+.gui-container {
+    max-width: 800px;
+    width: 100%;
+    border: 2px solid #33ff33;
+    padding: 30px;
+    box-shadow: 0 0 15px rgba(51, 255, 51, 0.3), inset 0 0 15px rgba(51, 255, 51, 0.2);
+    background: #000800;
+    position: relative;
+}
+
+.gui-container::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: radial-gradient(circle, transparent 70%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gui-heading {
+    font-size: 2rem;
+    margin: 0 0 10px 0;
+    border-bottom: 2px dashed #33ff33;
+    padding-bottom: 5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.gui-text {
+    font-size: 1.1rem;
+}
+
+.gui-btn {
+    border: 2px solid #33ff33;
+    background-color: #001100;
+    color: #33ff33;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-family: inherit;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(51, 255, 51, 0.3);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.gui-btn:hover {
+    background-color: #33ff33;
+    color: #000c00;
+    box-shadow: 0 0 15px #33ff33;
+}
+
+.gui-field {
+    border: 2px solid #33ff33;
+    background-color: #000600;
+    color: #33ff33;
+    padding: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5);
+    outline: none;
+    flex-grow: 1;
+}
+
+.gui-field:focus {
+    box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5), 0 0 10px rgba(51, 255, 51, 0.5);
+}
+
+.gui-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.gui-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0; width: 0;
+}
+
+.gui-checkbox-custom {
+    height: 20px;
+    width: 20px;
+    border: 2px solid #33ff33;
+    background-color: #000600;
+    display: inline-block;
+    position: relative;
+}
+
+.gui-checkbox:checked ~ .gui-checkbox-custom::after {
+    content: "X";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #33ff33;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.gui-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-grow: 1;
+}
+
+.gui-slider-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.gui-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border: 2px solid #33ff33;
+    background: #000600;
+    outline: none;
+    opacity: 0.8;
+    transition: opacity .2s;
+}
+
+.gui-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #33ff33;
+    cursor: pointer;
+    border: 1px solid #000c00;
+    box-shadow: 0 0 5px #33ff33;
+}
+
+.gui-img {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #33ff33;
+    box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+}
+
+/* Glow effects */
+.gui-heading, .gui-text, .gui-btn, .gui-field, .gui-checkbox-label, .gui-slider-label {
+    text-shadow: 0 0 5px rgba(51, 255, 51, 0.8), 0 0 10px rgba(51, 255, 51, 0.2);
+}

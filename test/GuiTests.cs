@@ -115,18 +115,33 @@ public class GuiTests : TestBase
     {
         var widgetText = new GuiWidget("txt1", "text", "Glow text", new Word("none"));
         var htmlText = GuiFunctions.RenderWidgetHtml(widgetText);
-        Assert.Contains("class=\"retro-text\"", htmlText);
+        Assert.Contains("class=\"gui-text\"", htmlText);
         Assert.Contains("id=\"txt1\"", htmlText);
 
         var widgetBtn = new GuiWidget("btn1", "button", "Click me", new Word("none"));
         var htmlBtn = GuiFunctions.RenderWidgetHtml(widgetBtn);
-        Assert.Contains("class=\"retro-btn\"", htmlBtn);
+        Assert.Contains("class=\"gui-btn\"", htmlBtn);
         Assert.Contains("onclick=\"triggerClick('btn1')\"", htmlBtn);
 
         var widgetField = new GuiWidget("f1", "field", "", new Text("init text"));
         var htmlField = GuiFunctions.RenderWidgetHtml(widgetField);
-        Assert.Contains("class=\"retro-field\"", htmlField);
+        Assert.Contains("class=\"gui-field\"", htmlField);
         Assert.Contains("value=\"init text\"", htmlField);
+    }
+
+    [Fact]
+    public void Test_SetTheme()
+    {
+        var (result1, _) = Run("set-theme 'classic-rebol");
+        Assert.Equal("classic-rebol", result1.ToUserString());
+
+        var (result2, _) = Run("set-theme \"retro-terminal\"");
+        Assert.Equal("retro-terminal", result2.ToUserString());
+
+        var (result3, _) = Run("set-theme 'modern-slate");
+        Assert.Equal("modern-slate", result3.ToUserString());
+
+        Assert.ThrowsAny<Exception>(() => Run("set-theme 'invalid-theme"));
     }
 
     [Fact]
