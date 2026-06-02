@@ -343,3 +343,24 @@ public class ErrorValue(string message, Exception? innerException = null) : Valu
 
     public override string ToString() => $"** Script Error: {Message}";
 }
+
+public class GuiWidget : Value
+{
+    public string Id { get; }
+    public string Type { get; }
+    public string Text { get; set; }
+    public Value CurrentValue { get; set; }
+    public Block? Action { get; }
+    public List<GuiWidget> Children { get; } = new();
+
+    public GuiWidget(string id, string type, string text, Value currentValue, Block? action = null)
+    {
+        Id = id;
+        Type = type;
+        Text = text;
+        CurrentValue = currentValue;
+        Action = action;
+    }
+
+    public override string ToString() => $"<gui-widget {Type} id:{Id}>";
+}

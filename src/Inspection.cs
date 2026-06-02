@@ -147,6 +147,7 @@ public class Inspection
                 Function => "function!",
                 Native   => "native!",
                 DotNetValue => "dotnet!",
+                GuiWidget => "gui-widget!",
                 _        => "value!"
             };
             return new Word(typeName);

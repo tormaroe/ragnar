@@ -1,0 +1,832 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Ragnar.Natives;
+
+public static class GuiFunctions
+{
+    private static HttpListener? _listener;
+    private static ManualResetEvent? _exitEvent;
+    private static StreamWriter? _sseWriter;
+    private static readonly object _sseLock = new();
+    private static int _connectionCount = 0;
+    private static readonly object _connLock = new();
+    private static Timer? _disconnectTimer;
+    private static GuiWidget? _rootWidget;
+
+    public static void Add(Context ctx)
+    {
+        // view [layout]
+        ctx.Set("view", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            if (args[0] is not Block layoutBlock)
+                throw new Exception("view expects a layout block.");
+
+            // Parse layout block recursively
+            _rootWidget = ParseLayout(layoutBlock, context, interpreter);
+
+            // Find free port
+            int port = GetFreePort();
+            string url = $"http://localhost:{port}/";
+
+            // Initialize exit event
+            _exitEvent = new ManualResetEvent(false);
+            _connectionCount = 0;
+            _disconnectTimer = null;
+            _sseWriter = null;
+
+            // Start HttpListener
+            _listener = new HttpListener();
+            _listener.Prefixes.Add(url);
+            _listener.Start();
+
+            // Run listener loop in background task
+            Task.Run(() => ListenLoop(context, interpreter));
+
+            // Open browser
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                ctx.Output.WriteLine($"Failed to open browser: {ex.Message}");
+            }
+
+            ctx.Output.WriteLine($"GUI Server running at {url}. Waiting for browser...");
+
+            // Block script execution until window is closed
+            _exitEvent.WaitOne();
+
+            // Stop server and clean up
+            try
+            {
+                _listener.Stop();
+                _listener.Close();
+            }
+            catch {}
+
+            lock (_sseLock)
+            {
+                _sseWriter?.Close();
+                _sseWriter = null;
+            }
+
+            _disconnectTimer?.Dispose();
+
+            ctx.Output.WriteLine("GUI Session ended.");
+            return new Word("none");
+        }, 1).WithTitle("Launches a Visual Dialect application in the default browser."));
+
+        // set-face widget value
+        ctx.Set("set-face", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            if (args[0] is not GuiWidget widget)
+                throw new Exception("set-face expects a gui-widget.");
+
+            Value val = args[1];
+            widget.CurrentValue = val;
+
+            // If it is a text-based or visual widget, also update its text
+            if (widget.Type == "text" || widget.Type == "heading" || widget.Type == "image")
+            {
+                widget.Text = val.ToUserString();
+            }
+
+            // Push update to browser via SSE
+            SendSseUpdate(widget.Id, val.ToUserString());
+
+            return val;
+        }, 2).WithTitle("Updates a GUI widget's value and refreshes it in the browser."));
+
+        // get-face widget
+        ctx.Set("get-face", new Native((args, refs, context, interpreter, isTail) =>
+        {
+            if (args[0] is not GuiWidget widget)
+                throw new Exception("get-face expects a gui-widget.");
+
+            return widget.CurrentValue;
+        }, 1).WithTitle("Returns the current value of a GUI widget."));
+    }
+
+    private static int GetFreePort()
+    {
+        using var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    internal static GuiWidget ParseLayout(Block layoutBlock, Context context, Interpreter interpreter)
+    {
+        var root = new GuiWidget("root", "column", "", new Word("none"));
+        ParseBlock(layoutBlock.Children.Skip(layoutBlock.Index).ToList(), root, context, interpreter);
+        return root;
+    }
+
+    private static void ParseBlock(List<Value> items, GuiWidget container, Context context, Interpreter interpreter)
+    {
+        int i = 0;
+        int widgetCounter = 0;
+        string? pendingName = null;
+
+        while (i < items.Count)
+        {
+            var item = items[i];
+
+            if (item is SetWord sw)
+            {
+                pendingName = sw.Name;
+                i++;
+                continue;
+            }
+
+            if (item is Word w)
+            {
+                string type = w.Name.ToLower();
+                if (type == "title")
+                {
+                    i++;
+                    if (i < items.Count)
+                    {
+                        var val = EvaluateOrGetLiteral(items[i], context, interpreter);
+                        container.Text = val.ToUserString();
+                    }
+                    i++;
+                }
+                else if (type == "heading" || type == "text" || type == "field" || type == "button" || type == "check" || type == "slider" || type == "image")
+                {
+                    i++;
+                    string text = "";
+                    Value initialValue = new Word("none");
+                    Block? action = null;
+
+                    if (i < items.Count && (items[i] is Text || items[i] is Paren))
+                    {
+                        var evaluated = EvaluateOrGetLiteral(items[i], context, interpreter);
+                        text = evaluated.ToUserString();
+                        if (type == "field") initialValue = evaluated;
+                        i++;
+                    }
+
+                    if (type == "check")
+                    {
+                        if (i < items.Count && (items[i] is Logic || items[i] is Paren))
+                        {
+                            var evaluated = EvaluateOrGetLiteral(items[i], context, interpreter);
+                            initialValue = evaluated;
+                            i++;
+                        }
+                        if (initialValue is Word) initialValue = new Logic(false);
+                    }
+
+                    if (type == "slider")
+                    {
+                        if (i < items.Count && (items[i] is Integer || items[i] is Paren))
+                        {
+                            var evaluated = EvaluateOrGetLiteral(items[i], context, interpreter);
+                            initialValue = evaluated;
+                            i++;
+                        }
+                        if (initialValue is Word) initialValue = new Integer(0);
+                    }
+
+                    if (type == "field" && initialValue is Word)
+                    {
+                        initialValue = new Text("");
+                    }
+
+                    if (i < items.Count && items[i] is Block actionBlock)
+                    {
+                        action = actionBlock;
+                        i++;
+                    }
+
+                    string id = pendingName ?? $"{type}_{++widgetCounter}";
+                    var widget = new GuiWidget(id, type, text, initialValue, action);
+                    container.Children.Add(widget);
+
+                    if (pendingName != null)
+                    {
+                        context.Set(pendingName, widget);
+                        pendingName = null;
+                    }
+                }
+                else if (type == "row" || type == "column")
+                {
+                    i++;
+                    if (i < items.Count && items[i] is Block subBlock)
+                    {
+                        string id = pendingName ?? $"{type}_{++widgetCounter}";
+                        var subContainer = new GuiWidget(id, type, "", new Word("none"));
+                        ParseBlock(subBlock.Children.Skip(subBlock.Index).ToList(), subContainer, context, interpreter);
+                        container.Children.Add(subContainer);
+
+                        if (pendingName != null)
+                        {
+                            context.Set(pendingName, subContainer);
+                            pendingName = null;
+                        }
+                        i++;
+                    }
+                    else
+                    {
+                        throw new Exception($"{type} expects a layout block.");
+                    }
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            else
+            {
+                pendingName = null;
+                i++;
+            }
+        }
+    }
+
+    private static Value EvaluateOrGetLiteral(Value val, Context context, Interpreter interpreter)
+    {
+        if (val is Paren p)
+        {
+            return interpreter.Evaluate(new Block(p.Children, p.Index), context);
+        }
+        return val;
+    }
+
+    private static void ListenLoop(Context context, Interpreter interpreter)
+    {
+        if (_listener == null) return;
+
+        while (_listener.IsListening)
+        {
+            try
+            {
+                var contextTask = _listener.GetContextAsync();
+                contextTask.Wait();
+                var ctx = contextTask.Result;
+
+                _ = Task.Run(() => HandleRequest(ctx, context, interpreter));
+            }
+            catch
+            {
+                break;
+            }
+        }
+    }
+
+    private static void HandleRequest(HttpListenerContext ctx, Context context, Interpreter interpreter)
+    {
+        var request = ctx.Request;
+        var response = ctx.Response;
+
+        try
+        {
+            if (request.HttpMethod == "GET" && request.Url?.AbsolutePath == "/")
+            {
+                string html = BuildHtml();
+                byte[] buffer = Encoding.UTF8.GetBytes(html);
+                response.ContentType = "text/html";
+                response.ContentLength64 = buffer.Length;
+                response.OutputStream.Write(buffer, 0, buffer.Length);
+                response.OutputStream.Close();
+            }
+            else if (request.HttpMethod == "GET" && request.Url?.AbsolutePath == "/events")
+            {
+                response.ContentType = "text/event-stream";
+                response.Headers.Add("Cache-Control", "no-cache");
+                response.Headers.Add("Connection", "keep-alive");
+                response.Headers.Add("Access-Control-Allow-Origin", "*");
+
+                var writer = new StreamWriter(response.OutputStream);
+                lock (_sseLock)
+                {
+                    if (_sseWriter != null)
+                    {
+                        try { _sseWriter.Close(); } catch {}
+                    }
+                    _sseWriter = writer;
+                }
+
+                lock (_connLock)
+                {
+                    _connectionCount++;
+                    if (_disconnectTimer != null)
+                    {
+                        _disconnectTimer.Dispose();
+                        _disconnectTimer = null;
+                    }
+                }
+
+                // Keep SSE connection open with heartbeat
+                while (_listener?.IsListening == true)
+                {
+                    Thread.Sleep(2000);
+                    try
+                    {
+                        lock (_sseLock)
+                        {
+                            writer.Write(":\n\n");
+                            writer.Flush();
+                        }
+                    }
+                    catch
+                    {
+                        break;
+                    }
+                }
+
+                lock (_connLock)
+                {
+                    _connectionCount--;
+                    if (_connectionCount <= 0)
+                    {
+                        _disconnectTimer = new Timer(_ =>
+                        {
+                            lock (_connLock)
+                            {
+                                if (_connectionCount <= 0)
+                                {
+                                    _exitEvent?.Set();
+                                }
+                            }
+                        }, null, 2000, Timeout.Infinite);
+                    }
+                }
+
+                try { writer.Close(); } catch {}
+            }
+            else if (request.HttpMethod == "POST" && request.Url?.AbsolutePath == "/click")
+            {
+                string? id = request.QueryString["id"];
+                if (id != null)
+                {
+                    using var reader = new StreamReader(request.InputStream);
+                    string body = reader.ReadToEnd();
+
+                    // Parse request body containing values: {"values": {"cmd-field": "value"}}
+                    var values = ParseJsonValues(body);
+
+                    // Sync client values back to C# GuiWidget instances
+                    if (_rootWidget != null)
+                    {
+                        SyncWidgetValues(_rootWidget, values);
+                    }
+
+                    // Run the associated action block in the interpreter
+                    var widget = FindWidget(_rootWidget, id);
+                    if (widget?.Action != null)
+                    {
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                interpreter.Evaluate(widget.Action, context);
+                            }
+                            catch (Exception ex)
+                            {
+                                context.Output.WriteLine($"GUI action error: {ex.Message}");
+                            }
+                        });
+                    }
+                }
+
+                response.StatusCode = 200;
+                response.OutputStream.Close();
+            }
+            else
+            {
+                response.StatusCode = 404;
+                response.OutputStream.Close();
+            }
+        }
+        catch (Exception)
+        {
+            try
+            {
+                response.StatusCode = 500;
+                response.OutputStream.Close();
+            }
+            catch {}
+        }
+    }
+
+    private static Dictionary<string, string> ParseJsonValues(string json)
+    {
+        var dict = new Dictionary<string, string>();
+        
+        // Very basic JSON parser to extract values without external library
+        int valuesIdx = json.IndexOf("\"values\"");
+        if (valuesIdx < 0) return dict;
+
+        int startBrace = json.IndexOf("{", valuesIdx);
+        int endBrace = json.LastIndexOf("}");
+        if (startBrace < 0 || endBrace < 0 || endBrace <= startBrace) return dict;
+
+        string sub = json.Substring(startBrace + 1, endBrace - startBrace - 1);
+        var tokens = sub.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var t in tokens)
+        {
+            var parts = t.Split(new[] { ':' }, 2);
+            if (parts.Length == 2)
+            {
+                string key = parts[0].Trim().Trim('"');
+                string val = parts[1].Trim().Trim('"');
+                dict[key] = val;
+            }
+        }
+
+        return dict;
+    }
+
+    private static void SyncWidgetValues(GuiWidget widget, Dictionary<string, string> values)
+    {
+        if (values.TryGetValue(widget.Id, out string? valStr))
+        {
+            if (widget.Type == "field")
+            {
+                widget.CurrentValue = new Text(valStr);
+            }
+            else if (widget.Type == "check")
+            {
+                widget.CurrentValue = new Logic(valStr.ToLower() == "true");
+            }
+            else if (widget.Type == "slider")
+            {
+                if (int.TryParse(valStr, out int parsedVal))
+                    widget.CurrentValue = new Integer(parsedVal);
+            }
+        }
+
+        foreach (var child in widget.Children)
+        {
+            SyncWidgetValues(child, values);
+        }
+    }
+
+    private static GuiWidget? FindWidget(GuiWidget? widget, string id)
+    {
+        if (widget == null) return null;
+        if (widget.Id == id) return widget;
+
+        foreach (var child in widget.Children)
+        {
+            var found = FindWidget(child, id);
+            if (found != null) return found;
+        }
+
+        return null;
+    }
+
+    private static void SendSseUpdate(string id, string val)
+    {
+        lock (_sseLock)
+        {
+            if (_sseWriter != null)
+            {
+                try
+                {
+                    string safeVal = val.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
+                    var json = $"{{\"action\":\"update\",\"id\":\"{id}\",\"value\":\"{safeVal}\"}}";
+                    _sseWriter.Write($"data: {json}\n\n");
+                    _sseWriter.Flush();
+                }
+                catch {}
+            }
+        }
+    }
+
+    private static string BuildHtml()
+    {
+        string title = _rootWidget?.Text ?? "Ragnar GUI";
+        string content = "";
+
+        if (_rootWidget != null)
+        {
+            foreach (var child in _rootWidget.Children)
+            {
+                content += RenderWidgetHtml(child);
+            }
+        }
+
+        return $@"<!DOCTYPE html>
+<html>
+<head>
+    <title>{title}</title>
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <style>
+        body {{
+            background-color: #000c00;
+            color: #33ff33;
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            padding: 40px;
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            background-image: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 6px 100%;
+        }}
+        
+        .retro-container {{
+            max-width: 800px;
+            width: 100%;
+            border: 2px solid #33ff33;
+            padding: 30px;
+            box-shadow: 0 0 15px rgba(51, 255, 51, 0.3), inset 0 0 15px rgba(51, 255, 51, 0.2);
+            background: #000800;
+            position: relative;
+        }}
+
+        .retro-container::after {{
+            content: "" "";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: radial-gradient(circle, transparent 70%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+        }}
+
+        .column {{
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }}
+
+        .row {{
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }}
+
+        .retro-heading {{
+            font-size: 2rem;
+            margin: 0 0 10px 0;
+            border-bottom: 2px dashed #33ff33;
+            padding-bottom: 5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }}
+
+        .retro-text {{
+            font-size: 1.1rem;
+        }}
+
+        .retro-btn {{
+            border: 2px solid #33ff33;
+            background-color: #001100;
+            color: #33ff33;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(51, 255, 51, 0.3);
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }}
+
+        .retro-btn:hover {{
+            background-color: #33ff33;
+            color: #000c00;
+            box-shadow: 0 0 15px #33ff33;
+        }}
+
+        .retro-field {{
+            border: 2px solid #33ff33;
+            background-color: #000600;
+            color: #33ff33;
+            padding: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5);
+            outline: none;
+            flex-grow: 1;
+        }}
+
+        .retro-field:focus {{
+            box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5), 0 0 10px rgba(51, 255, 51, 0.5);
+        }}
+
+        .retro-checkbox-label {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }}
+
+        .retro-checkbox {{
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0; width: 0;
+        }}
+
+        .retro-checkbox-custom {{
+            height: 20px;
+            width: 20px;
+            border: 2px solid #33ff33;
+            background-color: #000600;
+            display: inline-block;
+            position: relative;
+        }}
+
+        .retro-checkbox:checked ~ .retro-checkbox-custom::after {{
+            content: ""X"";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #33ff33;
+            font-weight: bold;
+            font-size: 14px;
+        }}
+
+        .retro-slider-container {{
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex-grow: 1;
+        }}
+
+        .retro-slider-label {{
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }}
+
+        .retro-slider {{
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border: 2px solid #33ff33;
+            background: #000600;
+            outline: none;
+            opacity: 0.8;
+            transition: opacity .2s;
+        }}
+
+        .retro-slider::-webkit-slider-thumb {{
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #33ff33;
+            cursor: pointer;
+            border: 1px solid #000c00;
+            box-shadow: 0 0 5px #33ff33;
+        }}
+
+        .retro-img {{
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #33ff33;
+            box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+        }}
+
+        /* Glow effects */
+        .retro-heading, .retro-text, .retro-btn, .retro-field, .retro-checkbox-label, .retro-slider-label {{
+            text-shadow: 0 0 5px rgba(51, 255, 51, 0.8), 0 0 10px rgba(51, 255, 51, 0.2);
+        }}
+    </style>
+</head>
+<body>
+    <div class=""retro-container"">
+        <div class=""column"">
+            {content}
+        </div>
+    </div>
+
+    <script>
+        const clientValues = {{}};
+
+        // Cache initial values
+        function syncInputs() {{
+            document.querySelectorAll('input').forEach(el => {{
+                if (el.type === 'checkbox') {{
+                    clientValues[el.id] = el.checked;
+                }} else {{
+                    clientValues[el.id] = el.value;
+                }}
+            }});
+        }}
+        syncInputs();
+
+        function updateValue(id, val) {{
+            clientValues[id] = val;
+        }}
+
+        function triggerAction(id) {{
+            fetch('/click?id=' + id, {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json'
+                }},
+                body: JSON.stringify({{ values: clientValues }})
+            }}).catch(err => console.error(err));
+        }}
+
+        function triggerClick(id) {{
+            triggerAction(id);
+        }}
+
+        // Server-Sent Events
+        const eventSource = new EventSource('/events');
+        eventSource.onmessage = function(event) {{
+            const data = JSON.parse(event.data);
+            const el = document.getElementById(data.id);
+            if (!el) return;
+
+            if (data.action === ""update"") {{
+                if (el.tagName === 'INPUT') {{
+                    if (el.type === 'checkbox') {{
+                        el.checked = data.value.toLowerCase() === 'true';
+                        clientValues[data.id] = el.checked;
+                    }} else {{
+                        el.value = data.value;
+                        clientValues[data.id] = el.value;
+                    }}
+                }} else if (el.tagName === 'IMG') {{
+                    el.src = data.value;
+                }} else {{
+                    el.textContent = data.value;
+                }}
+            }}
+        }};
+
+        eventSource.onerror = function() {{
+            console.log(""SSE connection dropped"");
+        }};
+    </script>
+</body>
+</html>";
+    }
+
+    internal static string RenderWidgetHtml(GuiWidget widget)
+    {
+        var sb = new StringBuilder();
+
+        switch (widget.Type)
+        {
+            case "row":
+                sb.Append($"<div id=\"{widget.Id}\" class=\"row\">");
+                foreach (var child in widget.Children) sb.Append(RenderWidgetHtml(child));
+                sb.Append("</div>");
+                break;
+
+            case "column":
+                sb.Append($"<div id=\"{widget.Id}\" class=\"column\">");
+                foreach (var child in widget.Children) sb.Append(RenderWidgetHtml(child));
+                sb.Append("</div>");
+                break;
+
+            case "heading":
+                sb.Append($"<h1 id=\"{widget.Id}\" class=\"retro-heading\">{widget.Text}</h1>");
+                break;
+
+            case "text":
+                sb.Append($"<span id=\"{widget.Id}\" class=\"retro-text\">{widget.Text}</span>");
+                break;
+
+            case "button":
+                sb.Append($"<button id=\"{widget.Id}\" onclick=\"triggerClick('{widget.Id}')\" class=\"retro-btn\">{widget.Text}</button>");
+                break;
+
+            case "field":
+                sb.Append($"<input id=\"{widget.Id}\" type=\"text\" class=\"retro-field\" value=\"{widget.CurrentValue.ToUserString()}\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/>");
+                break;
+
+            case "check":
+                bool isChecked = widget.CurrentValue is Logic l && l.Condition;
+                sb.Append($"<label class=\"retro-checkbox-label\"><input id=\"{widget.Id}\" type=\"checkbox\" class=\"retro-checkbox\" {(isChecked ? "checked" : "")} onchange=\"updateValue('{widget.Id}', this.checked){(widget.Action != null ? "; triggerAction('" + widget.Id + "')" : "")}\"/> <span class=\"retro-checkbox-custom\"></span>{widget.Text}</label>");
+                break;
+
+            case "slider":
+                int val = widget.CurrentValue is Integer integer ? (int)integer.Number : 0;
+                sb.Append($"<div class=\"retro-slider-container\"><span class=\"retro-slider-label\">{widget.Text}</span><input id=\"{widget.Id}\" type=\"range\" min=\"0\" max=\"100\" value=\"{val}\" class=\"retro-slider\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/></div>");
+                break;
+
+            case "image":
+                sb.Append($"<img id=\"{widget.Id}\" src=\"{widget.Text}\" class=\"retro-img\" alt=\"{widget.Id}\"/>");
+                break;
+        }
+
+        return sb.ToString();
+    }
+}

@@ -77,6 +77,7 @@ public static class Runtime
         IoFunctions.Add(ctx);
         Actor.AddActorFunctions(ctx);
         ZipFunctions.Add(ctx);
+        Natives.GuiFunctions.Add(ctx);
 
         // System object
         ctx.Set("system", SystemObject);
