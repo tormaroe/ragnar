@@ -352,14 +352,18 @@ public class GuiWidget : Value
     public Value CurrentValue { get; set; }
     public Block? Action { get; }
     public List<GuiWidget> Children { get; } = new();
+    public List<string> Options { get; } = new();
+    public string? Width { get; set; }
+    public string? Height { get; set; }
 
-    public GuiWidget(string id, string type, string text, Value currentValue, Block? action = null)
+    public GuiWidget(string id, string type, string text, Value currentValue, Block? action = null, List<string>? options = null)
     {
         Id = id;
         Type = type;
         Text = text;
         CurrentValue = currentValue;
         Action = action;
+        if (options != null) Options.AddRange(options);
     }
 
     public override string ToString() => $"<gui-widget {Type} id:{Id}>";

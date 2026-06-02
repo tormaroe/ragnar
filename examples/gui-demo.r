@@ -17,10 +17,22 @@ either theme-choice = "2" [
 ]
 
 view [
-    title "Ragnar CRT Terminal v1.0"
-    heading "Ragnar Terminal Command Center"
+    title "Ragnar Command Center v1.0"
+    
+    row [
+        image "assets/ragnar-logo-small.png" 100
+        heading "Ragnar Command Center"
+    ]
     
     text "Configure system settings below:"
+    
+    row [
+        text "Subsystem Target:"
+        subsystem-choice: choice ["MAIN FRAME" "PROPULSION" "LIFE SUPPORT" "COMMUNICATIONS"] [
+            target: get-face subsystem-choice
+            set-face status-lbl rejoin ["Target Subsystem selected: " target]
+        ]
+    ]
     
     row [
         text "User Command:"
@@ -40,12 +52,14 @@ view [
     
     row [
         button "Execute Command" [
+            target: get-face subsystem-choice
             cmd: get-face cmd-field
             level: get-face pwr-slider
             safety: get-face check-override
             
             status-msg: rejoin [
-                "Command: " cmd 
+                "Target: " target
+                " | Command: " cmd 
                 " | Power: " level "%" 
                 " | Safety: " either safety ["DISABLED"] ["ENABLED"]
             ]
@@ -53,6 +67,7 @@ view [
         ]
         
         button "Reset System" [
+            set-face subsystem-choice "MAIN FRAME"
             set-face cmd-field "ACTIVATE"
             set-face pwr-slider 75
             set-face check-override false

@@ -166,4 +166,112 @@ public class GuiTests : TestBase
         Assert.Equal("Updated", widget.Text);
         Assert.Equal("Updated", widget.CurrentValue.ToUserString());
     }
+
+    [Fact]
+    public void Test_Choice_Parsing_And_Rendering()
+    {
+        var ctx = Runtime.CreateGlobalContext();
+        var interpreter = new Interpreter();
+
+        var code = @"
+            [
+                sel: choice [""Option A"" ""Option B"" ""Option C""] [ print ""Changed"" ]
+            ]
+        ";
+
+        var lexer = new Lexer(code);
+        var tokens = lexer.Tokenize();
+        var layoutBlock = (Block)new Loader().Load(tokens).Children.First();
+
+        var root = GuiFunctions.ParseLayout(layoutBlock, ctx, interpreter);
+
+        Assert.Single(root.Children);
+        var choice = root.Children[0];
+        Assert.Equal("choice", choice.Type);
+        Assert.Equal("Option A", choice.CurrentValue.ToUserString());
+        Assert.Equal(3, choice.Options.Count);
+        Assert.Equal("Option A", choice.Options[0]);
+        Assert.Equal("Option B", choice.Options[1]);
+        Assert.Equal("Option C", choice.Options[2]);
+        Assert.NotNull(choice.Action);
+
+        // Check HTML generation
+        var html = GuiFunctions.RenderWidgetHtml(choice);
+        Assert.Contains("<select id=\"sel\" class=\"gui-choice\"", html);
+        Assert.Contains("<option value=\"Option A\" selected=\"selected\">Option A</option>", html);
+        Assert.Contains("<option value=\"Option B\">Option B</option>", html);
+    }
+
+    [Fact]
+    public void Test_Image_Encoding()
+    {
+        var tempFile = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "temp_test_image.png");
+        try
+        {
+            System.IO.File.WriteAllBytes(tempFile, new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }); // dummy png header
+            var widget = new GuiWidget("img1", "image", tempFile, new Word("none"));
+
+            var html = GuiFunctions.RenderWidgetHtml(widget);
+            Assert.Contains("data:image/png;base64,iVBORw0KGgo=", html);
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tempFile)) System.IO.File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Test_Image_Sizing()
+    {
+        var ctx = Runtime.CreateGlobalContext();
+        var interpreter = new Interpreter();
+
+        var code = @"
+            [
+                image ""logo.png"" 150 50
+                image ""logo2.png"" 120x60
+            ]
+        ";
+
+        var lexer = new Lexer(code);
+        var tokens = lexer.Tokenize();
+        var layoutBlock = (Block)new Loader().Load(tokens).Children.First();
+
+        var root = GuiFunctions.ParseLayout(layoutBlock, ctx, interpreter);
+
+        Assert.Equal(2, root.Children.Count);
+
+        var img1 = root.Children[0];
+        Assert.Equal("image", img1.Type);
+        Assert.Equal("logo.png", img1.Text);
+        Assert.Equal("150", img1.Width);
+        Assert.Equal("50", img1.Height);
+
+        var img2 = root.Children[1];
+        Assert.Equal("image", img2.Type);
+        Assert.Equal("logo2.png", img2.Text);
+        Assert.Equal("120", img2.Width);
+        Assert.Equal("60", img2.Height);
+
+        var html1 = GuiFunctions.RenderWidgetHtml(img1);
+        Assert.Contains("width=\"150\"", html1);
+        Assert.Contains("height=\"50\"", html1);
+
+        var html2 = GuiFunctions.RenderWidgetHtml(img2);
+        Assert.Contains("width=\"120\"", html2);
+        Assert.Contains("height=\"60\"", html2);
+    }
+
+    [Fact]
+    public void Test_Json_Parsing_Values()
+    {
+        var json = "{\"values\":{\"check-override\":true,\"cmd-field\":\"ACTIVATE\"}}";
+        var dict = GuiFunctions.ParseJsonValues(json);
+
+        Assert.True(dict.TryGetValue("check-override", out var overrideVal));
+        Assert.Equal("true", overrideVal);
+
+        Assert.True(dict.TryGetValue("cmd-field", out var cmdVal));
+        Assert.Equal("ACTIVATE", cmdVal);
+    }
 }

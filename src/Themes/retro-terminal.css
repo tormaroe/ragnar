@@ -172,7 +172,35 @@ body {
     box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
 }
 
+.gui-choice {
+    border: 2px solid #33ff33;
+    background-color: #000600;
+    color: #33ff33;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2333ff33' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding: 10px 40px 10px 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5);
+    outline: none;
+    cursor: pointer;
+}
+
+.gui-choice:focus {
+    box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5), 0 0 10px rgba(51, 255, 51, 0.5);
+}
+
+.gui-choice option {
+    background-color: #000600;
+    color: #33ff33;
+}
+
 /* Glow effects */
-.gui-heading, .gui-text, .gui-btn, .gui-field, .gui-checkbox-label, .gui-slider-label {
+.gui-heading, .gui-text, .gui-btn, .gui-field, .gui-checkbox-label, .gui-slider-label, .gui-choice {
     text-shadow: 0 0 5px rgba(51, 255, 51, 0.8), 0 0 10px rgba(51, 255, 51, 0.2);
 }

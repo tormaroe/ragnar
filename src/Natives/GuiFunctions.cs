@@ -101,8 +101,14 @@ public static class GuiFunctions
                 widget.Text = val.ToUserString();
             }
 
+            string sseVal = val.ToUserString();
+            if (widget.Type == "image")
+            {
+                sseVal = GetImageSource(sseVal);
+            }
+
             // Push update to browser via SSE
-            SendSseUpdate(widget.Id, val.ToUserString());
+            SendSseUpdate(widget.Id, sseVal);
 
             return val;
         }, 2).WithTitle("Updates a GUI widget's value and refreshes it in the browser."));
@@ -184,12 +190,13 @@ public static class GuiFunctions
                     }
                     i++;
                 }
-                else if (type == "heading" || type == "text" || type == "field" || type == "button" || type == "check" || type == "slider" || type == "image")
+                else if (type == "heading" || type == "text" || type == "field" || type == "button" || type == "check" || type == "slider" || type == "image" || type == "choice")
                 {
                     i++;
                     string text = "";
                     Value initialValue = new Word("none");
                     Block? action = null;
+                    List<string>? options = null;
 
                     if (i < items.Count && (items[i] is Text || items[i] is Paren))
                     {
@@ -197,6 +204,38 @@ public static class GuiFunctions
                         text = evaluated.ToUserString();
                         if (type == "field") initialValue = evaluated;
                         i++;
+                    }
+
+                    string? imgWidth = null;
+                    string? imgHeight = null;
+                    if (type == "image")
+                    {
+                        if (i < items.Count && items[i] is Integer wInt)
+                        {
+                            imgWidth = wInt.Number.ToString();
+                            i++;
+                            if (i < items.Count && items[i] is Integer hInt)
+                            {
+                                imgHeight = hInt.Number.ToString();
+                                i++;
+                            }
+                        }
+                        else if (i < items.Count && (items[i] is Word || items[i] is Text))
+                        {
+                            string sizeStr = items[i].ToUserString();
+                            var parts = sizeStr.Split('x');
+                            if (parts.Length == 2)
+                            {
+                                imgWidth = parts[0];
+                                imgHeight = parts[1];
+                                i++;
+                            }
+                            else if (parts.Length == 1 && int.TryParse(parts[0], out _))
+                            {
+                                imgWidth = parts[0];
+                                i++;
+                            }
+                        }
                     }
 
                     if (type == "check")
@@ -221,6 +260,18 @@ public static class GuiFunctions
                         if (initialValue is Word) initialValue = new Integer(0);
                     }
 
+                    if (type == "choice")
+                    {
+                        if (i < items.Count && items[i] is Block optionsBlock)
+                        {
+                            var optionsList = optionsBlock.Children.Skip(optionsBlock.Index).Select(v => v.ToUserString()).ToList();
+                            options = optionsList;
+                            initialValue = new Text(optionsList.FirstOrDefault() ?? "");
+                            i++;
+                        }
+                        if (initialValue is Word) initialValue = new Text("");
+                    }
+
                     if (type == "field" && initialValue is Word)
                     {
                         initialValue = new Text("");
@@ -233,7 +284,12 @@ public static class GuiFunctions
                     }
 
                     string id = pendingName ?? $"{type}_{++widgetCounter}";
-                    var widget = new GuiWidget(id, type, text, initialValue, action);
+                    var widget = new GuiWidget(id, type, text, initialValue, action, options);
+                    if (type == "image")
+                    {
+                        widget.Width = imgWidth;
+                        widget.Height = imgHeight;
+                    }
                     container.Children.Add(widget);
 
                     if (pendingName != null)
@@ -443,7 +499,7 @@ public static class GuiFunctions
         }
     }
 
-    private static Dictionary<string, string> ParseJsonValues(string json)
+    internal static Dictionary<string, string> ParseJsonValues(string json)
     {
         var dict = new Dictionary<string, string>();
         
@@ -452,7 +508,7 @@ public static class GuiFunctions
         if (valuesIdx < 0) return dict;
 
         int startBrace = json.IndexOf("{", valuesIdx);
-        int endBrace = json.LastIndexOf("}");
+        int endBrace = json.IndexOf("}", startBrace);
         if (startBrace < 0 || endBrace < 0 || endBrace <= startBrace) return dict;
 
         string sub = json.Substring(startBrace + 1, endBrace - startBrace - 1);
@@ -476,7 +532,7 @@ public static class GuiFunctions
     {
         if (values.TryGetValue(widget.Id, out string? valStr))
         {
-            if (widget.Type == "field")
+            if (widget.Type == "field" || widget.Type == "choice")
             {
                 widget.CurrentValue = new Text(valStr);
             }
@@ -566,7 +622,7 @@ public static class GuiFunctions
 
         // Cache initial values
         function syncInputs() {{
-            document.querySelectorAll('input').forEach(el => {{
+            document.querySelectorAll('input, select').forEach(el => {{
                 if (el.type === 'checkbox') {{
                     clientValues[el.id] = el.checked;
                 }} else {{
@@ -602,7 +658,7 @@ public static class GuiFunctions
             if (!el) return;
 
             if (data.action === ""update"") {{
-                if (el.tagName === 'INPUT') {{
+                if (el.tagName === 'INPUT' || el.tagName === 'SELECT') {{
                     if (el.type === 'checkbox') {{
                         el.checked = data.value.toLowerCase() === 'true';
                         clientValues[data.id] = el.checked;
@@ -660,6 +716,16 @@ public static class GuiFunctions
                 sb.Append($"<input id=\"{widget.Id}\" type=\"text\" class=\"gui-field\" value=\"{widget.CurrentValue.ToUserString()}\" oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}/>");
                 break;
 
+            case "choice":
+                sb.Append($"<select id=\"{widget.Id}\" class=\"gui-choice\" onchange=\"updateValue('{widget.Id}', this.value){(widget.Action != null ? "; triggerAction('" + widget.Id + "')" : "")}\">");
+                foreach (var opt in widget.Options)
+                {
+                    bool isSelected = opt == widget.CurrentValue.ToUserString();
+                    sb.Append($"<option value=\"{opt}\"{(isSelected ? " selected=\"selected\"" : "")}>{opt}</option>");
+                }
+                sb.Append("</select>");
+                break;
+
             case "check":
                 bool isChecked = widget.CurrentValue is Logic l && l.Condition;
                 sb.Append($"<label class=\"gui-checkbox-label\"><input id=\"{widget.Id}\" type=\"checkbox\" class=\"gui-checkbox\" {(isChecked ? "checked" : "")} onchange=\"updateValue('{widget.Id}', this.checked){(widget.Action != null ? "; triggerAction('" + widget.Id + "')" : "")}\"/> <span class=\"gui-checkbox-custom\"></span>{widget.Text}</label>");
@@ -671,11 +737,48 @@ public static class GuiFunctions
                 break;
 
             case "image":
-                sb.Append($"<img id=\"{widget.Id}\" src=\"{widget.Text}\" class=\"gui-img\" alt=\"{widget.Id}\"/>");
+                string widthAttr = !string.IsNullOrEmpty(widget.Width) ? $" width=\"{widget.Width}\"" : "";
+                string heightAttr = !string.IsNullOrEmpty(widget.Height) ? $" height=\"{widget.Height}\"" : "";
+                sb.Append($"<img id=\"{widget.Id}\" src=\"{GetImageSource(widget.Text)}\" class=\"gui-img\" alt=\"{widget.Id}\"{widthAttr}{heightAttr}/>");
                 break;
         }
 
         return sb.ToString();
+    }
+
+    private static string GetImageSource(string pathOrUrl)
+    {
+        if (string.IsNullOrWhiteSpace(pathOrUrl)) return "";
+
+        if (pathOrUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            pathOrUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            pathOrUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return pathOrUrl;
+        }
+
+        try
+        {
+            if (System.IO.File.Exists(pathOrUrl))
+            {
+                byte[] bytes = System.IO.File.ReadAllBytes(pathOrUrl);
+                string ext = System.IO.Path.GetExtension(pathOrUrl).ToLowerInvariant();
+                string mimeType = ext switch
+                {
+                    ".png" => "image/png",
+                    ".jpg" => "image/jpeg",
+                    ".jpeg" => "image/jpeg",
+                    ".gif" => "image/gif",
+                    ".svg" => "image/svg+xml",
+                    ".webp" => "image/webp",
+                    _ => "image/png"
+                };
+                return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
+            }
+        }
+        catch {}
+
+        return pathOrUrl;
     }
 
     private static string LoadThemeCss(string themeName)
