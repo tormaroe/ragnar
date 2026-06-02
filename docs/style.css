@@ -572,3 +572,46 @@ pre code {
         padding: 1.75rem;
     }
 }
+
+/* Screenshots Gallery / Grid */
+.screenshot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.screenshot-card {
+    background-color: var(--bg-main);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.screenshot-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--box-shadow-hover);
+    border-color: var(--color-primary);
+}
+
+.screenshot-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: calc(var(--border-radius) - 4px);
+    border: 1px solid var(--border-color);
+    object-fit: contain;
+}
+
+.screenshot-title {
+    margin-top: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-heading);
+    color: var(--color-dark-slate);
+    font-size: 0.95rem;
+}

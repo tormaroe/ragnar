@@ -51,6 +51,7 @@
                         <li><a href="#interop" class="menu-item">.NET Interop</a></li>
                         <li><a href="#objects" class="menu-item">Objects Support</a></li>
                         <li><a href="#parse" class="menu-item">Parse Dialect</a></li>
+                        <li><a href="#gui" class="menu-item">Visual Dialect (GUI)</a></li>
                         <li><a href="#tco" class="menu-item">Tail-Call Optimization</a></li>
                         <li><a href="#actors" class="menu-item">Actor Model</a></li>
                         <li><a href="#functional" class="menu-item">Functional Programming</a></li>
@@ -597,6 +598,113 @@ phone-num: [3 digits "-" 4 digits]
 ; Match the rule against a string
 parse "467-8000" phone-num
 ; == true</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Visual Dialect (GUI) Section -->
+            <section id="gui" class="content-section">
+                <div class="card">
+                    <h1>Visual Dialect (GUI)</h1>
+                    <p>Ragnar features a powerful, lightweight, cross-platform Visual Dialect (<code>view</code>). It spawns a local background HTTP/SSE server and automatically launches your application in the default web browser, allowing you to write reactive GUI scripts with minimal code.</p>
+
+                    <h2>1. Syntax &amp; Examples</h2>
+                    <p>To declare a GUI, pass a layout block to the <code>view</code> function. Widgets can be styled, nested inside <code>row</code> or <code>column</code> blocks, and dynamically updated using <code>get-face</code> and <code>set-face</code>:</p>
+                    <div class="code-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#gui-example">Copy</button>
+                        <pre><code id="gui-example">view [
+    title "Ragnar Command Center v1.0"
+    
+    row [
+        image "assets/ragnar-logo-small.png" 100
+        heading "Ragnar Command Center"
+    ]
+    
+    text "Configure system settings below:"
+    
+    row [
+        text "Subsystem Target:"
+        subsystem-choice: choice ["MAIN FRAME" "PROPULSION" "LIFE SUPPORT" "COMMUNICATIONS"] [
+            target: get-face subsystem-choice
+            set-face status-lbl rejoin ["Target Subsystem selected: " target]
+        ]
+    ]
+    
+    row [
+        text "User Command:"
+        cmd-field: field "ACTIVATE"
+    ]
+    
+    row [
+        text "Power Level:"
+        pwr-slider: slider 75
+    ]
+    
+    row [
+        check-override: check "Override Safety Protocols" false
+    ]
+    
+    status-lbl: text "System status: STANDBY"
+    
+    row [
+        button "Execute Command" [
+            target: get-face subsystem-choice
+            cmd: get-face cmd-field
+            level: get-face pwr-slider
+            safety: get-face check-override
+            
+            status-msg: rejoin [
+                "Target: " target
+                " | Command: " cmd 
+                " | Power: " level "%" 
+                " | Safety: " either safety ["DISABLED"] ["ENABLED"]
+            ]
+            set-face status-lbl status-msg
+        ]
+        
+        button "Reset System" [
+            set-face subsystem-choice "MAIN FRAME"
+            set-face cmd-field "ACTIVATE"
+            set-face pwr-slider 75
+            set-face check-override false
+            set-face status-lbl "System status: STANDBY"
+        ]
+    ]
+]</code></pre>
+                    </div>
+
+                    <h2>2. Supported Widgets</h2>
+                    <ul class="features-list">
+                        <li><strong>heading:</strong> Displays a styled title header text.</li>
+                        <li><strong>text:</strong> Standard inline text block.</li>
+                        <li><strong>field:</strong> Single-line text input field.</li>
+                        <li><strong>button:</strong> A clickable button that runs a block of Ragnar code on click.</li>
+                        <li><strong>check:</strong> A toggleable checkbox widget storing boolean values.</li>
+                        <li><strong>slider:</strong> An integer range input slider (value ranges 0 to 100).</li>
+                        <li><strong>choice:</strong> A dropdown list element (e.g. <code>choice ["OptA" "OptB"]</code>).</li>
+                        <li><strong>image:</strong> Renders an image widget (e.g. <code>image "path.png" [width] [height]</code>). Supports both URLs and local filepaths which are base64-encoded on-the-fly.</li>
+                    </ul>
+
+                    <h2>3. Visual Themes</h2>
+                    <p>Ragnar supports multiple visual themes. You can switch the active theme dynamically using <code>set-theme 'theme-name</code>. The active styles are shown below in the gallery:</p>
+
+                    <div class="screenshot-grid">
+                        <a href="assets/command-center-retro.jpg" target="_blank" rel="noopener noreferrer" class="screenshot-card">
+                            <img src="assets/command-center-retro.jpg" alt="Retro Terminal Theme" class="screenshot-img">
+                            <span class="screenshot-title">Retro Terminal ('retro-terminal)</span>
+                        </a>
+                        <a href="assets/command-center-classic.jpg" target="_blank" rel="noopener noreferrer" class="screenshot-card">
+                            <img src="assets/command-center-classic.jpg" alt="Classic Rebol Theme" class="screenshot-img">
+                            <span class="screenshot-title">Classic Rebol ('classic-rebol)</span>
+                        </a>
+                        <a href="assets/command-center-modern.jpg" target="_blank" rel="noopener noreferrer" class="screenshot-card">
+                            <img src="assets/command-center-modern.jpg" alt="Modern Slate Theme" class="screenshot-img">
+                            <span class="screenshot-title">Modern Slate ('modern-slate)</span>
+                        </a>
+                        <a href="assets/command-center-kawaii.jpg" target="_blank" rel="noopener noreferrer" class="screenshot-card">
+                            <img src="assets/command-center-kawaii.jpg" alt="Kawaii Blossom Theme" class="screenshot-img">
+                            <span class="screenshot-title">Kawaii Blossom ('kawaii-blossom)</span>
+                        </a>
                     </div>
                 </div>
             </section>

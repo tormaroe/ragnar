@@ -50,8 +50,15 @@ Ragnar homepage: [tormaroe.github.io/ragnar](https://tormaroe.github.io/ragnar)
 - **Positional Command Line Invocation**: Execute a script by passing its path directly as the first argument, e.g. `ragnar script.r arg1 arg2`. Ragnar options parsing stops at the script path (or at the `--` separator), allowing script-specific arguments and flags.
 - **Accessing Arguments**: Scripts can access the block of arguments passed to them as string (`Text`) values via the `system/options/args` path.
 
+### Visual Dialect (GUI)
+- **Interactive GUI**: The `view` function spawns a local HTTP/SSE server, opens the browser, and renders responsive layouts from a Ragnar block.
+- **Dynamic Face Access**: Get or set widget values dynamically using `get-face` and `set-face`.
+- **Themes**: Switch active CSS styles using `set-theme` (themes: `'retro-terminal` [default], `'classic-rebol`, `'modern-slate`, `'kawaii-blossom`).
+
 ### Core Vocabulary & Functions
 All native and mezzanine functions categorized:
+
+- **Visual Dialect (GUI)**: `view`, `get-face`, `set-face`, `set-theme`
 
 - **Constants**: `true`, `false`, `none`
 - **Output & Evaluation**: `print`, `prin`, `do`, `probe`
