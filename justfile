@@ -20,5 +20,8 @@ deploy:
 release:
     python3 scripts/release.py || python scripts/release.py
 
+bump:
+    .githooks/pre-commit --force
+
 site:
     node docs/server.js

@@ -12,6 +12,7 @@ show-help: does [
     print "  test        - Run the test suite"
     print "  deploy      - Publish a single-file executable to dist/"
     print "  release     - Run the release script"
+    print "  bump        - Trigger version bump manually"
     print "  site        - Run the local documentation website server"
 ]
 
@@ -48,6 +49,9 @@ either empty? args [
             if not-equal? exit-code 0 [
                 call/wait/shell "python scripts/release.py"
             ]
+        ]
+        "bump" [
+            call/wait/shell ".githooks/pre-commit --force"
         ]
         "site" [
             call/wait/shell "node docs/server.js"

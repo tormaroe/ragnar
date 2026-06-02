@@ -13,9 +13,12 @@ fi
 
 # Check if there are any staged changes (excluding csproj changes)
 # This prevents prompting if we are just amending or doing git commit without staging files
-STAGED_FILES=$(git diff --cached --name-only | grep -v "src/Ragnar.csproj" || true)
-if [ -z "$STAGED_FILES" ]; then
-    exit 0
+# We bypass this check if "--force" or "--manual" is passed as an argument
+if [ "$1" != "--force" ] && [ "$1" != "--manual" ]; then
+    STAGED_FILES=$(git diff --cached --name-only | grep -v "src/Ragnar.csproj" || true)
+    if [ -z "$STAGED_FILES" ]; then
+        exit 0
+    fi
 fi
 
 # Check if stdout is a TTY and we can redirect stdin to /dev/tty
