@@ -82,7 +82,7 @@ public static class ConversionFunctions
             }
 
             return new Text(val.ToString());
-        }, 1).WithTitle("Converts a value to its Ragnar source representation."));
+        }, 1).WithTitle("Converts a value to its Ragnar source representation.").WithRefinements("only"));
 
         // to-record [value]
         ctx.Set("to-record", new Native((args, refs, _, _, _) =>

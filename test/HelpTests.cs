@@ -71,7 +71,20 @@ public class HelpTests : TestBase
         var (_, output) = RunWithOutput(code);
         
         Assert.Contains("WORD: f", output);
-        Assert.Contains("ARGS:  [ a /with b ]", output);
+        Assert.Contains("ARGS:  [ a ]", output);
+        Assert.Contains("REFINEMENTS:", output);
+        Assert.Contains("/with b", output);
+    }
+
+    [Fact]
+    public void Help_Displays_Native_Function_With_Refinements()
+    {
+        var (_, output) = RunWithOutput("help read");
+        
+        Assert.Contains("WORD: read", output);
+        Assert.Contains("TYPE:  Native Function", output);
+        Assert.Contains("REFINEMENTS:", output);
+        Assert.Contains("/lines", output);
     }
 
     [Fact]

@@ -42,7 +42,7 @@ public static class StringFunctions
 
             // Default: trim head and tail
             return new Text(input.Trim());
-        }, 1).WithTitle("Removes whitespace from a string."));
+        }, 1).WithTitle("Removes whitespace from a string.").WithRefinements("all", "lines", "head", "tail"));
 
         ctx.Set("replace", new Native((args, refinements, _, _, _) =>
         {
@@ -64,7 +64,7 @@ public static class StringFunctions
                 if (index < 0) return target;
                 return new Text(input.Remove(index, pattern.Length).Insert(index, substitute));
             }
-        }, 3).WithTitle("Replaces occurrences of a pattern in a string."));
+        }, 3).WithTitle("Replaces occurrences of a pattern in a string.").WithRefinements("all"));
 
         ctx.Set("uppercase", new Native((args, refinements, _, _, _) =>
         {

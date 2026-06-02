@@ -55,6 +55,14 @@ public class Inspection
                     if (!string.IsNullOrEmpty(native.Title))
                         ctx.Output.WriteLine($"TITLE: {native.Title}");
                     ctx.Output.WriteLine($"ARITY: {native.Arity} arguments");
+                    if (native.Refinements.Count > 0)
+                    {
+                        ctx.Output.WriteLine("REFINEMENTS:");
+                        foreach (var r in native.Refinements)
+                        {
+                            ctx.Output.WriteLine($"       /{r}");
+                        }
+                    }
                 }
                 else if (val is Function func)
                 {
@@ -67,13 +75,22 @@ public class Inspection
                     {
                         spec.Add((p.Evaluate ? "" : "'") + p.Name);
                     }
-                    foreach (var r in func.Refinements)
+                    ctx.Output.WriteLine($"ARGS:  [ {string.Join(" ", spec)} ]");
+
+                    if (func.Refinements.Count > 0)
                     {
-                        spec.Add("/" + r.Name);
-                        spec.AddRange(r.Args);
+                        ctx.Output.WriteLine("REFINEMENTS:");
+                        foreach (var r in func.Refinements)
+                        {
+                            var rStr = "/" + r.Name;
+                            if (r.Args.Count > 0)
+                            {
+                                rStr += " " + string.Join(" ", r.Args);
+                            }
+                            ctx.Output.WriteLine($"       {rStr}");
+                        }
                     }
 
-                    ctx.Output.WriteLine($"ARGS:  [ {string.Join(" ", spec)} ]");
                     string formattedBody = Formatter.Format(func.Body, 0, context).TrimStart();
                     ctx.Output.WriteLine($"BODY:  {formattedBody}");
                 }
@@ -155,6 +172,6 @@ public class Inspection
             }
 
             return new Text(Formatter.Format(val, 0, context));
-        }, 1).WithTitle("Pretty-prints and formats a value or Ragnar code string. Supports /script for blocks."));
+        }, 1).WithTitle("Pretty-prints and formats a value or Ragnar code string. Supports /script for blocks.").WithRefinements("script"));
     }
 }

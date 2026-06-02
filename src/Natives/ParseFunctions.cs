@@ -136,6 +136,6 @@ public static class ParseFunctions
             }
             
             return new Block(resultList);
-        }, 2).WithTitle("Parses a series using rules."));
+        }, 2).WithTitle("Parses a series using rules.").WithRefinements("case", "all"));
     }
 }

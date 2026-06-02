@@ -115,7 +115,7 @@ public class OS
             }
 
             return new Word("none");
-        }, 1).WithTitle("Executes an external shell command."));
+        }, 1).WithTitle("Executes an external shell command.").WithRefinements("shell", "wait", "output"));
 
         ctx.Set("home", new Native((args, refinements, context, interpreter, isTail) =>
         {

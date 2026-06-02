@@ -105,6 +105,6 @@ public static class ConditionalFunctions
             }
 
             return lastResult;
-        }, 1).WithTitle("Evaluates blocks for matching conditions."));
+        }, 1).WithTitle("Evaluates blocks for matching conditions.").WithRefinements("all"));
     }
 }

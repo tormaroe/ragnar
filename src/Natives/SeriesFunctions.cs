@@ -205,7 +205,7 @@ public static class SeriesFunctions
             }
 
             return new Word("none");
-        }, 2).WithTitle("Finds a value in a series and returns the series at that position."));
+        }, 2).WithTitle("Finds a value in a series and returns the series at that position.").WithRefinements("case", "any", "last", "tail", "match"));
 
         // append [1 2] 3 -> [1 2 3]
         ctx.Set("append", new Native((args, refinements, _, _, _) =>

@@ -182,6 +182,7 @@ public class Native : Value
     // True = Evaluate (default), False = Literal (Word remains a Word)
     public bool[] EvalArgs { get; }
     public string Title { get; set; } = "";
+    public List<string> Refinements { get; } = new();
 
     public Native(NativeDelegate action, int arity, bool[]? evalArgs = null)
     {
@@ -194,6 +195,12 @@ public class Native : Value
     public Native WithTitle(string title)
     {
         Title = title;
+        return this;
+    }
+
+    public Native WithRefinements(params string[] refinements)
+    {
+        Refinements.AddRange(refinements);
         return this;
     }
 
