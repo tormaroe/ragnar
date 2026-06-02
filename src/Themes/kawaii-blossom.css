@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap');
+
+body {
+    background-color: #ffeef2;
+    background-image: 
+        radial-gradient(#ffdfeb 20%, transparent 20%),
+        radial-gradient(#ffdfeb 20%, transparent 20%);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    color: #4a283d;
+    font-family: 'Fredoka', 'Quicksand', sans-serif;
+    padding: 40px;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.gui-container {
+    max-width: 800px;
+    width: 100%;
+    border: 4px solid #ffb7c5;
+    border-radius: 24px;
+    padding: 30px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 0 #ffb7c5, 0 20px 30px rgba(255, 183, 197, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Fluffy cloud decoration in the background of container */
+.gui-container::before {
+    content: "✿";
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 2rem;
+    color: #ffb7c5;
+    opacity: 0.6;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gui-heading {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #ff6584;
+    border-bottom: 3px dashed #ffb7c5;
+    padding-bottom: 8px;
+    text-shadow: 2px 2px 0px #fff0f3;
+}
+
+.gui-text {
+    font-size: 1.1rem;
+    color: #6d4b60;
+}
+
+.gui-btn {
+    background: linear-gradient(135deg, #ff94b1 0%, #ff6584 100%);
+    color: #ffffff;
+    border: 3px solid #ffaec1;
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #ffcbd8;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.gui-btn:hover {
+    background: linear-gradient(135deg, #ff7ba0 0%, #ef4f71 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 #ffcbd8;
+}
+
+.gui-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #ffcbd8;
+}
+
+.gui-field {
+    background-color: #fff0f3;
+    border: 3px solid #ffcbd8;
+    border-radius: 16px;
+    color: #4a283d;
+    padding: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    flex-grow: 1;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.gui-field:focus {
+    border-color: #ff6584;
+    background-color: #ffffff;
+}
+
+.gui-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    color: #6d4b60;
+    font-weight: 500;
+}
+
+.gui-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0; width: 0;
+}
+
+.gui-checkbox-custom {
+    height: 22px;
+    width: 22px;
+    border-radius: 8px;
+    border: 3px solid #ffcbd8;
+    background-color: #fff0f3;
+    display: inline-block;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.gui-checkbox:checked ~ .gui-checkbox-custom {
+    background-color: #ff6584;
+    border-color: #ff6584;
+}
+
+.gui-checkbox:checked ~ .gui-checkbox-custom::after {
+    content: "❤";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.gui-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+}
+
+.gui-slider-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ff6584;
+}
+
+.gui-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: #fff0f3;
+    border: 3px solid #ffcbd8;
+    outline: none;
+}
+
+.gui-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ff6584;
+    cursor: pointer;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 6px rgba(255, 101, 132, 0.4);
+    transition: transform 0.1s ease;
+}
+
+.gui-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.gui-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 18px;
+    border: 4px solid #ffcbd8;
+    box-shadow: 0 8px 0 #ffcbd8;
+}
+
+.gui-choice {
+    background-color: #fff0f3;
+    border: 3px solid #ffcbd8;
+    border-radius: 16px;
+    color: #4a283d;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff6584'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding: 10px 40px 10px 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.gui-choice:focus {
+    border-color: #ff6584;
+    background-color: #ffffff;
+}
+
+.gui-choice option {
+    background-color: #ffffff;
+    color: #4a283d;
+}

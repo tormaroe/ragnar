@@ -134,9 +134,9 @@ public static class GuiFunctions
             };
 
             themeName = themeName.ToLower();
-            if (themeName != "retro-terminal" && themeName != "classic-rebol" && themeName != "modern-slate")
+            if (themeName != "retro-terminal" && themeName != "classic-rebol" && themeName != "modern-slate" && themeName != "kawaii-blossom")
             {
-                throw new Exception($"Unknown theme: '{themeName}'. Supported themes: 'retro-terminal', 'classic-rebol', 'modern-slate'.");
+                throw new Exception($"Unknown theme: '{themeName}'. Supported themes: 'retro-terminal', 'classic-rebol', 'modern-slate', 'kawaii-blossom'.");
             }
 
             _currentTheme = themeName;

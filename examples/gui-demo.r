@@ -2,7 +2,7 @@
 
 print "Starting GUI Demo..."
 
-theme-choice: ask "Choose theme (1: retro-terminal [default], 2: classic-rebol, 3: modern-slate): "
+theme-choice: ask "Choose theme (1: retro-terminal [default], 2: classic-rebol, 3: modern-slate, 4: kawaii-blossom): "
 either theme-choice = "2" [
     set-theme 'classic-rebol
     print "Theme set to: classic-rebol"
@@ -11,8 +11,13 @@ either theme-choice = "2" [
         set-theme 'modern-slate
         print "Theme set to: modern-slate"
     ] [
-        set-theme 'retro-terminal
-        print "Theme set to: retro-terminal"
+        either theme-choice = "4" [
+            set-theme 'kawaii-blossom
+            print "Theme set to: kawaii-blossom"
+        ] [
+            set-theme 'retro-terminal
+            print "Theme set to: retro-terminal"
+        ]
     ]
 ]
 

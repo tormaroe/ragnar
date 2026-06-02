@@ -141,6 +141,9 @@ public class GuiTests : TestBase
         var (result3, _) = Run("set-theme 'modern-slate");
         Assert.Equal("modern-slate", result3.ToUserString());
 
+        var (result4, _) = Run("set-theme 'kawaii-blossom");
+        Assert.Equal("kawaii-blossom", result4.ToUserString());
+
         Assert.ThrowsAny<Exception>(() => Run("set-theme 'invalid-theme"));
     }
 
