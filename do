@@ -24,7 +24,7 @@ either empty? args [
 
     switch/default cmd [
         "run" [
-            call/wait/shell "dotnet run --project src/Ragnar.csproj"
+            sh "dotnet run --project src/Ragnar.csproj"
         ]
         "eval" [
             either empty? cmd-args [
@@ -32,29 +32,29 @@ either empty? args [
                 quit/with 1
             ] [
                 file: first cmd-args
-                call/wait/shell rejoin ["dotnet run --project src/Ragnar.csproj " file]
+                sh rejoin ["dotnet run --project src/Ragnar.csproj " file]
             ]
         ]
         "build" [
-            call/wait/shell "dotnet build"
+            sh "dotnet build"
         ]
         "test" [
-            call/wait/shell "dotnet test"
+            sh "dotnet test"
         ]
         "deploy" [
-            call/wait/shell "dotnet publish src/Ragnar.csproj -c Release -o dist -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:SelfContained=false"
+            sh "dotnet publish src/Ragnar.csproj -c Release -o dist -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:SelfContained=false"
         ]
         "release" [
-            exit-code: call/wait/shell "python3 scripts/release.py"
+            exit-code: sh "python3 scripts/release.py"
             if not-equal? exit-code 0 [
-                call/wait/shell "python scripts/release.py"
+                sh "python scripts/release.py"
             ]
         ]
         "bump" [
-            call/wait/shell ".githooks/pre-commit --force"
+            sh ".githooks/pre-commit --force"
         ]
         "site" [
-            call/wait/shell "node docs/server.js"
+            sh "node docs/server.js"
         ]
     ] [
         print ["Unknown command: " cmd]

@@ -158,6 +158,16 @@ public class MezzanineTests : TestBase
         var (result, _) = Run(script);
         Assert.Equal("[ [ 1 10 ] [ 2 20 ] [ 3 30 ] ]", result.ToString());
     }
+
+    [Fact]
+    public void Test_Sh()
+    {
+        string script = @"
+            sh ""echo hello""
+        ";
+        var (result, _) = Run(script);
+        Assert.Equal("0", result.ToString());
+    }
 }
 
 

@@ -31,6 +31,9 @@ public static class Mezzanine
             prin prompt
             input
         ]
+        sh: func ["Executes a shell command and waits for it." cmd] [
+            call/wait/shell cmd
+        ]
         confirm: func ["Prompts the user to confirm an action." question /with options] [
             choices: either with [options] [ ["y" "n"] ]
             prompt: rejoin [question " (" join "/" choices ") "]
