@@ -96,7 +96,7 @@ public static class GuiFunctions
             widget.CurrentValue = val;
 
             // If it is a text-based or visual widget, also update its text
-            if (widget.Type == "text" || widget.Type == "heading" || widget.Type == "image")
+            if (widget.Type == "text" || widget.Type == "heading" || widget.Type == "image" || widget.Type == "textarea")
             {
                 widget.Text = val.ToUserString();
             }
@@ -190,7 +190,7 @@ public static class GuiFunctions
                     }
                     i++;
                 }
-                else if (type == "heading" || type == "text" || type == "field" || type == "button" || type == "check" || type == "slider" || type == "image" || type == "choice")
+                else if (type == "heading" || type == "text" || type == "field" || type == "button" || type == "check" || type == "slider" || type == "image" || type == "choice" || type == "textarea" || type == "spinner")
                 {
                     i++;
                     string text = "";
@@ -202,8 +202,35 @@ public static class GuiFunctions
                     {
                         var evaluated = EvaluateOrGetLiteral(items[i], context, interpreter);
                         text = evaluated.ToUserString();
-                        if (type == "field") initialValue = evaluated;
+                        if (type == "field" || type == "textarea") initialValue = evaluated;
                         i++;
+                    }
+
+                    int? textareaRows = null;
+                    if (type == "textarea")
+                    {
+                        if (i < items.Count && items[i] is Integer rowsInt)
+                        {
+                            textareaRows = (int)rowsInt.Number;
+                            i++;
+                            if (i < items.Count && (items[i] is Text || items[i] is Paren))
+                            {
+                                var evaluated = EvaluateOrGetLiteral(items[i], context, interpreter);
+                                text = evaluated.ToUserString();
+                                initialValue = evaluated;
+                                i++;
+                            }
+                        }
+                        else if (i < items.Count && items[i] is Integer rowsInt2)
+                        {
+                            textareaRows = (int)rowsInt2.Number;
+                            i++;
+                        }
+
+                        if (initialValue is Word)
+                        {
+                            initialValue = new Text("");
+                        }
                     }
 
                     string? imgWidth = null;
@@ -246,6 +273,11 @@ public static class GuiFunctions
                             initialValue = evaluated;
                             i++;
                         }
+                        else if (i < items.Count && items[i] is Word boolWord && (boolWord.Name == "true" || boolWord.Name == "false"))
+                        {
+                            initialValue = new Logic(boolWord.Name == "true");
+                            i++;
+                        }
                         if (initialValue is Word) initialValue = new Logic(false);
                     }
 
@@ -272,6 +304,22 @@ public static class GuiFunctions
                         if (initialValue is Word) initialValue = new Text("");
                     }
 
+                    if (type == "spinner")
+                    {
+                        if (i < items.Count && (items[i] is Logic || items[i] is Paren))
+                        {
+                            var evaluated = EvaluateOrGetLiteral(items[i], context, interpreter);
+                            initialValue = evaluated;
+                            i++;
+                        }
+                        else if (i < items.Count && items[i] is Word boolWord && (boolWord.Name == "true" || boolWord.Name == "false"))
+                        {
+                            initialValue = new Logic(boolWord.Name == "true");
+                            i++;
+                        }
+                        if (initialValue is Word) initialValue = new Logic(true);
+                    }
+
                     if (type == "field" && initialValue is Word)
                     {
                         initialValue = new Text("");
@@ -289,6 +337,10 @@ public static class GuiFunctions
                     {
                         widget.Width = imgWidth;
                         widget.Height = imgHeight;
+                    }
+                    if (type == "textarea")
+                    {
+                        widget.Rows = textareaRows;
                     }
                     container.Children.Add(widget);
 
@@ -532,7 +584,7 @@ public static class GuiFunctions
     {
         if (values.TryGetValue(widget.Id, out string? valStr))
         {
-            if (widget.Type == "field" || widget.Type == "choice")
+            if (widget.Type == "field" || widget.Type == "choice" || widget.Type == "textarea")
             {
                 widget.CurrentValue = new Text(valStr);
             }
@@ -622,7 +674,7 @@ public static class GuiFunctions
 
         // Cache initial values
         function syncInputs() {{
-            document.querySelectorAll('input, select').forEach(el => {{
+            document.querySelectorAll('input, select, textarea').forEach(el => {{
                 if (el.type === 'checkbox') {{
                     clientValues[el.id] = el.checked;
                 }} else {{
@@ -658,7 +710,7 @@ public static class GuiFunctions
             if (!el) return;
 
             if (data.action === ""update"") {{
-                if (el.tagName === 'INPUT' || el.tagName === 'SELECT') {{
+                if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') {{
                     if (el.type === 'checkbox') {{
                         el.checked = data.value.toLowerCase() === 'true';
                         clientValues[data.id] = el.checked;
@@ -668,6 +720,8 @@ public static class GuiFunctions
                     }}
                 }} else if (el.tagName === 'IMG') {{
                     el.src = data.value;
+                }} else if (el.classList.contains('gui-spinner')) {{
+                    el.style.display = data.value.toLowerCase() === 'true' ? 'inline-block' : 'none';
                 }} else {{
                     el.textContent = data.value;
                 }}
@@ -740,6 +794,17 @@ public static class GuiFunctions
                 string widthAttr = !string.IsNullOrEmpty(widget.Width) ? $" width=\"{widget.Width}\"" : "";
                 string heightAttr = !string.IsNullOrEmpty(widget.Height) ? $" height=\"{widget.Height}\"" : "";
                 sb.Append($"<img id=\"{widget.Id}\" src=\"{GetImageSource(widget.Text)}\" class=\"gui-img\" alt=\"{widget.Id}\"{widthAttr}{heightAttr}/>");
+                break;
+
+            case "textarea":
+                string rowsAttr = widget.Rows.HasValue ? $" rows=\"{widget.Rows.Value}\"" : "";
+                sb.Append($"<textarea id=\"{widget.Id}\" class=\"gui-textarea\"{rowsAttr} oninput=\"updateValue('{widget.Id}', this.value)\"{(widget.Action != null ? " onchange=\"triggerAction('" + widget.Id + "')\"" : "")}>{widget.CurrentValue.ToUserString()}</textarea>");
+                break;
+
+            case "spinner":
+                bool isSpinning = widget.CurrentValue is Logic lSpinner && lSpinner.Condition;
+                string displayStyle = isSpinning ? "" : " style=\"display: none;\"";
+                sb.Append($"<div id=\"{widget.Id}\" class=\"gui-spinner\"{displayStyle}></div>");
                 break;
         }
 

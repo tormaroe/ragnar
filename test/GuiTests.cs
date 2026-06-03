@@ -277,4 +277,63 @@ public class GuiTests : TestBase
         Assert.True(dict.TryGetValue("cmd-field", out var cmdVal));
         Assert.Equal("ACTIVATE", cmdVal);
     }
+
+    [Fact]
+    public void Test_Textarea_And_Spinner()
+    {
+        var ctx = Runtime.CreateGlobalContext();
+        var interpreter = new Interpreter();
+
+        var code = @"
+            [
+                ta1: textarea ""default rows""
+                ta2: textarea 8 ""custom rows""
+                ta3: textarea ""custom rows after"" 12
+                spin1: spinner false
+                spin2: spinner
+            ]
+        ";
+
+        var lexer = new Lexer(code);
+        var tokens = lexer.Tokenize();
+        var layoutBlock = (Block)new Loader().Load(tokens).Children.First();
+
+        var root = GuiFunctions.ParseLayout(layoutBlock, ctx, interpreter);
+
+        Assert.Equal(5, root.Children.Count);
+
+        var ta1 = root.Children[0];
+        Assert.Equal("textarea", ta1.Type);
+        Assert.Equal("default rows", ta1.Text);
+        Assert.Null(ta1.Rows);
+
+        var ta2 = root.Children[1];
+        Assert.Equal("textarea", ta2.Type);
+        Assert.Equal("custom rows", ta2.Text);
+        Assert.Equal(8, ta2.Rows);
+
+        var ta3 = root.Children[2];
+        Assert.Equal("textarea", ta3.Type);
+        Assert.Equal("custom rows after", ta3.Text);
+        Assert.Equal(12, ta3.Rows);
+
+        var spin1 = root.Children[3];
+        Assert.Equal("spinner", spin1.Type);
+        Assert.False(((Logic)spin1.CurrentValue).Condition);
+
+        var spin2 = root.Children[4];
+        Assert.Equal("spinner", spin2.Type);
+        Assert.True(((Logic)spin2.CurrentValue).Condition);
+
+        // Check HTML Generation
+        var htmlTa2 = GuiFunctions.RenderWidgetHtml(ta2);
+        Assert.Contains("<textarea id=\"ta2\" class=\"gui-textarea\" rows=\"8\"", htmlTa2);
+        Assert.Contains("custom rows</textarea>", htmlTa2);
+
+        var htmlSpin1 = GuiFunctions.RenderWidgetHtml(spin1);
+        Assert.Contains("<div id=\"spin1\" class=\"gui-spinner\" style=\"display: none;\"></div>", htmlSpin1);
+
+        var htmlSpin2 = GuiFunctions.RenderWidgetHtml(spin2);
+        Assert.Contains("<div id=\"spin2\" class=\"gui-spinner\"></div>", htmlSpin2);
+    }
 }

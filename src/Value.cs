@@ -355,6 +355,7 @@ public class GuiWidget : Value
     public List<string> Options { get; } = new();
     public string? Width { get; set; }
     public string? Height { get; set; }
+    public int? Rows { get; set; }
 
     public GuiWidget(string id, string type, string text, Value currentValue, Block? action = null, List<string>? options = null)
     {

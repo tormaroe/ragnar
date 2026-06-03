@@ -92,7 +92,7 @@ body {
     box-shadow: 0 2px 0 #ffcbd8;
 }
 
-.gui-field {
+.gui-field, .gui-textarea {
     background-color: #fff0f3;
     border: 3px solid #ffcbd8;
     border-radius: 16px;
@@ -105,7 +105,7 @@ body {
     transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.gui-field:focus {
+.gui-field:focus, .gui-textarea:focus {
     border-color: #ff6584;
     background-color: #ffffff;
 }
@@ -229,4 +229,19 @@ body {
 .gui-choice option {
     background-color: #ffffff;
     color: #4a283d;
+}
+
+.gui-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #fff0f3;
+    border-top: 3px solid #ff6584;
+    border-radius: 50%;
+    animation: gui-spin 1s linear infinite;
+    display: inline-block;
+}
+
+@keyframes gui-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

@@ -80,7 +80,7 @@ body {
     box-shadow: 0 0 15px #33ff33;
 }
 
-.gui-field {
+.gui-field, .gui-textarea {
     border: 2px solid #33ff33;
     background-color: #000600;
     color: #33ff33;
@@ -92,7 +92,7 @@ body {
     flex-grow: 1;
 }
 
-.gui-field:focus {
+.gui-field:focus, .gui-textarea:focus {
     box-shadow: inset 0 0 5px rgba(51, 255, 51, 0.5), 0 0 10px rgba(51, 255, 51, 0.5);
 }
 
@@ -200,7 +200,23 @@ body {
     color: #33ff33;
 }
 
+.gui-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #002200;
+    border-top: 3px solid #33ff33;
+    border-radius: 50%;
+    animation: gui-spin 1s linear infinite;
+    display: inline-block;
+    box-shadow: 0 0 5px rgba(51, 255, 51, 0.3);
+}
+
+@keyframes gui-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Glow effects */
-.gui-heading, .gui-text, .gui-btn, .gui-field, .gui-checkbox-label, .gui-slider-label, .gui-choice {
+.gui-heading, .gui-text, .gui-btn, .gui-field, .gui-checkbox-label, .gui-slider-label, .gui-choice, .gui-textarea, .gui-spinner {
     text-shadow: 0 0 5px rgba(51, 255, 51, 0.8), 0 0 10px rgba(51, 255, 51, 0.2);
 }
