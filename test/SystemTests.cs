@@ -90,4 +90,43 @@ public class SystemTests : TestBase
         Assert.IsType<Text>(result);
         Assert.Contains("hello", ((Text)result).Content);
     }
+
+    [Fact]
+    public void Call_Pid_And_Process_Management_Works()
+    {
+        bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+        string cmd = isWindows ? "ping 127.0.0.1 -n 10" : "sleep 10";
+
+        var pidResult = Run($"call/pid \"{cmd}\"").Result;
+        Assert.IsType<Integer>(pidResult);
+        long pid = ((Integer)pidResult).Number;
+        Assert.True(pid > 0);
+
+        // Check if process is alive
+        var statusResult = Run($"proc-status {pid}").Result;
+        Assert.IsType<Logic>(statusResult);
+        Assert.True(((Logic)statusResult).Condition);
+
+        // Kill process
+        var killResult = Run($"proc-kill {pid}").Result;
+        Assert.IsType<Logic>(killResult);
+        Assert.True(((Logic)killResult).Condition);
+
+        // Check if process is now dead
+        var statusAfterKill = Run($"proc-status {pid}").Result;
+        Assert.IsType<Logic>(statusAfterKill);
+        Assert.False(((Logic)statusAfterKill).Condition);
+    }
+
+    [Fact]
+    public void Proc_Status_And_Kill_Handle_Invalid_Pid()
+    {
+        var statusResult = Run("proc-status 999999").Result;
+        Assert.IsType<Logic>(statusResult);
+        Assert.False(((Logic)statusResult).Condition);
+
+        var killResult = Run("proc-kill 999999").Result;
+        Assert.IsType<Logic>(killResult);
+        Assert.False(((Logic)killResult).Condition);
+    }
 }

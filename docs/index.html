@@ -379,6 +379,14 @@ print           Prints a value to the output.
                         <li><code>unzip archive dest</code>: Extracts a <code>.zip</code> archive into the destination directory. Supports overwriting existing files with <code>/force</code> (or <code>/f</code>) and verbose output with <code>/verbose</code> (or <code>/v</code>).</li>
                     </ul>
 
+                    <h2>Process Management</h2>
+                    <p>Start processes asynchronously and manage them:</p>
+                    <ul class="features-list">
+                        <li><code>call/pid command</code>: Starts a process and returns its PID immediately as an integer, without waiting or capturing output.</li>
+                        <li><code>proc-status pid</code>: Checks if a process is alive and running (returns a logic value).</li>
+                        <li><code>proc-kill pid</code>: Terminates a process and all of its descendants (returns a logic value indicating success).</li>
+                    </ul>
+
                     <h2>Example Session</h2>
                     <div class="code-wrapper">
                         <button class="copy-btn" data-clipboard-target="#shell-session">Copy</button>
@@ -419,7 +427,19 @@ Extracting: file-new.txt
 >> rm/recursive/verbose %sub-level
 Removing file: sub-level/file-new.txt
 Removing directory: sub-level
-== none</code></pre>
+== none
+
+>> pid: call/pid "ping 127.0.0.1 -n 10"
+== 12345
+
+>> proc-status pid
+== true
+
+>> proc-kill pid
+== true
+
+>> proc-status pid
+== false</code></pre>
                     </div>
                 </div>
             </section>

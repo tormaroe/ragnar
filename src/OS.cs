@@ -81,8 +81,9 @@ public class OS
                 processInfo.ArgumentList.Add(a);
             }
 
-            bool wait = refinements.Contains("wait") || refinements.Contains("output");
-            bool captureOutput = refinements.Contains("output");
+            bool pid = refinements.Contains("pid");
+            bool wait = (refinements.Contains("wait") || refinements.Contains("output")) && !pid;
+            bool captureOutput = refinements.Contains("output") && !pid;
 
             if (captureOutput)
             {
@@ -97,6 +98,11 @@ public class OS
 
             var process = System.Diagnostics.Process.Start(processInfo);
             if (process == null) throw new Exception($"Failed to start process: {execPath}");
+
+            if (pid)
+            {
+                return new Integer(process.Id);
+            }
 
             if (wait)
             {
@@ -115,12 +121,44 @@ public class OS
             }
 
             return new Word("none");
-        }, 1).WithTitle("Executes an external shell command.").WithRefinements("shell", "wait", "output"));
+        }, 1).WithTitle("Executes an external shell command.").WithRefinements("shell", "wait", "output", "pid"));
 
         ctx.Set("home", new Native((args, refinements, context, interpreter, isTail) =>
         {
             string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             return new File(homeDir);
         }, 0).WithTitle("Returns the current user's home directory."));
+
+        ctx.Set("proc-status", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            if (args[0] is not Integer intVal) throw new Exception("proc-status expects an integer pid.");
+            int pid = (int)intVal.Number;
+            try
+            {
+                var process = System.Diagnostics.Process.GetProcessById(pid);
+                return new Logic(!process.HasExited);
+            }
+            catch
+            {
+                return new Logic(false);
+            }
+        }, 1).WithTitle("Checks if the process with the given PID is currently alive."));
+
+        ctx.Set("proc-kill", new Native((args, refinements, context, interpreter, isTail) =>
+        {
+            if (args[0] is not Integer intVal) throw new Exception("proc-kill expects an integer pid.");
+            int pid = (int)intVal.Number;
+            try
+            {
+                var process = System.Diagnostics.Process.GetProcessById(pid);
+                process.Kill(true);
+                process.WaitForExit();
+                return new Logic(true);
+            }
+            catch
+            {
+                return new Logic(false);
+            }
+        }, 1).WithTitle("Terminates the process with the given PID and all its children."));
     }
 }

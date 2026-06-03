@@ -73,7 +73,7 @@ All native and mezzanine functions categorized:
 - **Functional Operators**: `>>`, `<<`, `partial`, `|`, `|>`, `>|`, `|>>`, `>|>`, `>>|`
 - **IO & File System**: `read`, `write`, `load`, `save`, `cd`, `ls`, `mkdir`, `rmdir`, `rm`, `pushd`, `popd`, `mv`, `cp`, `pwd`, `what-dir`, `ask`, `confirm`, `exists?`
 - **.NET Interop**: `get-type`, `new`, `call-method`, `get-prop`, `set-prop`, `get-static`, `call-static`
-- **Inspection & OS**: `what`, `help`, `?`, `type?`, `format`, `call`, `home`, `get-env`, `set-env`, `list-env`, `now`, `wait`, `rc-file-name`
+- **Inspection & OS**: `what`, `help`, `?`, `type?`, `format`, `call` (supports `/pid`), `home`, `get-env`, `set-env`, `list-env`, `now`, `wait`, `rc-file-name`, `proc-status`, `proc-kill`
 - **Actors (Erlang-like)**: `spawn`, `tell`, `kill`, `receive`
 - **Compression**: `zip`, `unzip`, `native-zip`, `native-unzip`
 - **Parsing**: `parse`
