@@ -51,7 +51,7 @@ Ragnar homepage: [tormaroe.github.io/ragnar](https://tormaroe.github.io/ragnar)
 - **Accessing Arguments**: Scripts can access the block of arguments passed to them as string (`Text`) values via the `system/options/args` path.
 
 ### Visual Dialect (GUI)
-- **Interactive GUI**: The `view` function spawns a local HTTP/SSE server, opens the browser, and renders responsive layouts from a Ragnar block.
+- **Interactive GUI**: The `view` function spawns a local HTTP/SSE server, opens the browser, and renders responsive layouts from a Ragnar block. Supported widgets: `heading`, `text`, `field`, `button`, `check`, `slider`, `choice`, `image`, `textarea`, and `spinner`.
 - **Dynamic Face Access**: Get or set widget values dynamically using `get-face` and `set-face`.
 - **Themes**: Switch active CSS styles using `set-theme` (themes: `'retro-terminal` [default], `'classic-rebol`, `'modern-slate`, `'kawaii-blossom`).
 

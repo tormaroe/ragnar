@@ -55,8 +55,14 @@ view [
     
     status-lbl: text "System status: STANDBY"
     
+    log-field: textarea 6 "System initialized. Waiting for command..."
+    
     row [
         button "Execute Command" [
+            set-face loading-spin true
+            set-face status-lbl "Running diagnostics..."
+            wait 1
+            
             target: get-face subsystem-choice
             cmd: get-face cmd-field
             level: get-face pwr-slider
@@ -68,7 +74,19 @@ view [
                 " | Power: " level "%" 
                 " | Safety: " either safety ["DISABLED"] ["ENABLED"]
             ]
+            
+            log-entry: rejoin [
+                "*** EXECUTION LOG ***^/"
+                "Subsystem: " target "^/"
+                "Command:   " cmd "^/"
+                "Power:     " level "%^/"
+                "Safety:    " either safety ["OVERRIDDEN"] ["ACTIVE"] "^/"
+                "Status:    SUCCESSFUL"
+            ]
+            
             set-face status-lbl status-msg
+            set-face log-field log-entry
+            set-face loading-spin false
         ]
         
         button "Reset System" [
@@ -77,6 +95,10 @@ view [
             set-face pwr-slider 75
             set-face check-override false
             set-face status-lbl "System status: STANDBY"
+            set-face log-field "System initialized. Waiting for command..."
+            set-face loading-spin false
         ]
+        
+        loading-spin: spinner false
     ]
 ]

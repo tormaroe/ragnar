@@ -1,0 +1,20 @@
+set-theme 'classic-rebol
+
+view [
+    row [
+        button "Run build" [
+            set-face loading true
+            set-face log ""
+            set-face log call/wait/output "dotnet build"
+            set-face loading false
+        ]
+        button "Run tests" [
+            set-face loading true
+            set-face log ""
+            set-face log call/wait/output "dotnet test"
+            set-face loading false
+        ]
+        loading: spinner false
+    ]
+    log: textarea 10 ""
+]
