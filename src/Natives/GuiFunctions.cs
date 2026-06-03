@@ -156,14 +156,14 @@ public static class GuiFunctions
     internal static GuiWidget ParseLayout(Block layoutBlock, Context context, Interpreter interpreter)
     {
         var root = new GuiWidget("root", "column", "", new Word("none"));
-        ParseBlock(layoutBlock.Children.Skip(layoutBlock.Index).ToList(), root, context, interpreter);
+        int widgetCounter = 0;
+        ParseBlock(layoutBlock.Children.Skip(layoutBlock.Index).ToList(), root, context, interpreter, ref widgetCounter);
         return root;
     }
 
-    private static void ParseBlock(List<Value> items, GuiWidget container, Context context, Interpreter interpreter)
+    private static void ParseBlock(List<Value> items, GuiWidget container, Context context, Interpreter interpreter, ref int widgetCounter)
     {
         int i = 0;
-        int widgetCounter = 0;
         string? pendingName = null;
 
         while (i < items.Count)
@@ -357,7 +357,7 @@ public static class GuiFunctions
                     {
                         string id = pendingName ?? $"{type}_{++widgetCounter}";
                         var subContainer = new GuiWidget(id, type, "", new Word("none"));
-                        ParseBlock(subBlock.Children.Skip(subBlock.Index).ToList(), subContainer, context, interpreter);
+                        ParseBlock(subBlock.Children.Skip(subBlock.Index).ToList(), subContainer, context, interpreter, ref widgetCounter);
                         container.Children.Add(subContainer);
 
                         if (pendingName != null)

@@ -336,4 +336,65 @@ public class GuiTests : TestBase
         var htmlSpin2 = GuiFunctions.RenderWidgetHtml(spin2);
         Assert.Contains("<div id=\"spin2\" class=\"gui-spinner\"></div>", htmlSpin2);
     }
+
+    [Fact]
+    public void Test_Nested_Widgets_Have_Unique_Ids()
+    {
+        var ctx = Runtime.CreateGlobalContext();
+        var interpreter = new Interpreter();
+
+        var code = @"
+            [
+                button ""1""
+                row [
+                    button ""2""
+                    button ""3""
+                ]
+                button ""4""
+            ]
+        ";
+
+        var lexer = new Lexer(code);
+        var tokens = lexer.Tokenize();
+        var layoutBlock = (Block)new Loader().Load(tokens).Children.First();
+
+        var root = GuiFunctions.ParseLayout(layoutBlock, ctx, interpreter);
+
+        Assert.Equal(3, root.Children.Count);
+
+        var btn1 = root.Children[0];
+        var row = root.Children[1];
+        var btn4 = root.Children[2];
+
+        Assert.Equal("button_1", btn1.Id);
+        Assert.Equal("row_2", row.Id);
+
+        Assert.Equal(2, row.Children.Count);
+        var btn2 = row.Children[0];
+        var btn3 = row.Children[1];
+
+        Assert.Equal("button_3", btn2.Id);
+        Assert.Equal("button_4", btn3.Id);
+        Assert.Equal("button_5", btn4.Id);
+
+        // Verify that all IDs in the whole tree are unique
+        var allIds = new HashSet<string>();
+        void CollectIds(GuiWidget w)
+        {
+            if (w.Id != "root") allIds.Add(w.Id);
+            foreach (var child in w.Children)
+            {
+                CollectIds(child);
+            }
+        }
+        CollectIds(root);
+
+        // There should be 5 unique ids: button_1, row_2, button_3, button_4, button_5
+        Assert.Equal(5, allIds.Count);
+        Assert.Contains("button_1", allIds);
+        Assert.Contains("row_2", allIds);
+        Assert.Contains("button_3", allIds);
+        Assert.Contains("button_4", allIds);
+        Assert.Contains("button_5", allIds);
+    }
 }
