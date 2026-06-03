@@ -2,6 +2,26 @@ namespace Ragnar;
 
 public class IO
 {
+    private static string ReadTextWithShare(string path)
+    {
+        using var fs = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite);
+        using var sr = new System.IO.StreamReader(fs, System.Text.Encoding.UTF8);
+        return sr.ReadToEnd();
+    }
+
+    private static List<string> ReadLinesWithShare(string path)
+    {
+        var lines = new List<string>();
+        using var fs = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite);
+        using var sr = new System.IO.StreamReader(fs, System.Text.Encoding.UTF8);
+        string? line;
+        while ((line = sr.ReadLine()) != null)
+        {
+            lines.Add(line);
+        }
+        return lines;
+    }
+
     public static void AddIoFunctions(Context ctx)
     {
         // read %file.txt (returns string) or read/lines %file.txt (returns block)
@@ -15,11 +35,11 @@ public class IO
             if (refinements.Contains("lines"))
             {
                 // Read all lines and wrap each in a Text object
-                var lines = System.IO.File.ReadAllLines(path);
+                var lines = ReadLinesWithShare(path);
                 return new Block(lines.Select(l => new Text(l)));
             }
 
-            return new Text(System.IO.File.ReadAllText(path));
+            return new Text(ReadTextWithShare(path));
         }, 1).WithTitle("Reads the content of a file.").WithRefinements("lines"));
 
         // write %file.txt "data" or write/append %file.txt "data"
@@ -55,7 +75,7 @@ public class IO
             {
                 if (!System.IO.File.Exists(f.Path))
                     throw new Exception($"File not found: {f.Path}");
-                source = System.IO.File.ReadAllText(f.Path);
+                source = ReadTextWithShare(f.Path);
             }
             else if (args[0] is Text t)
             {

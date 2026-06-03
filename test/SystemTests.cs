@@ -129,4 +129,31 @@ public class SystemTests : TestBase
         Assert.IsType<Logic>(killResult);
         Assert.False(((Logic)killResult).Condition);
     }
+
+    [Fact]
+    public void Read_Can_Read_Locked_File()
+    {
+        string path = "test-locked.txt";
+        System.IO.File.WriteAllText(path, "locked file content");
+
+        // Open file with FileAccess.Write and FileShare.ReadWrite (simulating another process writing/locking the file)
+        using (var lockStream = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite))
+        {
+            // Try to read the file in Ragnar
+            var readResult = Run($"read %{path}").Result;
+            Assert.IsType<Text>(readResult);
+            Assert.Equal("locked file content", ((Text)readResult).Content);
+
+            var readLinesResult = Run($"read/lines %{path}").Result;
+            Assert.IsType<Block>(readLinesResult);
+            var block = (Block)readLinesResult;
+            Assert.Single(block.Children);
+            Assert.Equal("locked file content", ((Text)block.Children[0]).Content);
+        }
+
+        if (System.IO.File.Exists(path))
+        {
+            System.IO.File.Delete(path);
+        }
+    }
 }
