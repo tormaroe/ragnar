@@ -106,17 +106,23 @@ public class OS
 
             if (wait)
             {
-                process.WaitForExit();
                 if (captureOutput)
                 {
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
+                    var outputTask = process.StandardOutput.ReadToEndAsync();
+                    var errorTask = process.StandardError.ReadToEndAsync();
+                    System.Threading.Tasks.Task.WaitAll(outputTask, errorTask);
+                    string output = outputTask.Result;
+                    string error = errorTask.Result;
+                    process.WaitForExit();
+
                     if (!string.IsNullOrEmpty(error))
                     {
                         return new Text(output + "\n" + error);
                     }
                     return new Text(output);
                 }
+                
+                process.WaitForExit();
                 return new Integer(process.ExitCode);
             }
 
