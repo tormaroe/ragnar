@@ -13,6 +13,7 @@ public class Repl
     private int _historyIndex = -1;
     private string _savedInput = "";
     private int _lastMaxTextLength = 0;
+    private Context? _currentContext;
 
     private bool IsSeparator(char c)
     {
@@ -46,6 +47,7 @@ public class Repl
 
     public string ReadLine(string prompt, Context? context = null)
     {
+        _currentContext = context;
         if (Console.IsInputRedirected && ReadKeyFunc == DefaultReadKey)
         {
             WritePrompt(prompt);
@@ -318,7 +320,7 @@ public class Repl
         WritePrompt(prompt);
         
         string text = line.ToString();
-        Console.Write(text);
+        ReplHighlighter.WriteColored(text, _currentContext);
         
         int currentTotalLength = prompt.Length + text.Length;
         if (currentTotalLength < _lastMaxTextLength)
