@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 64 64"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg26"
+   sodipodi:docname="favicon.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs30" />
+  <sodipodi:namedview
+     id="namedview28"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="13.640625"
+     inkscape:cx="15.248568"
+     inkscape:cy="32.696449"
+     inkscape:window-width="3840"
+     inkscape:window-height="2054"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg26" />
+  <!-- Circular teal background -->
+  <circle
+     cx="32"
+     cy="32"
+     r="31"
+     fill="#1a5f6e"
+     id="circle2"
+     style="fill:#d8e0e3;fill-opacity:1" />
+  <!-- Left horn -->
+  <!-- Right horn -->
+  <!-- Helmet dome -->
+  <!-- Helmet center ridge -->
+  <!-- Helmet brim / cheek guards -->
+  <!-- Nose guard -->
+  <!-- Eye visor slot left -->
+  <!-- Eye visor slot right -->
+  <!-- Beard (orange) -->
+  <!-- Thin circle border -->
+  <path
+     style="fill:#34a2b4;fill-opacity:1;stroke:#34a2b4;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 13.269187,47.10653 h 38.04811 C 49.044674,37.429554 41.273769,27.019473 31.670103,26.726232 21.699885,27.092784 14.808706,37.869416 13.269187,47.10653 Z"
+     id="path5323"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#34a2b4;fill-opacity:1;stroke:#34a2b4;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+     d="M 50.14433,41.754868 C 58.208477,38.67583 59.088202,32.517754 58.79496,29.878579 54.616266,17.562428 47.871707,12.870561 47.871707,12.870561 c 8.064147,21.919817 -0.733104,23.459336 -0.733104,23.459336 0,0 1.099656,3.812142 3.005727,5.424971 z"
+     id="path10707"
+     sodipodi:nodetypes="ccccc" />
+  <path
+     style="font-variation-settings:normal;vector-effect:none;fill:#34a2b4;fill-opacity:1;stroke:#34a2b4;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000"
+     d="M 13.995268,42.420222 C 5.9311213,39.341184 5.0513963,33.183108 5.3446383,30.543933 9.5233323,18.227782 16.267891,13.535916 16.267891,13.535916 c -8.0641467,21.919816 0.733104,23.459335 0.733104,23.459335 0,0 -1.099656,3.812142 -3.005727,5.424971 z"
+     id="path10707-8"
+     sodipodi:nodetypes="ccccc" />
+  <path
+     style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#34a2b4;fill-opacity:1;stroke:#34a2b4;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+     d="m 26.245132,47.619702 2.639175,1.539519 0.439863,4.618557 1.979381,1.539519 2.199313,-1.466209 0.439862,-4.325315 2.712486,-1.83276 z"
+     id="path11386" />
+</svg>
