@@ -46,7 +46,7 @@ either empty? args [
         ]
         "release" [
             exit-code: sh "python3 scripts/release.py"
-            if not-equal? exit-code 0 [
+            if equal? exit-code 127 [
                 sh "python scripts/release.py"
             ]
         ]

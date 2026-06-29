@@ -88,7 +88,11 @@ def main():
             print(f"Running dotnet publish for {rid}...")
             ret, stdout, stderr = run_command(publish_cmd)
             if ret != 0:
-                print(f"Failed to publish for {rid}:\n{stderr}")
+                print(f"Failed to publish for {rid}:")
+                if stdout:
+                    print(f"Stdout:\n{stdout}")
+                if stderr:
+                    print(f"Stderr:\n{stderr}")
                 sys.exit(1)
 
             zip_name = f"Ragnar_{version}_{rid}"
