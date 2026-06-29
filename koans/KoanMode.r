@@ -30,10 +30,39 @@ substitute-blank: func [expr val] [
     ]
 ]
 
-run-koan-file: func [file name /local meditations med desc expr hint user-input parsed substituted result correct?] [
+get-home-dir: func [/local home] [
+    home: get-env "USERPROFILE"
+    either none? :home [
+        home: get-env "HOME"
+    ] [
+        home
+    ]
+]
+
+resolve-home-path: func [path /local str home] [
+    str: to-string path
+    either (pick str 1) = "~" [
+        home: get-home-dir
+        either none? :home [
+            to-file next next str
+        ] [
+            to-file rejoin [home "/" next next str]
+        ]
+    ] [
+        to-file str
+    ]
+]
+
+run-koan-file: func [file name /local meditations med desc expr hint user-input parsed substituted result correct? esc green red yellow reset] [
+    esc: to-string to-char 27
+    green: rejoin [esc "[32m"]
+    red: rejoin [esc "[31m"]
+    yellow: rejoin [esc "[33m"]
+    reset: rejoin [esc "[0m"]
+
     meditations: load file
     if not block? meditations [
-        print rejoin ["Error: meditations file " to-string file " does not contain a block."]
+        print rejoin [red "Error: meditations file " to-string file " does not contain a block." reset]
         return none
     ]
     
@@ -61,16 +90,22 @@ run-koan-file: func [file name /local meditations med desc expr hint user-input 
             ] [
                 parsed: attempt [load user-input]
                 either none? :parsed [
-                    print "  Error: Could not parse your answer. Try again."
+                    print rejoin [red "  Error: Could not parse your answer. Try again." reset]
                 ] [
                     substituted: substitute-blank expr :parsed
                     result: attempt [do substituted]
                     
                     either all [ not none? :result logic? :result result ] [
-                        print "  Correct! Well done."
+                        print rejoin [green "  Correct! Well done." reset]
                         correct?: true
                     ] [
-                        print rejoin ["  Wrong answer. Hint: " hint]
+                        print rejoin [
+                            red "  Wrong answer." reset "^/"
+                            "  Original expression:  " mold expr "^/"
+                            "  Your answer:          " mold parsed "^/"
+                            "  Evaluated expression: " mold substituted " -> " mold result "^/"
+                            yellow "  Hint: " hint reset
+                        ]
                     ]
                 ]
             ]
@@ -78,11 +113,26 @@ run-koan-file: func [file name /local meditations med desc expr hint user-input 
         idx: idx + 1
     ]
     print ""
-    print "Congratulations! You have completed all meditations in this koan!"
+    print rejoin [green "Congratulations! You have completed all meditations in this koan!" reset]
     ask "Press Enter to return to the menu..."
 ]
 
-start-koan-mode: func [/local koans-list idx choice num item file name] [
+start-koan-mode: func [/local koans-list idx choice num item file name progress-file completed-list status esc green yellow reset] [
+    esc: to-string to-char 27
+    green: rejoin [esc "[32m"]
+    yellow: rejoin [esc "[33m"]
+    reset: rejoin [esc "[0m"]
+
+    progress-file: resolve-home-path %~/.ragnar-koans-progress.r
+    completed-list: either exists? progress-file [
+        attempt [load progress-file]
+    ] [
+        none
+    ]
+    if not block? :completed-list [
+        completed-list: copy []
+    ]
+
     koans-list: [
         [file: %koans/01-equalities.r name: "Equalities"]
         [file: %koans/02-blocks-and-series.r name: "Blocks and Series"]
@@ -102,7 +152,15 @@ start-koan-mode: func [/local koans-list idx choice num item file name] [
         idx: 1
         foreach item koans-list [
             name: select item 'name
-            print rejoin ["  " idx ". " name]
+            file: select item 'file
+            
+            status: either not none? find completed-list file [
+                rejoin [green "[x]" reset]
+            ] [
+                "[ ]"
+            ]
+            
+            print rejoin ["  " idx ". " status " " name]
             idx: idx + 1
         ]
         print "  q. Quit Koan Mode"
@@ -123,6 +181,13 @@ start-koan-mode: func [/local koans-list idx choice num item file name] [
                 
                 either exists? file [
                     run-koan-file file name
+                    
+                    ; Save progress if completed successfully
+                    original-file: select item 'file
+                    if none? find completed-list original-file [
+                        append completed-list original-file
+                        attempt [save progress-file completed-list]
+                    ]
                 ] [
                     print rejoin ["Error: File " to-string file " does not exist."]
                 ]
