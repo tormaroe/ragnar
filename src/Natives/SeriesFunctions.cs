@@ -346,6 +346,14 @@ public static class SeriesFunctions
         // copy [value]
         ctx.Set("copy", new Native((args, refs, _, _, _) =>
         {
+            if (args[0] is Record rec)
+            {
+                return new Record(rec.Children.Skip(rec.Index));
+            }
+            if (args[0] is Paren p)
+            {
+                return new Paren(p.Children.Skip(p.Index));
+            }
             if (args[0] is Block b)
             {
                 // Create a new block with a shallow copy of the children (from current index)

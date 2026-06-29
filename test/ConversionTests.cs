@@ -48,4 +48,24 @@ public class ConversionTests : TestBase
         var (res3, _) = Run("mold/only [x: 1]");
         Assert.Equal("x: 1", ((Text)res3).ToUserString());
     }
+
+    [Fact]
+    public void ToBlock_And_ToParen_And_Copy_PreserveType_Works()
+    {
+        var (res1, _) = Run("to-block first [ (1 2) ]");
+        Assert.IsType<Block>(res1);
+        Assert.Equal("[ 1 2 ]", res1.ToString());
+
+        var (res2, _) = Run("to-paren [1 2]");
+        Assert.IsType<Paren>(res2);
+        Assert.Equal("(1 2)", res2.ToString());
+
+        var (res3, _) = Run("copy first [ (1 2) ]");
+        Assert.IsType<Paren>(res3);
+        Assert.Equal("(1 2)", res3.ToString());
+
+        var (res4, _) = Run("copy to-record [a: 1]");
+        Assert.IsType<Record>(res4);
+        Assert.Equal("#( a: 1 )", res4.ToString());
+    }
 }

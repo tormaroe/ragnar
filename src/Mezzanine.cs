@@ -523,6 +523,15 @@ public static class Mezzanine
             
             native-unzip archive dest is-force is-verbose
         ]
+        start-koan-mode: func [/local file] [
+            file: %koans/KoanMode.r
+            either exists? file [
+                do file
+                start-koan-mode
+            ] [
+                print rejoin ["Error: Could not find " to-string file ". Please run from the Ragnar project directory."]
+            ]
+        ]
 
     """;
 

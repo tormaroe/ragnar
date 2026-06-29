@@ -116,5 +116,26 @@ public static class ConversionFunctions
             if (args[0] is GetWord gw) return new SetWord(gw.Name);
             return new SetWord(args[0].ToUserString());
         }, 1).WithTitle("Converts a value to a set-word."));
+
+        // to-block [value]
+        ctx.Set("to-block", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is Block b)
+            {
+                if (b is Paren || b is Record) return new Block(b.Children, b.Index);
+                return b;
+            }
+            return new Block(new List<Value> { args[0] });
+        }, 1).WithTitle("Converts a value to a block."));
+
+        // to-paren [value]
+        ctx.Set("to-paren", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is Block b)
+            {
+                return new Paren(b.Children, b.Index);
+            }
+            return new Paren(new List<Value> { args[0] });
+        }, 1).WithTitle("Converts a value to a paren."));
     }
 }

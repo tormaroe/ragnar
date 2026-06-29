@@ -41,6 +41,10 @@
       <Link>lib\prettytable.r</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\koans\**\*.*">
+      <Link>koans\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="ConfigureGitHooks" AfterTargets="BeforeBuild" Condition="Exists('$(MSBuildProjectDirectory)\..\.git') And '$(GITHUB_RUN_NUMBER)' == ''">
