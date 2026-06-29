@@ -448,6 +448,17 @@ public static class SeriesFunctions
             return s.At(len);
         }, 1).WithTitle("Returns the series at its end position."));
 
+        // at [series] [index]
+        ctx.Set("at", new Native((args, refs, _, _, _) =>
+        {
+            if (args[0] is not Series s) throw new Exception("at requires a series.");
+            if (args[1] is not Integer i) throw new Exception("at requires an integer index.");
+            int target = (int)i.Number - 1;
+            int len = s is Block b ? b.Children.Count : ((Text)s).Content.Length;
+            target = Math.Clamp(target, 0, len);
+            return s.At(target);
+        }, 2).WithTitle("Returns the series at the specified index."));
+
         // head? [series]
         ctx.Set("head?", new Native((args, refs, _, _, _) =>
         {

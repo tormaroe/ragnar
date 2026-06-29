@@ -27,6 +27,7 @@ public static class Runtime
                         consoleCtx.Set("history", new Block());
 
                         optionsCtx.Set("args", new Block());
+                        optionsCtx.Set("boot", new File(AppContext.BaseDirectory.Replace("\\", "/")));
 
                         systemCtx.Set("console", new ObjectValue(consoleCtx));
                         systemCtx.Set("options", new ObjectValue(optionsCtx));

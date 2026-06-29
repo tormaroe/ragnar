@@ -237,4 +237,14 @@ public class SeriesTests : TestBase
         var (resBlock, _) = Run("reverse [1 2 3]");
         Assert.Equal("[ 3 2 1 ]", resBlock.ToString());
     }
+
+    [Fact]
+    public void Test_At_Works()
+    {
+        var (resText, _) = Run("at \"abcdef\" 3");
+        Assert.Equal("cdef", ((Text)resText).ToUserString());
+
+        var (resBlock, _) = Run("at [10 20 30 40] 2");
+        Assert.Equal("[ 20 30 40 ]", resBlock.ToString());
+    }
 }

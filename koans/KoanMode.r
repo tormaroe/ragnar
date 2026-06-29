@@ -118,7 +118,7 @@ start-koan-mode: func [/local koans-list idx choice num item file name] [
             num: attempt [to-integer choice]
             either all [integer? num num >= 1 num <= length? koans-list] [
                 item: pick koans-list num
-                file: select item 'file
+                file: join system/options/boot select item 'file
                 name: select item 'name
                 
                 either exists? file [
