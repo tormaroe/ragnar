@@ -100,10 +100,10 @@ run-koan-file: func [file name /local meditations med desc expr hint user-input 
                         correct?: true
                     ] [
                         print rejoin [
-                            red "  Wrong answer." reset "^/"
-                            "  Original expression:  " mold expr "^/"
-                            "  Your answer:          " mold parsed "^/"
-                            "  Evaluated expression: " mold substituted " -> " mold result "^/"
+                            red "  Wrong answer." reset #"^/"
+                            "  Original expression:  " mold expr #"^/"
+                            "  Your answer:          " mold parsed #"^/"
+                            "  Evaluated expression: " mold substituted " -> " mold result #"^/"
                             yellow "  Hint: " hint reset
                         ]
                     ]
